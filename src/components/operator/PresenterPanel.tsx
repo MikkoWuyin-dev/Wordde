@@ -211,7 +211,7 @@ export function PresenterPanel() {
               onChange={e => { setJumpValue(e.target.value.replace(/\D/g, '')); setJumpError(''); }}
               onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); handleJump(); } }}
               className={cn('h-6 w-16 text-xs text-center', jumpError && 'border-destructive')}
-              title="Jump to verse"
+              title="Jump to passage"
             />
             {jumpError && <span className="text-[10px] text-destructive whitespace-nowrap">{jumpError}</span>}
           </div>

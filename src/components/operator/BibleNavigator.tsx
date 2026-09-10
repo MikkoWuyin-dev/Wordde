@@ -90,7 +90,7 @@ export function BibleNavigator() {
   }, [level]);
 
   const breadcrumb = level === 'books'
-    ? 'Browse Bible'
+    ? 'Browse'
     : level === 'chapters'
       ? selectedBook
       : `${selectedBook} ${selectedChapter}`;
@@ -117,15 +117,13 @@ export function BibleNavigator() {
     <div className="px-2 py-2">
       {/* Breadcrumb / Back */}
       {level !== 'books' && (
-        <div className="flex items-center gap-1.5 px-1 py-1.5 mb-1">
-          <button
-            onClick={goBack}
-            className="p-0.5 rounded hover:bg-accent"
-          >
-            <ChevronLeft className="h-3.5 w-3.5 text-muted-foreground" />
-          </button>
+        <button
+          onClick={goBack}
+          className="flex items-center gap-1.5 px-1 py-1.5 mb-1 hover:bg-accent/50 rounded cursor-pointer w-fit"
+        >
+          <ChevronLeft className="h-3.5 w-3.5 text-muted-foreground" />
           <span className="text-xs font-medium text-foreground">{breadcrumb}</span>
-        </div>
+        </button>
       )}
 
       {level === 'books' && (

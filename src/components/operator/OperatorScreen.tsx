@@ -15,19 +15,26 @@ import { ServicePlan } from './ServicePlan';
 import { RecentPassages } from './RecentPassages';
 import { ProjectionSettings } from './ProjectionSettings';
 import { ProjectionControl } from './ProjectionControl';
-import { Book, Monitor, HelpCircle, Search, BookOpen, ListChecks, Clock, ChevronDown, ChevronRight, Undo2, Settings2 } from 'lucide-react';
+import { Book, Monitor, HelpCircle, Undo2, Settings2, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 type TabId = 'search' | 'browse' | 'plan' | 'recent';
 
-const tabs: { id: TabId; label: string; icon: React.ElementType }[] = [
-  { id: 'search', label: 'Search', icon: Search },
-  { id: 'browse', label: 'Browse', icon: BookOpen },
-  { id: 'plan', label: 'Plan', icon: ListChecks },
-  { id: 'recent', label: 'Recent', icon: Clock },
+const tabs: { id: TabId; label: string }[] = [
+  { id: 'search', label: 'Search' },
+  { id: 'browse', label: 'Browse' },
+  { id: 'plan', label: 'Plan' },
+  { id: 'recent', label: 'Recent' },
 ];
 
 export function OperatorScreen() {
@@ -99,7 +106,7 @@ export function OperatorScreen() {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-4">
           <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-lg text-muted-foreground">Loading Bible translations…</p>
+          <p className="text-lg text-muted-foreground">Loading translations…</p>
         </div>
       </div>
     );
@@ -112,51 +119,57 @@ export function OperatorScreen() {
       <header className="border-b border-border bg-card/50 backdrop-blur-sm shrink-0">
         <div className="px-4 py-2">
           <div className="flex items-center justify-between">
+            <h1 className="font-semibold text-sm text-foreground">Wordde</h1>
+
             <div className="flex items-center gap-2">
-              <div className="p-1.5 rounded-md bg-primary/10">
-                <Book className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <h1 className="font-semibold text-sm text-foreground leading-tight">Bible Projection</h1>
-                <p className="text-[10px] text-muted-foreground leading-tight">Operator Control</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <select
+              {/* Translation selector - styled Select component */}
+              <Select
                 value={currentTranslation}
-                onChange={(e) => setTranslation(e.target.value)}
-                className="px-2 py-0.5 rounded bg-secondary text-secondary-foreground text-xs font-medium border-none outline-none cursor-pointer"
-                title="Switch translation"
+                onValueChange={(value) => {
+                  setTranslation(value);
+                }}
               >
-                {BibleRepository.getAvailableTranslations().map((t) => (
-                  <option key={t} value={t}>{t}</option>
-                ))}
-              </select>
+                <SelectTrigger
+                  className="h-8 px-2 text-xs font-medium min-w-[80px]"
+                  title="Switch translation"
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {BibleRepository.getAvailableTranslations().map((t) => (
+                    <SelectItem key={t} value={t}>{t}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-              {/* Undo button next to live indicator */}
+              {/* Undo button - tertiary, subtle */}
               <Button
-                variant="outline"
+                variant="ghost"
                 size="sm"
-                className="h-7 px-2 text-xs gap-1"
+                className="h-7 px-1.5 text-xs gap-1 opacity-80 hover:opacity-100"
                 onClick={undoProjection}
                 disabled={historyStack.length === 0}
                 title="Undo last projection (Ctrl+Z)"
               >
                 <Undo2 className="h-3 w-3" />
-                Undo
+                <span className="hidden sm:inline">Undo</span>
                 {historyStack.length > 0 && (
                   <span className="ml-0.5 text-[10px] text-muted-foreground">({historyStack.length})</span>
                 )}
               </Button>
 
+              {/* Live projection indicator - quiet, contextual */}
               {committedPassage && (
-                <div className="flex items-center gap-2 px-2 py-1 rounded-md bg-primary/10 border border-primary/20">
-                  <Monitor className="h-3.5 w-3.5 text-primary" />
+                <div className="h-7 flex items-center gap-1.5 px-2 rounded-md bg-primary/5 border border-primary/10">
+                  <Monitor className="h-3 w-3 text-primary/70" />
                   <PassageNavigation />
                 </div>
               )}
 
+              {/* Spacer to push projection control to the edge */}
+              <div className="flex-1" />
+
+              {/* Projection control - primary action, prominent */}
               <ProjectionControl />
             </div>
           </div>
@@ -170,7 +183,6 @@ export function OperatorScreen() {
           {/* Tab bar */}
           <div className="flex border-b border-border shrink-0">
             {tabs.map((tab) => {
-              const Icon = tab.icon;
               const isActive = activeTab === tab.id;
               return (
                 <button
@@ -181,13 +193,12 @@ export function OperatorScreen() {
                     if (tab.id === 'plan') setPlanOpened(true);
                   }}
                   className={cn(
-                    'flex-1 flex items-center justify-center gap-1.5 px-2 py-2 text-xs font-medium transition-colors border-b-2',
+                    'flex-1 px-3 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px',
                     isActive
-                      ? 'border-primary text-primary bg-primary/5'
-                      : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-accent/10'
+                      ? 'border-primary text-primary'
+                      : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-accent/50'
                   )}
                 >
-                  <Icon className="h-3.5 w-3.5" />
                   {tab.label}
                 </button>
               );
@@ -208,7 +219,7 @@ export function OperatorScreen() {
                   placeholder="Search reference or keyword..."
                   onFocus={() => setSearchFocused(true)}
                 />
-                <ContextualHint id="search" message='Type a verse like "John 3:16"' show={searchFocused} />
+                <ContextualHint id="search" message='Type a passage like "John 3:16"' show={searchFocused} />
                 {searchResults.length > 0 && (
                   <ResultsList
                     results={searchResults}
@@ -221,7 +232,7 @@ export function OperatorScreen() {
 
             {activeTab === 'browse' && (
               <div data-tutorial="navigator">
-                <ContextualHint id="browse" message="Select a book → chapter → verse" show={browseOpened} className="mx-2 mt-2" />
+                <ContextualHint id="browse" message="Select a book → chapter → passage" show={browseOpened} className="mx-2 mt-2" />
                 <BibleNavigator />
               </div>
             )}
@@ -265,7 +276,7 @@ export function OperatorScreen() {
 
         {/* Right Column - Presenter Panel */}
         <div className="flex-1 min-w-0 flex flex-col" data-tutorial="presenter">
-          <ContextualHint id="keyboard_nav" message="Use ← → to move between verses" show={arrowUsed} className="mx-3 mt-2" />
+          <ContextualHint id="keyboard_nav" message="Use ← → to move between passages" show={arrowUsed} className="mx-3 mt-2" />
           <PresenterPanel />
         </div>
       </main>
@@ -283,32 +294,53 @@ export function OperatorScreen() {
               <span>Replay Tutorial</span>
             </button>
           </div>
-          <div className="flex items-center gap-4">
-            <span>
-              <kbd className="px-1 py-0.5 rounded bg-muted text-[10px] font-mono">←</kbd> Prev
-            </span>
-            <span>
-              <kbd className="px-1 py-0.5 rounded bg-muted text-[10px] font-mono">→</kbd> Next
-            </span>
-            <span>
-              <kbd className="px-1 py-0.5 rounded bg-muted text-[10px] font-mono">↑↓</kbd> Results
-            </span>
-            <span className="text-border">│</span>
-            <span>
-              <kbd className="px-1 py-0.5 rounded bg-muted text-[10px] font-mono">N</kbd> Next Passage
-            </span>
-            <span>
-              <kbd className="px-1 py-0.5 rounded bg-muted text-[10px] font-mono">B</kbd> Blank
-            </span>
-            <span>
-              <kbd className="px-1 py-0.5 rounded bg-muted text-[10px] font-mono">P</kbd> Project
-            </span>
-            <span>
-              <kbd className="px-1 py-0.5 rounded bg-muted text-[10px] font-mono">⌘Z</kbd> Undo
-            </span>
-            <span>
-              <kbd className="px-1 py-0.5 rounded bg-muted text-[10px] font-mono">Esc</kbd> Clear
-            </span>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 text-[11px]">
+              <span>
+                <kbd className="px-1 py-0.5 rounded bg-muted text-[10px] font-mono">←</kbd> Prev
+              </span>
+              <span>
+                <kbd className="px-1 py-0.5 rounded bg-muted text-[10px] font-mono">→</kbd> Next
+              </span>
+              <span>
+                <kbd className="px-1 py-0.5 rounded bg-muted text-[10px] font-mono">↑↓</kbd> Results
+              </span>
+            </div>
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  className="flex items-center gap-1 px-1.5 py-0.5 rounded hover:bg-accent hover:text-accent-foreground transition-colors text-muted-foreground hover:text-foreground"
+                  title="Show all keyboard shortcuts"
+                >
+                  <span className="text-[10px] font-mono">?</span>
+                  <span className="text-[10px]">More</span>
+                </button>
+              </PopoverTrigger>
+              <PopoverContent
+                side="top"
+                align="end"
+                className="w-56 p-3"
+              >
+                <p className="text-[10px] font-medium text-muted-foreground mb-2">Keyboard Shortcuts</p>
+                <div className="space-y-1.5">
+                  {[
+                    { keys: '← →', label: 'Navigate passages' },
+                    { keys: '↑ ↓', label: 'Select search result' },
+                    { keys: 'N', label: 'Next service plan passage' },
+                    { keys: 'B', label: 'Blank / unblank screen' },
+                    { keys: 'P', label: 'Project current slide' },
+                    { keys: '⌘Z', label: 'Undo last projection' },
+                    { keys: 'Esc', label: 'Clear preview' },
+                    { keys: '?', label: 'Show this help' },
+                  ].map((shortcut) => (
+                    <div key={shortcut.keys} className="flex items-center justify-between text-[11px]">
+                      <span className="text-muted-foreground">{shortcut.label}</span>
+                      <kbd className="px-1 py-0.5 rounded bg-muted text-[10px] font-mono">{shortcut.keys}</kbd>
+                    </div>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
           <span className="text-[10px] text-muted-foreground/60 select-none pointer-events-none">v{packageJson.version}</span>
         </div>

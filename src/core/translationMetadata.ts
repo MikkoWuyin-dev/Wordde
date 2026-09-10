@@ -1,4 +1,4 @@
-// Bible Projection App - Translation Display Metadata
+// Wordde - Translation Display Metadata
 // Maps translation codes to human-readable names for use on the projection screen.
 
 export const TRANSLATION_DISPLAY_NAMES: Record<string, string> = {

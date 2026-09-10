@@ -28,7 +28,7 @@ export function PassageNavigation() {
         variant="ghost"
         size="sm"
         onClick={goToPreviousVerse}
-        title="Previous verse (←)"
+        title="Previous passage (←)"
         className="text-muted-foreground hover:text-foreground"
       >
         <ChevronLeft className="h-4 w-4" />
@@ -40,7 +40,7 @@ export function PassageNavigation() {
         variant="ghost"
         size="sm"
         onClick={goToNextVerse}
-        title="Next verse (→)"
+        title="Next passage (→)"
         className="text-muted-foreground hover:text-foreground"
       >
         <ChevronRight className="h-4 w-4" />

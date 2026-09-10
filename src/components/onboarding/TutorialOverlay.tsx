@@ -16,7 +16,7 @@ const STEPS: TutorialStep[] = [
   {
     targetSelector: '[data-tutorial="search"]',
     title: 'Search for Scripture',
-    instruction: 'Type a Bible verse (e.g., John 3:16) in the search box and select a result.',
+    instruction: 'Type a passage (e.g., John 3:16) in the search box and select a result.',
     position: 'right',
     actionType: 'search',
     completedText: 'Verse projected!',
@@ -24,14 +24,14 @@ const STEPS: TutorialStep[] = [
   {
     targetSelector: '[data-tutorial="presenter"]',
     title: 'Live Projection',
-    instruction: 'This verse is now projected live. The Presenter panel shows what\'s on screen.',
+    instruction: 'This passage is now projected live. The Presenter panel shows what\'s on screen.',
     position: 'left',
     actionType: 'auto',
   },
   {
     targetSelector: '[data-tutorial="presenter"]',
     title: 'Navigate Verses',
-    instruction: 'Use the ← → arrow keys to move between verses.',
+    instruction: 'Use the ← → arrow keys to move between passages.',
     position: 'left',
     actionType: 'navigate',
     completedText: 'Navigation works!',
@@ -42,7 +42,7 @@ const STEPS: TutorialStep[] = [
     instruction: 'Type a verse number (e.g., 5) in the input and press Enter.',
     position: 'left',
     actionType: 'jump',
-    completedText: 'Jumped to verse!',
+    completedText: 'Jumped to passage!',
   },
   {
     targetSelector: '[data-tutorial="service"]',

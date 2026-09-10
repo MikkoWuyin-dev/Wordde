@@ -5,17 +5,17 @@ import { cn } from '@/lib/utils';
 const slides = [
   {
     icon: Search,
-    title: 'Find any Bible verse instantly',
+    title: 'Find any passage instantly',
     description: 'Type "John 3:16" or browse through books and chapters.',
   },
   {
     icon: Monitor,
-    title: 'Project verses to the screen',
-    description: 'Selecting a verse displays it immediately — no extra steps.',
+    title: 'Project passages to the screen',
+    description: 'Selecting a passage displays it immediately — no extra steps.',
   },
   {
     icon: ArrowLeftRight,
-    title: 'Move through verses effortlessly',
+    title: 'Move through passages effortlessly',
     description: 'Use arrow keys or on-screen controls to navigate.',
   },
   {
