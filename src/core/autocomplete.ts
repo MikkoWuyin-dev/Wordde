@@ -1,4 +1,4 @@
-// Bible Projection App - Autocomplete Engine
+// Wordde - Autocomplete Engine
 // Provides fast, fuzzy reference suggestions as the operator types
 
 import { BibleRepository } from './bibleRepository';
@@ -50,7 +50,7 @@ function matchBooks(input: string): string[] {
 
     // Exact alias match via repository
     const resolved = BibleRepository.resolveBookName(query);
-    if (resolved && resolved.toLowerCase() === lower) {
+    if (resolved.some(r => r.toLowerCase() === lower)) {
       scored.push({ name: book, score: 100 });
       continue;
     }
@@ -101,7 +101,7 @@ function parseInput(input: string): { bookPart: string; rest: string } {
     const [, bookCandidate, rest] = numberedMatch;
     // Check if the numbered prefix resolves to a book
     const resolved = BibleRepository.resolveBookName(bookCandidate.trim());
-    if (resolved) {
+    if (resolved.length > 0) {
       return { bookPart: bookCandidate.trim(), rest: rest.trim() };
     }
   }
@@ -113,7 +113,7 @@ function parseInput(input: string): { bookPart: string; rest: string } {
   for (let i = 1; i <= Math.min(words.length, 3); i++) {
     const candidate = words.slice(0, i).join(' ');
     const resolved = BibleRepository.resolveBookName(candidate);
-    if (resolved) {
+    if (resolved.length > 0) {
       return { bookPart: candidate, rest: words.slice(i).join(' ').trim() };
     }
   }

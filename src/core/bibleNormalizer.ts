@@ -1,4 +1,4 @@
-// Bible Projection App - Data Normalization Layer
+// Wordde - Data Normalization Layer
 // Converts arbitrary incoming Bible JSON into the canonical BibleBook format.
 //
 // Canonical format (do not change):

@@ -1,4 +1,4 @@
-// Bible Projection App - State Manager
+// Wordde - State Manager
 // Single source of truth for all application state
 // Per MCD: State is the truth. UI is a projection.
 

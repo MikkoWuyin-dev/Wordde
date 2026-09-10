@@ -1,4 +1,4 @@
-// Bible Projection App - Bible Repository
+// Wordde - Bible Repository
 // Read-only access layer for Bible data
 // Supports multiple translations (KJV, NIV, etc.)
 
@@ -34,8 +34,9 @@ class BibleRepositoryClass {
   private loadedTranslations: Set<string> = new Set();
   private currentTranslation: string = 'KJV';
 
-  // Book name normalization map
-  private bookAliases: Map<string, string> = new Map();
+  // Book name normalization map: alias -> array of matching book names
+  // Supports ambiguous aliases (e.g., '1c' -> ['1 Chronicles', '1 Corinthians'])
+  private bookAliases: Map<string, string[]> = new Map();
 
   /** Get list of available translation codes */
   getAvailableTranslations(): string[] {
@@ -203,80 +204,94 @@ class BibleRepositoryClass {
 
   private setupBookAliases(bookName: string): void {
     const lower = bookName.toLowerCase();
-    this.bookAliases.set(lower, bookName);
+    // Map full book name as an alias to itself
+    this.bookAliases.set(lower, [bookName]);
 
     const abbreviations: Record<string, string[]> = {
-      'genesis': ['gen', 'ge'],
-      'exodus': ['exod', 'ex'],
+      // Old Testament
+      'genesis': ['gen', 'ge', 'gn'],
+      'exodus': ['exo', 'exod', 'ex', 'exod'],
       'leviticus': ['lev', 'le'],
-      'numbers': ['num', 'nu'],
-      'deuteronomy': ['deut', 'dt'],
+      'numbers': ['num', 'nu', 'nm'],
+      'deuteronomy': ['deut', 'deu', 'dt'],
       'joshua': ['josh', 'jos'],
       'judges': ['judg', 'jdg'],
-      'ruth': ['ru'],
-      '1 samuel': ['1sam', '1sa', '1 sam'],
-      '2 samuel': ['2sam', '2sa', '2 sam'],
-      '1 kings': ['1kgs', '1ki', '1 kgs'],
-      '2 kings': ['2kgs', '2ki', '2 kgs'],
-      '1 chronicles': ['1chr', '1ch', '1 chr'],
-      '2 chronicles': ['2chr', '2ch', '2 chr'],
+      'ruth': ['ruth', 'ru'],
+      '1 samuel': ['1sam', '1sa', '1 sam', '1 s'],
+      '2 samuel': ['2sam', '2sa', '2 sam', '2 s'],
+      '1 kings': ['1kgs', '1ki', '1k', '1 kings'],
+      '2 kings': ['2kgs', '2ki', '2k', '2 kings'],
+      '1 chronicles': ['1chr', '1ch', '1 chr', '1 ch'],
+      '2 chronicles': ['2chr', '2ch', '2 chr', '2 ch'],
       'ezra': ['ezr'],
       'nehemiah': ['neh', 'ne'],
-      'esther': ['est', 'es'],
-      'job': ['jb'],
-      'psalms': ['ps', 'psa', 'psalm'],
-      'proverbs': ['prov', 'pr'],
-      'ecclesiastes': ['eccl', 'ec'],
-      'song of solomon': ['song', 'sos', 'ss'],
+      'esther': ['est', 'esth'],
+      'job': ['job'],
+      'psalms': ['ps', 'psa', 'psm', 'psalm', 'psalms'],
+      'proverbs': ['prov', 'pro', 'pr'],
+      'ecclesiastes': ['ecc', 'eccl', 'eccles'],
+      'song of solomon': ['song', 'sos', 'songofsolomon'],
       'isaiah': ['isa', 'is'],
       'jeremiah': ['jer', 'je'],
       'lamentations': ['lam', 'la'],
-      'ezekiel': ['ezek', 'eze'],
+      'ezekiel': ['ezek', 'eze', 'ezk'],
       'daniel': ['dan', 'da'],
       'hosea': ['hos', 'ho'],
       'joel': ['joe', 'jl'],
-      'amos': ['am'],
+      'amos': ['amos', 'am'],
       'obadiah': ['obad', 'ob'],
-      'jonah': ['jon', 'jnh'],
+      'jonah': ['jonah', 'jon'],
       'micah': ['mic', 'mi'],
       'nahum': ['nah', 'na'],
-      'habakkuk': ['hab'],
+      'habakkuk': ['hab', 'hb'],
       'zephaniah': ['zeph', 'zep'],
-      'haggai': ['hag'],
+      'haggai': ['hag', 'hg'],
       'zechariah': ['zech', 'zec'],
-      'malachi': ['mal'],
-      'matthew': ['matt', 'mt'],
-      'mark': ['mk', 'mar'],
-      'luke': ['lk', 'lu'],
-      'john': ['jn', 'joh'],
-      'acts': ['ac', 'act'],
+      'malachi': ['mal', 'ml'],
+      // New Testament
+      'matthew': ['matt', 'mat', 'mt'],
+      'mark': ['mark', 'mar', 'mrk', 'mk'],
+      'luke': ['luke', 'luk', 'lk'],
+      'john': ['john', 'joh', 'jn'],
+      'acts': ['acts', 'act', 'ac'],
       'romans': ['rom', 'ro'],
-      '1 corinthians': ['1cor', '1co', '1 cor'],
-      '2 corinthians': ['2cor', '2co', '2 cor'],
+      '1 corinthians': ['1cor', '1co', '1 cor', '1 co'],
+      '2 corinthians': ['2cor', '2co', '2 cor', '2 co'],
       'galatians': ['gal', 'ga'],
-      'ephesians': ['eph'],
-      'philippians': ['phil', 'php'],
-      'colossians': ['col'],
-      '1 thessalonians': ['1thess', '1th', '1 thess'],
-      '2 thessalonians': ['2thess', '2th', '2 thess'],
-      '1 timothy': ['1tim', '1ti', '1 tim'],
-      '2 timothy': ['2tim', '2ti', '2 tim'],
-      'titus': ['tit'],
-      'philemon': ['phlm', 'phm'],
-      'hebrews': ['heb'],
-      'james': ['jas', 'jm'],
-      '1 peter': ['1pet', '1pe', '1 pet'],
-      '2 peter': ['2pet', '2pe', '2 pet'],
-      '1 john': ['1jn', '1jo', '1 jn'],
-      '2 john': ['2jn', '2jo', '2 jn'],
-      '3 john': ['3jn', '3jo', '3 jn'],
-      'jude': ['jud'],
-      'revelation': ['rev', 're', 'revelations'],
+      'ephesians': ['eph', 'ep'],
+      'philippians': ['phil', 'php', 'pp'],
+      'colossians': ['col', 'co'],
+      '1 thessalonians': ['1thess', '1th', '1 thes', '1 th'],
+      '2 thessalonians': ['2thess', '2th', '2 thes', '2 th'],
+      '1 timothy': ['1tim', '1ti', '1 tim', '1 ti'],
+      '2 timothy': ['2tim', '2ti', '2 tim', '2 ti'],
+      'titus': ['tit', 'ti'],
+      'philemon': ['phlm', 'phm', 'phile'],
+      'hebrews': ['heb', 'he'],
+      'james': ['jas', 'jam', 'jm'],
+      '1 peter': ['1pet', '1pe', '1 peter', '1 pe'],
+      '2 peter': ['2pet', '2pe', '2 peter', '2 pe'],
+      '1 john': ['1john', '1jn', '1 joh', '1 jn'],
+      '2 john': ['2john', '2jn', '2 joh', '2 jn'],
+      '3 john': ['3john', '3jn', '3 joh', '3 jn'],
+      'jude': ['jude', 'jud'],
+      'revelation': ['rev', 're', 'revelation', 'revelations'],
     };
 
     const aliases = abbreviations[lower];
     if (aliases) {
-      aliases.forEach(alias => this.bookAliases.set(alias, bookName));
+      aliases.forEach(alias => {
+        const normalizedAlias = alias.toLowerCase().trim();
+        const existing = this.bookAliases.get(normalizedAlias);
+        if (existing) {
+          // Merge: alias maps to multiple books (e.g., '1c' -> both 1 Chronicles and 1 Corinthians)
+          if (!existing.includes(bookName)) {
+            this.bookAliases.set(normalizedAlias, [...existing, bookName]);
+          }
+        } else {
+          this.bookAliases.set(normalizedAlias, [bookName]);
+        }
+      });
     }
   }
 
@@ -308,15 +323,79 @@ class BibleRepositoryClass {
 
   // --- Public API (translation-aware) ---
 
-  resolveBookName(input: string): string | null {
+  /**
+   * Resolve a book name or abbreviation to matching full book names.
+   * Returns all matches (supports ambiguous aliases like '1c' -> ['1 Chronicles', '1 Corinthians']).
+   *
+   * Uses exact alias lookup first, then falls back to book-name matching
+   * (exact > starts-with > contains, with canonical order tie-breaker).
+   */
+  resolveBookName(input: string): string[] {
     const normalized = input.toLowerCase().trim();
-    return this.bookAliases.get(normalized) || null;
+
+    // Minimum length check for abbreviation matching
+    if (normalized.length < 2) {
+      return [];
+    }
+
+    // 1. Try exact alias lookup first
+    const aliasMatches = this.bookAliases.get(normalized);
+    if (aliasMatches && aliasMatches.length > 0) {
+      return aliasMatches;
+    }
+
+    // 2. Fallback: match against normalized book names
+    const booksMap = this.translations.get(this.currentTranslation);
+    if (!booksMap) {
+      return [];
+    }
+
+    const scored: { name: string; score: number }[] = [];
+
+    for (const book of booksMap.values()) {
+      const lowerBook = book.book.toLowerCase();
+
+      // Exact normalized book name match
+      if (lowerBook === normalized) {
+        scored.push({ name: book.book, score: 100 });
+        continue;
+      }
+
+      // Starts-with match
+      if (lowerBook.startsWith(normalized)) {
+        scored.push({ name: book.book, score: 90 });
+        continue;
+      }
+
+      // Contains match
+      if (lowerBook.includes(normalized)) {
+        scored.push({ name: book.book, score: 70 });
+      }
+    }
+
+    // Sort by score (desc), then canonical order (tie-breaker)
+    const canonicalOrder = this.bookNames;
+    scored.sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      const idxA = canonicalOrder.findIndex(n => n.toLowerCase() === a.name.toLowerCase());
+      const idxB = canonicalOrder.findIndex(n => n.toLowerCase() === b.name.toLowerCase());
+      return (idxA === -1 ? 999 : idxA) - (idxB === -1 ? 999 : idxB);
+    });
+
+    // Deduplicate by book name
+    const seen = new Set<string>();
+    return scored.filter(s => {
+      if (seen.has(s.name.toLowerCase())) return false;
+      seen.add(s.name.toLowerCase());
+      return true;
+    }).map(s => s.name);
   }
 
   getBook(bookName: string, translation?: string): BibleBook | null {
     const resolved = this.resolveBookName(bookName);
-    if (!resolved) return null;
-    return this.getBooksMap(translation).get(resolved.toLowerCase()) || null;
+    if (resolved.length === 0) return null;
+    // Use first match for backward compatibility (single book lookup)
+    return this.getBooksMap(translation).get(resolved[0].toLowerCase()) || null;
   }
 
   getVerse(bookName: string, chapter: string, verse: string, translation?: string): Verse | null {
@@ -512,22 +591,42 @@ class BibleRepositoryClass {
     return this.loadedTranslations.has(translation);
   }
 
-  searchByReference(query: string): Passage | null {
+  /**
+   * Search for passages by reference string (e.g., "John 3:16", "luk 2:10").
+   * Returns array of matching passages (supports ambiguous references like "1c 13:4").
+   * All results have score 100 (exact reference match).
+   */
+  searchByReference(query: string): import('./types').SearchResult[] {
     const pattern = /^(.+?)\s*(\d+)\s*:\s*(\d+)(?:\s*-\s*(\d+))?$/i;
     const match = query.match(pattern);
-    if (!match) return null;
+    if (!match) return [];
 
     const [, bookPart, chapter, verseStart, verseEnd] = match;
-    const bookName = this.resolveBookName(bookPart.trim());
-    if (!bookName) return null;
+    const bookNames = this.resolveBookName(bookPart.trim());
+    if (bookNames.length === 0) return [];
 
-    return this.getPassage({
-      book: bookName,
-      chapter,
-      verseStart,
-      verseEnd,
-      translation: this.currentTranslation,
-    });
+    const results: import('./types').SearchResult[] = [];
+
+    // Try to resolve passage for each matching book
+    for (const bookName of bookNames) {
+      const passage = this.getPassage({
+        book: bookName,
+        chapter,
+        verseStart,
+        verseEnd,
+        translation: this.currentTranslation,
+      });
+
+      if (passage) {
+        results.push({
+          passage,
+          score: 100,
+          matchType: 'exact',
+        });
+      }
+    }
+
+    return results;
   }
 
   searchByKeyword(query: string, limit: number = 20): Passage[] {

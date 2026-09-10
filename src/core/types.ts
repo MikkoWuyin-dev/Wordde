@@ -1,4 +1,4 @@
-// Bible Projection App - Core Type Definitions
+// Wordde - Core Type Definitions
 // Based on PRD and MCD specifications
 
 /**

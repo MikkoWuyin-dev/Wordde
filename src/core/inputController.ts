@@ -1,4 +1,4 @@
-// Bible Projection App - Input Controller
+// Wordde - Input Controller
 // Handles keyboard input and coordinates between UI, SearchEngine, and StateManager
 // Per MCD: Input mutates state only
 

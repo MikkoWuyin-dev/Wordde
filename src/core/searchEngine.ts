@@ -1,4 +1,4 @@
-// Bible Projection App - Search Engine
+// Wordde - Search Engine
 // Ranks and returns passages based on query
 // Per PRD: Pure ranking logic, read-only access to Bible data
 
@@ -35,15 +35,20 @@ class SearchEngineClass {
     const existingRefs = new Set<string>();
 
     // 1. Exact reference match (highest priority)
-    const exactMatch = BibleRepository.searchByReference(trimmedQuery);
-    if (exactMatch) {
-      results.push({ passage: exactMatch, score: 100, matchType: 'exact' });
-      existingRefs.add(exactMatch.displayReference);
+    const exactMatches = BibleRepository.searchByReference(trimmedQuery);
+    if (exactMatches.length > 0) {
+      exactMatches.forEach((result, index) => {
+        if (results.length < limit && !existingRefs.has(result.passage.displayReference)) {
+          results.push({ ...result, score: 100 - index * 0 }); // All exact matches score 100
+          existingRefs.add(result.passage.displayReference);
+        }
+      });
     }
 
-    // 2. Nearby verses for exact matches
-    if (exactMatch && results.length < limit) {
-      const nearbyPassages = this.getNearbyPassages(exactMatch, 2);
+    // 2. Nearby verses for exact matches (use first match if multiple)
+    if (exactMatches.length > 0 && results.length < limit) {
+      const firstMatch = exactMatches[0].passage;
+      const nearbyPassages = this.getNearbyPassages(firstMatch, 2);
       nearbyPassages.forEach((passage, index) => {
         if (results.length < limit && !existingRefs.has(passage.displayReference)) {
           results.push({ passage, score: 90 - index * 5, matchType: 'reference' });
