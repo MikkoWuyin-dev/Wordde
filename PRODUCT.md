@@ -46,8 +46,9 @@ Open / undecided:
 
 ## Brand Commitments
 
-- Product name: **Scripture Ray** (as in `index.html` title and meta tags).
+- Product name: **Wordde** (as in `index.html` title and meta tags).
 - Voice: simplicity-first, volunteer-respectful — copy in the UI explains in plain terms, never assumes technical vocabulary.
+- Brand direction: progressive rebrand from Scripture Ray to Wordde; user-facing copy should use "passage" rather than "verse" where contextually appropriate.
 
 ## Evidence on Hand
 
