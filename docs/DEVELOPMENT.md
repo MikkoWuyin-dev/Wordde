@@ -1219,23 +1219,3 @@ if (typeof window !== 'undefined' && window.localStorage) {
 
 **END OF DEVELOPMENT.md**
 ```
-
----
-
-## What to Do Now
-
-### Step 1: Create the file
-```bash
-cd docs
-touch DEVELOPMENT.md
-```
-
-### Step 2: Copy the content
-Copy everything from the markdown block above and paste into `docs/DEVELOPMENT.md`.
-
-### Step 3: Commit it
-```bash
-git add docs/DEVELOPMENT.md
-git commit -m "docs: Add comprehensive development guide for FreeBuff workflow"
-git push
-```

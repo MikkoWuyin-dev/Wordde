@@ -821,10 +821,3 @@ to:
 ```markdown
 **END OF CONSTRAINTS.md**
 ```
-
-### Step 3: Commit it
-```bash
-git add docs/CONSTRAINTS.md
-git commit -m "docs: Add constraints and invariants quick reference"
-git push
-```
