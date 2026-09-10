@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import packageJson from '../../../package.json';
 import { OnboardingManager, resetOnboarding } from '@/components/onboarding/OnboardingManager';
 import { ContextualHint } from '@/components/onboarding/ContextualHint';
 import { useInputController, useGlobalKeyboard } from '@/core/inputController';
@@ -309,6 +310,7 @@ export function OperatorScreen() {
               <kbd className="px-1 py-0.5 rounded bg-muted text-[10px] font-mono">Esc</kbd> Clear
             </span>
           </div>
+          <span className="text-[10px] text-muted-foreground/60 select-none pointer-events-none">v{packageJson.version}</span>
         </div>
       </footer>
     </div>
