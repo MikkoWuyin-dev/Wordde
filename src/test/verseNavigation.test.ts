@@ -24,13 +24,13 @@ function installFixture(translation: string, books: BibleBook[], setCurrent = tr
     translationMetadata: Map<string, unknown>;
     loadedTranslations: Set<string>;
     bookNames: string[];
-    bookAliases: Map<string, string>;
+    bookAliases: Map<string, string[]>;
     currentTranslation: string;
   };
   const map = new Map<string, BibleBook>();
   for (const b of books) {
     map.set(b.book.toLowerCase(), b);
-    repo.bookAliases.set(b.book.toLowerCase(), b.book);
+    repo.bookAliases.set(b.book.toLowerCase(), [b.book]);
   }
   repo.translations.set(translation, map);
   repo.loadedTranslations.add(translation);
@@ -43,7 +43,7 @@ function reset() {
     translations: Map<string, unknown>;
     loadedTranslations: Set<string>;
     bookNames: string[];
-    bookAliases: Map<string, string>;
+    bookAliases: Map<string, string[]>;
   };
   repo.translations.clear();
   repo.loadedTranslations.clear();
