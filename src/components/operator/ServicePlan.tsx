@@ -19,7 +19,6 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
-
 export interface ServicePlanItem {
   id: string;
   label: string;
@@ -104,8 +103,8 @@ export function ServicePlan() {
     if (rangeMatch) {
       const [, bookPart, chapter, verseStart, verseEnd] = rangeMatch;
       const bookName = BibleRepository.resolveBookName(bookPart.trim());
-      if (!bookName) return;
-      const passage = BibleRepository.getPassage({ book: bookName, chapter, verseStart, verseEnd, translation: currentTranslation });
+      if (!bookName || bookName.length === 0) return;
+      const passage = BibleRepository.getPassage({ book: bookName[0], chapter, verseStart, verseEnd, translation: currentTranslation });
       if (passage) buildQueueFromPassage(passage);
       return;
     }
@@ -114,10 +113,10 @@ export function ServicePlan() {
     if (chapterMatch) {
       const [, bookPart, chapter] = chapterMatch;
       const bookName = BibleRepository.resolveBookName(bookPart.trim());
-      if (!bookName) return;
-      buildQueueFromChapter(bookName, chapter);
+      if (!bookName || bookName.length === 0) return;
+      buildQueueFromChapter(bookName[0], chapter);
     }
-  }, [activeService, buildQueueFromPassage, buildQueueFromChapter]);
+  }, [activeService, buildQueueFromPassage, buildQueueFromChapter, currentTranslation]);
 
   const nextPassage = useCallback(() => {
     if (!activeService) return;
@@ -219,7 +218,7 @@ export function ServicePlan() {
 
   const isAtEnd = activeService && activePassageIndex !== null && activePassageIndex >= activeService.passages.length - 1;
 
-  // ======== SERVICE LIST VIEW ========
+  // ======== SERVICE LIST VIEW =======
   if (!activeServiceId) {
     return (
       <div>
@@ -298,16 +297,19 @@ export function ServicePlan() {
     );
   }
 
-  // ======== PASSAGE LIST VIEW (inside a service) ========
+  // ======== PASSAGE LIST VIEW (inside a service) =======
   return (
     <div>
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-border shrink-0">
         <div className="flex items-center gap-1.5 min-w-0">
-          <button onClick={() => { setActiveServiceId(null); setActivePassageIndex(null); }} className="p-0.5 rounded hover:bg-accent shrink-0">
+          <button
+            onClick={() => { setActiveServiceId(null); setActivePassageIndex(null); }}
+            className="flex items-center gap-1.5 px-1 py-1.5 hover:bg-accent/50 rounded cursor-pointer w-fit shrink-0"
+          >
             <ArrowLeft className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="text-xs font-medium text-foreground">{activeService?.name}</span>
           </button>
-          <span className="text-xs font-medium text-foreground truncate">{activeService?.name}</span>
         </div>
         <div className="flex items-center gap-1">
           <Button variant="ghost" size="sm" className="h-6 px-2 gap-1 text-[11px]" onClick={nextPassage} disabled={!activeService || activeService.passages.length === 0 || !!isAtEnd} title="Next Passage (Shift+Enter)">
