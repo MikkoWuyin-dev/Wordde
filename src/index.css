@@ -1,0 +1,121 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Bible Projection App Design System
+   Professional, distraction-free aesthetic for church environments
+   Dark operator interface, high contrast, keyboard-first focus
+*/
+
+@import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap');
+
+@layer base {
+  :root {
+    /* Core surfaces - Dark operator interface */
+    --background: 222 47% 11%;
+    --foreground: 210 40% 96%;
+    
+    /* Card/Panel surfaces */
+    --card: 222 47% 14%;
+    --card-foreground: 210 40% 96%;
+    
+    --popover: 222 47% 16%;
+    --popover-foreground: 210 40% 96%;
+    
+    /* Primary - Warm amber accent for focus/selection */
+    --primary: 38 92% 50%;
+    --primary-foreground: 222 47% 11%;
+    
+    /* Secondary - Slate blue for subtle accents */
+    --secondary: 215 25% 22%;
+    --secondary-foreground: 210 40% 90%;
+    
+    /* Muted - For inactive/background elements */
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 55%;
+    
+    /* Accent - Teal for success/confirmation */
+    --accent: 173 58% 39%;
+    --accent-foreground: 210 40% 98%;
+    
+    /* Destructive */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+    
+    /* Borders and inputs */
+    --border: 217 33% 25%;
+    --input: 217 33% 20%;
+    --ring: 38 92% 50%;
+    
+    --radius: 0.5rem;
+    
+    /* Scripture-specific colors */
+    --scripture-text: 210 40% 98%;
+    --scripture-reference: 38 92% 60%;
+    --preview-border: 173 58% 39%;
+    --committed-glow: 38 92% 50%;
+    
+    /* Projection screen - Maximum contrast */
+    --projection-bg: 0 0% 0%;
+    --projection-text: 0 0% 100%;
+    
+    /* Sidebar */
+    --sidebar-background: 222 47% 9%;
+    --sidebar-foreground: 210 40% 90%;
+    --sidebar-primary: 38 92% 50%;
+    --sidebar-primary-foreground: 222 47% 11%;
+    --sidebar-accent: 217 33% 17%;
+    --sidebar-accent-foreground: 210 40% 90%;
+    --sidebar-border: 217 33% 20%;
+    --sidebar-ring: 38 92% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+  
+  /* Scripture text styling */
+  .scripture-text {
+    font-family: 'Crimson Pro', Georgia, serif;
+    @apply text-scripture leading-relaxed tracking-wide;
+  }
+  
+  .scripture-reference {
+    @apply text-reference font-sans font-medium tracking-wider uppercase text-sm;
+  }
+  
+  /* Focus states for keyboard navigation */
+  .keyboard-focus:focus {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+  
+  /* Result item states */
+  .result-item {
+    @apply transition-all duration-150 ease-out;
+  }
+  
+  .result-item.selected {
+    @apply bg-secondary border-l-4 border-l-primary;
+  }
+  
+  .result-item:hover:not(.selected) {
+    @apply bg-muted/50;
+  }
+  
+  /* Preview panel styling */
+  .preview-panel {
+    @apply border-2 border-preview rounded-lg bg-card/50;
+  }
+  
+  /* Committed passage glow effect */
+  .committed-glow {
+    box-shadow: 0 0 30px hsl(var(--committed-glow) / 0.3);
+  }
+}

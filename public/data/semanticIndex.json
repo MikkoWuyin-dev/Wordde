@@ -1,0 +1,656 @@
+[
+  {
+    "label": "Creation of the World",
+    "synonyms": ["creation", "God created", "in the beginning", "six days of creation"],
+    "category": "event",
+    "passage": {"book": "Genesis", "chapter": "1", "verseStart": "1", "verseEnd": "31"}
+  },
+  {
+    "label": "The Fall of Man",
+    "synonyms": ["fall of man", "original sin", "Adam and Eve sin", "forbidden fruit"],
+    "category": "event",
+    "passage": {"book": "Genesis", "chapter": "3", "verseStart": "1", "verseEnd": "24"}
+  },
+  {
+    "label": "Cain and Abel",
+    "synonyms": ["Cain kills Abel", "Cain and Abel", "brother's keeper"],
+    "category": "event",
+    "passage": {"book": "Genesis", "chapter": "4", "verseStart": "1", "verseEnd": "16"}
+  },
+  {
+    "label": "Noah's Ark and the Flood",
+    "synonyms": ["Noah's flood", "the great flood", "Noah builds the ark", "deluge"],
+    "category": "event",
+    "passage": {"book": "Genesis", "chapter": "6", "verseStart": "13", "verseEnd": "22"}
+  },
+  {
+    "label": "Tower of Babel",
+    "synonyms": ["Babel", "confusion of languages", "tower of Babel"],
+    "category": "event",
+    "passage": {"book": "Genesis", "chapter": "11", "verseStart": "1", "verseEnd": "9"}
+  },
+  {
+    "label": "Call of Abram",
+    "synonyms": ["God calls Abram", "Abram's calling", "call of Abraham"],
+    "category": "event",
+    "passage": {"book": "Genesis", "chapter": "12", "verseStart": "1", "verseEnd": "9"}
+  },
+  {
+    "label": "Covenant with Abraham",
+    "synonyms": ["Abrahamic covenant", "God's covenant with Abraham", "promise to Abraham"],
+    "category": "event",
+    "passage": {"book": "Genesis", "chapter": "15", "verseStart": "1", "verseEnd": "21"}
+  },
+  {
+    "label": "Binding of Isaac",
+    "synonyms": ["sacrifice of Isaac", "Abraham offers Isaac", "Mount Moriah sacrifice", "the Akedah"],
+    "category": "event",
+    "passage": {"book": "Genesis", "chapter": "22", "verseStart": "1", "verseEnd": "19"}
+  },
+  {
+    "label": "Jacob's Ladder",
+    "synonyms": ["Jacob's dream", "stairway to heaven", "Bethel dream"],
+    "category": "event",
+    "passage": {"book": "Genesis", "chapter": "28", "verseStart": "10", "verseEnd": "22"}
+  },
+  {
+    "label": "Jacob Wrestles with God",
+    "synonyms": ["wrestling with the angel", "Jacob at Peniel", "Jacob becomes Israel"],
+    "category": "event",
+    "passage": {"book": "Genesis", "chapter": "32", "verseStart": "24", "verseEnd": "32"}
+  },
+  {
+    "label": "Joseph Sold into Slavery",
+    "synonyms": ["Joseph sold by brothers", "Joseph and his brothers", "coat of many colors"],
+    "category": "event",
+    "passage": {"book": "Genesis", "chapter": "37", "verseStart": "18", "verseEnd": "36"}
+  },
+  {
+    "label": "The Burning Bush",
+    "synonyms": ["burning bush", "Moses and the burning bush", "God speaks from the bush"],
+    "category": "event",
+    "passage": {"book": "Exodus", "chapter": "3", "verseStart": "1", "verseEnd": "15"}
+  },
+  {
+    "label": "The Ten Plagues of Egypt",
+    "synonyms": ["plagues of Egypt", "ten plagues", "God judges Egypt"],
+    "category": "event",
+    "passage": {"book": "Exodus", "chapter": "7", "verseStart": "14", "verseEnd": "25"}
+  },
+  {
+    "label": "The Passover",
+    "synonyms": ["passover", "first Passover", "lamb's blood on doorpost", "Passover night"],
+    "category": "event",
+    "passage": {"book": "Exodus", "chapter": "12", "verseStart": "1", "verseEnd": "14"}
+  },
+  {
+    "label": "Crossing the Red Sea",
+    "synonyms": ["parting of the Red Sea", "Red Sea crossing", "exodus from Egypt", "Israel crosses the sea"],
+    "category": "event",
+    "passage": {"book": "Exodus", "chapter": "14", "verseStart": "21", "verseEnd": "31"}
+  },
+  {
+    "label": "The Ten Commandments",
+    "synonyms": ["ten commandments", "law at Sinai", "God gives the law", "tablets of stone"],
+    "category": "event",
+    "passage": {"book": "Exodus", "chapter": "20", "verseStart": "1", "verseEnd": "17"}
+  },
+  {
+    "label": "The Golden Calf",
+    "synonyms": ["golden calf", "Israel worships idol", "Aaron makes the calf"],
+    "category": "event",
+    "passage": {"book": "Exodus", "chapter": "32", "verseStart": "1", "verseEnd": "20"}
+  },
+  {
+    "label": "The Twelve Spies",
+    "synonyms": ["spies sent to Canaan", "twelve spies", "Caleb and Joshua report"],
+    "category": "event",
+    "passage": {"book": "Numbers", "chapter": "13", "verseStart": "1", "verseEnd": "33"}
+  },
+  {
+    "label": "Fall of Jericho",
+    "synonyms": ["walls of Jericho", "battle of Jericho", "Jericho falls", "marching around Jericho"],
+    "category": "event",
+    "passage": {"book": "Joshua", "chapter": "6", "verseStart": "1", "verseEnd": "27"}
+  },
+  {
+    "label": "Gideon's Three Hundred",
+    "synonyms": ["Gideon defeats Midian", "Gideon's army", "three hundred men"],
+    "category": "event",
+    "passage": {"book": "Judges", "chapter": "7", "verseStart": "1", "verseEnd": "25"}
+  },
+  {
+    "label": "Samson and Delilah",
+    "synonyms": ["Samson betrayed", "Delilah cuts Samson's hair", "Samson's strength"],
+    "category": "event",
+    "passage": {"book": "Judges", "chapter": "16", "verseStart": "4", "verseEnd": "31"}
+  },
+  {
+    "label": "David and Goliath",
+    "synonyms": ["David defeats Goliath", "David slays Goliath", "the giant Goliath"],
+    "category": "event",
+    "passage": {"book": "1 Samuel", "chapter": "17", "verseStart": "1", "verseEnd": "54"}
+  },
+  {
+    "label": "David Anointed King",
+    "synonyms": ["Samuel anoints David", "David chosen as king", "anointing of David"],
+    "category": "event",
+    "passage": {"book": "1 Samuel", "chapter": "16", "verseStart": "1", "verseEnd": "13"}
+  },
+  {
+    "label": "Solomon's Wisdom",
+    "synonyms": ["Solomon asks for wisdom", "God gives Solomon wisdom", "wise king Solomon"],
+    "category": "event",
+    "passage": {"book": "1 Kings", "chapter": "3", "verseStart": "5", "verseEnd": "14"}
+  },
+  {
+    "label": "Elijah on Mount Carmel",
+    "synonyms": ["Elijah vs prophets of Baal", "fire from heaven", "Elijah's sacrifice"],
+    "category": "event",
+    "passage": {"book": "1 Kings", "chapter": "18", "verseStart": "20", "verseEnd": "40"}
+  },
+  {
+    "label": "Elijah's Still Small Voice",
+    "synonyms": ["still small voice", "God whispers to Elijah", "Elijah at Horeb"],
+    "category": "event",
+    "passage": {"book": "1 Kings", "chapter": "19", "verseStart": "9", "verseEnd": "18"}
+  },
+  {
+    "label": "Elijah Taken to Heaven",
+    "synonyms": ["Elijah's chariot of fire", "Elijah ascends", "whirlwind to heaven"],
+    "category": "event",
+    "passage": {"book": "2 Kings", "chapter": "2", "verseStart": "1", "verseEnd": "14"}
+  },
+  {
+    "label": "Daniel in the Lion's Den",
+    "synonyms": ["Daniel and the lions", "lion's den", "God saves Daniel"],
+    "category": "event",
+    "passage": {"book": "Daniel", "chapter": "6", "verseStart": "1", "verseEnd": "28"}
+  },
+  {
+    "label": "Shadrach Meshach Abednego",
+    "synonyms": ["fiery furnace", "three Hebrew boys", "furnace of fire", "Nebuchadnezzar's furnace"],
+    "category": "event",
+    "passage": {"book": "Daniel", "chapter": "3", "verseStart": "1", "verseEnd": "30"}
+  },
+  {
+    "label": "Jonah and the Whale",
+    "synonyms": ["Jonah swallowed by fish", "Jonah runs from God", "great fish"],
+    "category": "event",
+    "passage": {"book": "Jonah", "chapter": "1", "verseStart": "1", "verseEnd": "17"}
+  },
+  {
+    "label": "The Nativity of Jesus",
+    "synonyms": ["birth of Jesus", "Christmas story", "Jesus born in Bethlehem", "nativity"],
+    "category": "event",
+    "passage": {"book": "Luke", "chapter": "2", "verseStart": "1", "verseEnd": "20"}
+  },
+  {
+    "label": "Baptism of Jesus",
+    "synonyms": ["Jesus baptized", "John baptizes Jesus", "dove descends"],
+    "category": "event",
+    "passage": {"book": "Matthew", "chapter": "3", "verseStart": "13", "verseEnd": "17"}
+  },
+  {
+    "label": "Temptation of Jesus",
+    "synonyms": ["Jesus tempted by Satan", "wilderness temptation", "forty days in the desert"],
+    "category": "event",
+    "passage": {"book": "Matthew", "chapter": "4", "verseStart": "1", "verseEnd": "11"}
+  },
+  {
+    "label": "Sermon on the Mount",
+    "synonyms": ["sermon on the mount", "beatitudes", "blessed are the poor in spirit"],
+    "category": "event",
+    "passage": {"book": "Matthew", "chapter": "5", "verseStart": "1", "verseEnd": "12"}
+  },
+  {
+    "label": "The Lord's Prayer",
+    "synonyms": ["Lord's prayer", "our Father", "teach us to pray", "model prayer"],
+    "category": "event",
+    "passage": {"book": "Matthew", "chapter": "6", "verseStart": "9", "verseEnd": "13"}
+  },
+  {
+    "label": "Feeding the Five Thousand",
+    "synonyms": ["five loaves and two fishes", "Jesus feeds 5000", "multiplication of loaves"],
+    "category": "event",
+    "passage": {"book": "John", "chapter": "6", "verseStart": "1", "verseEnd": "14"}
+  },
+  {
+    "label": "Jesus Walks on Water",
+    "synonyms": ["walking on water", "Peter walks on water", "Jesus on the sea"],
+    "category": "event",
+    "passage": {"book": "Matthew", "chapter": "14", "verseStart": "22", "verseEnd": "33"}
+  },
+  {
+    "label": "Transfiguration",
+    "synonyms": ["transfiguration of Jesus", "mount of transfiguration", "Jesus shining face"],
+    "category": "event",
+    "passage": {"book": "Matthew", "chapter": "17", "verseStart": "1", "verseEnd": "9"}
+  },
+  {
+    "label": "Raising of Lazarus",
+    "synonyms": ["Lazarus raised from the dead", "Jesus raises Lazarus", "Lazarus come forth"],
+    "category": "event",
+    "passage": {"book": "John", "chapter": "11", "verseStart": "1", "verseEnd": "44"}
+  },
+  {
+    "label": "Triumphal Entry",
+    "synonyms": ["palm Sunday", "Jesus enters Jerusalem", "triumphal entry", "hosanna"],
+    "category": "event",
+    "passage": {"book": "Matthew", "chapter": "21", "verseStart": "1", "verseEnd": "11"}
+  },
+  {
+    "label": "The Last Supper",
+    "synonyms": ["last supper", "communion instituted", "Lord's supper", "bread and wine"],
+    "category": "event",
+    "passage": {"book": "Matthew", "chapter": "26", "verseStart": "17", "verseEnd": "30"}
+  },
+  {
+    "label": "Garden of Gethsemane",
+    "synonyms": ["Gethsemane", "Jesus prays in the garden", "not my will but thine"],
+    "category": "event",
+    "passage": {"book": "Matthew", "chapter": "26", "verseStart": "36", "verseEnd": "46"}
+  },
+  {
+    "label": "The Crucifixion",
+    "synonyms": ["crucifixion", "Jesus crucified", "Christ on the cross", "Calvary", "Golgotha"],
+    "category": "event",
+    "passage": {"book": "John", "chapter": "19", "verseStart": "17", "verseEnd": "30"}
+  },
+  {
+    "label": "The Resurrection",
+    "synonyms": ["resurrection", "Jesus rises from the dead", "empty tomb", "He is risen"],
+    "category": "event",
+    "passage": {"book": "Matthew", "chapter": "28", "verseStart": "1", "verseEnd": "10"}
+  },
+  {
+    "label": "The Ascension",
+    "synonyms": ["Jesus ascends to heaven", "ascension of Christ", "taken up into heaven"],
+    "category": "event",
+    "passage": {"book": "Acts", "chapter": "1", "verseStart": "6", "verseEnd": "11"}
+  },
+  {
+    "label": "Day of Pentecost",
+    "synonyms": ["Pentecost", "Holy Spirit comes", "tongues of fire", "upper room"],
+    "category": "event",
+    "passage": {"book": "Acts", "chapter": "2", "verseStart": "1", "verseEnd": "13"}
+  },
+  {
+    "label": "Conversion of Saul",
+    "synonyms": ["Paul's conversion", "road to Damascus", "Saul becomes Paul", "Damascus road"],
+    "category": "event",
+    "passage": {"book": "Acts", "chapter": "9", "verseStart": "1", "verseEnd": "22"}
+  },
+  {
+    "label": "Paul and Silas in Prison",
+    "synonyms": ["Philippian jail", "earthquake frees Paul", "singing in prison"],
+    "category": "event",
+    "passage": {"book": "Acts", "chapter": "16", "verseStart": "16", "verseEnd": "34"}
+  },
+  {
+    "label": "The Good Samaritan",
+    "synonyms": ["good Samaritan", "parable of the good Samaritan", "who is my neighbor"],
+    "category": "event",
+    "passage": {"book": "Luke", "chapter": "10", "verseStart": "25", "verseEnd": "37"}
+  },
+  {
+    "label": "The Prodigal Son",
+    "synonyms": ["prodigal son", "lost son", "parable of the prodigal", "father's forgiveness"],
+    "category": "event",
+    "passage": {"book": "Luke", "chapter": "15", "verseStart": "11", "verseEnd": "32"}
+  },
+  {
+    "label": "Parable of the Sower",
+    "synonyms": ["sower and the seed", "parable of the sower", "four types of soil"],
+    "category": "event",
+    "passage": {"book": "Matthew", "chapter": "13", "verseStart": "1", "verseEnd": "23"}
+  },
+  {
+    "label": "Parable of the Talents",
+    "synonyms": ["parable of the talents", "faithful servant", "well done good and faithful"],
+    "category": "event",
+    "passage": {"book": "Matthew", "chapter": "25", "verseStart": "14", "verseEnd": "30"}
+  },
+  {
+    "label": "The Lost Sheep",
+    "synonyms": ["parable of the lost sheep", "ninety nine sheep", "leaving the ninety nine"],
+    "category": "event",
+    "passage": {"book": "Luke", "chapter": "15", "verseStart": "1", "verseEnd": "7"}
+  },
+  {
+    "label": "The Great Commission",
+    "synonyms": ["great commission", "go and make disciples", "go ye into all the world"],
+    "category": "event",
+    "passage": {"book": "Matthew", "chapter": "28", "verseStart": "18", "verseEnd": "20"}
+  },
+  {
+    "label": "Armor of God",
+    "synonyms": ["whole armor of God", "spiritual armor", "put on the armor", "shield of faith"],
+    "category": "event",
+    "passage": {"book": "Ephesians", "chapter": "6", "verseStart": "10", "verseEnd": "18"}
+  },
+  {
+    "label": "Love Chapter",
+    "synonyms": ["love is patient", "charity chapter", "1 Corinthians 13", "greatest is love"],
+    "category": "event",
+    "passage": {"book": "1 Corinthians", "chapter": "13", "verseStart": "1", "verseEnd": "13"}
+  },
+  {
+    "label": "Fruit of the Spirit",
+    "synonyms": ["fruit of the Spirit", "love joy peace", "fruits of the Spirit"],
+    "category": "event",
+    "passage": {"book": "Galatians", "chapter": "5", "verseStart": "22", "verseEnd": "23"}
+  },
+  {
+    "label": "Faith Chapter",
+    "synonyms": ["hall of faith", "faith is the substance", "Hebrews 11", "heroes of faith"],
+    "category": "event",
+    "passage": {"book": "Hebrews", "chapter": "11", "verseStart": "1", "verseEnd": "40"}
+  },
+  {
+    "label": "New Heaven and New Earth",
+    "synonyms": ["new Jerusalem", "new heaven new earth", "no more tears", "all things new"],
+    "category": "event",
+    "passage": {"book": "Revelation", "chapter": "21", "verseStart": "1", "verseEnd": "7"}
+  },
+  {
+    "label": "Valley of Dry Bones",
+    "synonyms": ["dry bones", "Ezekiel's vision", "can these bones live"],
+    "category": "event",
+    "passage": {"book": "Ezekiel", "chapter": "37", "verseStart": "1", "verseEnd": "14"}
+  },
+  {
+    "label": "Jesus Heals the Blind Man",
+    "synonyms": ["blind Bartimaeus", "Jesus heals blind", "I was blind now I see"],
+    "category": "event",
+    "passage": {"book": "John", "chapter": "9", "verseStart": "1", "verseEnd": "12"}
+  },
+  {
+    "label": "Woman at the Well",
+    "synonyms": ["Samaritan woman", "woman at the well", "living water"],
+    "category": "event",
+    "passage": {"book": "John", "chapter": "4", "verseStart": "1", "verseEnd": "26"}
+  },
+  {
+    "label": "Jesus Calms the Storm",
+    "synonyms": ["peace be still", "calming the storm", "Jesus rebukes the wind"],
+    "category": "event",
+    "passage": {"book": "Mark", "chapter": "4", "verseStart": "35", "verseEnd": "41"}
+  },
+  {
+    "label": "Adam",
+    "synonyms": ["Adam", "first man"],
+    "category": "person",
+    "passage": {"book": "Genesis", "chapter": "2", "verseStart": "7", "verseEnd": "7"}
+  },
+  {
+    "label": "Eve",
+    "synonyms": ["Eve", "first woman", "mother of all living"],
+    "category": "person",
+    "passage": {"book": "Genesis", "chapter": "3", "verseStart": "20", "verseEnd": "20"}
+  },
+  {
+    "label": "Noah",
+    "synonyms": ["Noah", "builder of the ark"],
+    "category": "person",
+    "passage": {"book": "Genesis", "chapter": "6", "verseStart": "8", "verseEnd": "9"}
+  },
+  {
+    "label": "Abraham",
+    "synonyms": ["Abraham", "Abram", "father of faith", "father of many nations"],
+    "category": "person",
+    "passage": {"book": "Genesis", "chapter": "12", "verseStart": "1", "verseEnd": "3"}
+  },
+  {
+    "label": "Moses",
+    "synonyms": ["Moses", "lawgiver", "leader of exodus"],
+    "category": "person",
+    "passage": {"book": "Exodus", "chapter": "3", "verseStart": "1", "verseEnd": "10"}
+  },
+  {
+    "label": "Joshua",
+    "synonyms": ["Joshua", "Joshua son of Nun", "Moses' successor"],
+    "category": "person",
+    "passage": {"book": "Joshua", "chapter": "1", "verseStart": "1", "verseEnd": "9"}
+  },
+  {
+    "label": "Ruth",
+    "synonyms": ["Ruth", "Ruth the Moabitess", "whither thou goest"],
+    "category": "person",
+    "passage": {"book": "Ruth", "chapter": "1", "verseStart": "16", "verseEnd": "17"}
+  },
+  {
+    "label": "David",
+    "synonyms": ["David", "King David", "man after God's own heart", "shepherd king"],
+    "category": "person",
+    "passage": {"book": "1 Samuel", "chapter": "16", "verseStart": "7", "verseEnd": "13"}
+  },
+  {
+    "label": "Solomon",
+    "synonyms": ["Solomon", "King Solomon", "wisest man"],
+    "category": "person",
+    "passage": {"book": "1 Kings", "chapter": "3", "verseStart": "5", "verseEnd": "12"}
+  },
+  {
+    "label": "Elijah",
+    "synonyms": ["Elijah", "Elias", "prophet of fire"],
+    "category": "person",
+    "passage": {"book": "1 Kings", "chapter": "17", "verseStart": "1", "verseEnd": "1"}
+  },
+  {
+    "label": "Elisha",
+    "synonyms": ["Elisha", "Elijah's successor", "double portion"],
+    "category": "person",
+    "passage": {"book": "2 Kings", "chapter": "2", "verseStart": "9", "verseEnd": "14"}
+  },
+  {
+    "label": "Isaiah",
+    "synonyms": ["Isaiah", "prophet Isaiah"],
+    "category": "person",
+    "passage": {"book": "Isaiah", "chapter": "6", "verseStart": "1", "verseEnd": "8"}
+  },
+  {
+    "label": "Jeremiah",
+    "synonyms": ["Jeremiah", "weeping prophet"],
+    "category": "person",
+    "passage": {"book": "Jeremiah", "chapter": "1", "verseStart": "4", "verseEnd": "10"}
+  },
+  {
+    "label": "Daniel",
+    "synonyms": ["Daniel", "prophet Daniel"],
+    "category": "person",
+    "passage": {"book": "Daniel", "chapter": "1", "verseStart": "8", "verseEnd": "8"}
+  },
+  {
+    "label": "Jonah",
+    "synonyms": ["Jonah", "reluctant prophet"],
+    "category": "person",
+    "passage": {"book": "Jonah", "chapter": "1", "verseStart": "1", "verseEnd": "3"}
+  },
+  {
+    "label": "Mary Mother of Jesus",
+    "synonyms": ["Mary", "virgin Mary", "mother of Jesus"],
+    "category": "person",
+    "passage": {"book": "Luke", "chapter": "1", "verseStart": "26", "verseEnd": "38"}
+  },
+  {
+    "label": "John the Baptist",
+    "synonyms": ["John the Baptist", "baptizer", "voice in the wilderness"],
+    "category": "person",
+    "passage": {"book": "Matthew", "chapter": "3", "verseStart": "1", "verseEnd": "6"}
+  },
+  {
+    "label": "Jesus Christ",
+    "synonyms": ["Jesus", "Christ", "Son of God", "Messiah", "Savior", "Lamb of God"],
+    "category": "person",
+    "passage": {"book": "John", "chapter": "1", "verseStart": "1", "verseEnd": "14"}
+  },
+  {
+    "label": "Peter",
+    "synonyms": ["Peter", "Simon Peter", "Cephas", "the rock"],
+    "category": "person",
+    "passage": {"book": "Matthew", "chapter": "16", "verseStart": "13", "verseEnd": "19"}
+  },
+  {
+    "label": "Paul the Apostle",
+    "synonyms": ["Paul", "Apostle Paul", "Saul of Tarsus"],
+    "category": "person",
+    "passage": {"book": "Acts", "chapter": "9", "verseStart": "1", "verseEnd": "6"}
+  },
+  {
+    "label": "Joseph Son of Jacob",
+    "synonyms": ["Joseph", "Joseph the dreamer", "Joseph in Egypt"],
+    "category": "person",
+    "passage": {"book": "Genesis", "chapter": "37", "verseStart": "2", "verseEnd": "11"}
+  },
+  {
+    "label": "Gideon",
+    "synonyms": ["Gideon", "judge Gideon", "mighty man of valor"],
+    "category": "person",
+    "passage": {"book": "Judges", "chapter": "6", "verseStart": "11", "verseEnd": "16"}
+  },
+  {
+    "label": "Samson",
+    "synonyms": ["Samson", "strong man", "Nazarite judge"],
+    "category": "person",
+    "passage": {"book": "Judges", "chapter": "13", "verseStart": "24", "verseEnd": "25"}
+  },
+  {
+    "label": "Esther",
+    "synonyms": ["Esther", "Queen Esther", "for such a time as this"],
+    "category": "person",
+    "passage": {"book": "Esther", "chapter": "4", "verseStart": "14", "verseEnd": "16"}
+  },
+  {
+    "label": "Nehemiah",
+    "synonyms": ["Nehemiah", "rebuilder of walls"],
+    "category": "person",
+    "passage": {"book": "Nehemiah", "chapter": "2", "verseStart": "17", "verseEnd": "18"}
+  },
+  {
+    "label": "Garden of Eden",
+    "synonyms": ["Eden", "garden of Eden", "paradise"],
+    "category": "place",
+    "passage": {"book": "Genesis", "chapter": "2", "verseStart": "8", "verseEnd": "15"}
+  },
+  {
+    "label": "Mount Sinai",
+    "synonyms": ["Sinai", "Mount Sinai", "Horeb", "mountain of God"],
+    "category": "place",
+    "passage": {"book": "Exodus", "chapter": "19", "verseStart": "16", "verseEnd": "20"}
+  },
+  {
+    "label": "Promised Land",
+    "synonyms": ["Canaan", "promised land", "land of milk and honey"],
+    "category": "place",
+    "passage": {"book": "Deuteronomy", "chapter": "8", "verseStart": "7", "verseEnd": "10"}
+  },
+  {
+    "label": "Bethlehem",
+    "synonyms": ["Bethlehem", "city of David", "birthplace of Jesus"],
+    "category": "place",
+    "passage": {"book": "Micah", "chapter": "5", "verseStart": "2", "verseEnd": "2"}
+  },
+  {
+    "label": "Jerusalem",
+    "synonyms": ["Jerusalem", "holy city", "Zion", "city of peace"],
+    "category": "place",
+    "passage": {"book": "Psalms", "chapter": "122", "verseStart": "1", "verseEnd": "9"}
+  },
+  {
+    "label": "Nazareth",
+    "synonyms": ["Nazareth", "Jesus' hometown"],
+    "category": "place",
+    "passage": {"book": "Luke", "chapter": "4", "verseStart": "16", "verseEnd": "21"}
+  },
+  {
+    "label": "Sea of Galilee",
+    "synonyms": ["Galilee", "Sea of Galilee", "sea of Tiberias"],
+    "category": "place",
+    "passage": {"book": "Matthew", "chapter": "4", "verseStart": "18", "verseEnd": "22"}
+  },
+  {
+    "label": "Mount of Olives",
+    "synonyms": ["Mount of Olives", "Olivet"],
+    "category": "place",
+    "passage": {"book": "Acts", "chapter": "1", "verseStart": "9", "verseEnd": "12"}
+  },
+  {
+    "label": "Calvary",
+    "synonyms": ["Calvary", "Golgotha", "place of the skull", "the cross"],
+    "category": "place",
+    "passage": {"book": "Luke", "chapter": "23", "verseStart": "33", "verseEnd": "33"}
+  },
+  {
+    "label": "Egypt",
+    "synonyms": ["Egypt", "land of Egypt", "Pharaoh's land"],
+    "category": "place",
+    "passage": {"book": "Exodus", "chapter": "1", "verseStart": "1", "verseEnd": "14"}
+  },
+  {
+    "label": "Babylon",
+    "synonyms": ["Babylon", "Babylonian exile", "captivity in Babylon"],
+    "category": "place",
+    "passage": {"book": "Daniel", "chapter": "1", "verseStart": "1", "verseEnd": "7"}
+  },
+  {
+    "label": "Jordan River",
+    "synonyms": ["Jordan", "river Jordan", "crossing the Jordan"],
+    "category": "place",
+    "passage": {"book": "Joshua", "chapter": "3", "verseStart": "14", "verseEnd": "17"}
+  },
+  {
+    "label": "Shepherd Psalm",
+    "synonyms": ["Psalm 23", "the Lord is my shepherd", "shepherd psalm", "green pastures"],
+    "category": "event",
+    "passage": {"book": "Psalms", "chapter": "23", "verseStart": "1", "verseEnd": "6"}
+  },
+  {
+    "label": "Isaiah 53 Suffering Servant",
+    "synonyms": ["suffering servant", "Isaiah 53", "man of sorrows", "wounded for our transgressions"],
+    "category": "event",
+    "passage": {"book": "Isaiah", "chapter": "53", "verseStart": "1", "verseEnd": "12"}
+  },
+  {
+    "label": "Romans Road to Salvation",
+    "synonyms": ["Romans road", "all have sinned", "wages of sin", "salvation through Christ"],
+    "category": "event",
+    "passage": {"book": "Romans", "chapter": "3", "verseStart": "23", "verseEnd": "24"}
+  },
+  {
+    "label": "John 3:16",
+    "synonyms": ["for God so loved the world", "John 3:16", "God's love for the world"],
+    "category": "event",
+    "passage": {"book": "John", "chapter": "3", "verseStart": "16", "verseEnd": "17"}
+  },
+  {
+    "label": "The Good Shepherd",
+    "synonyms": ["good shepherd", "I am the good shepherd", "lays down his life for the sheep"],
+    "category": "event",
+    "passage": {"book": "John", "chapter": "10", "verseStart": "11", "verseEnd": "18"}
+  },
+  {
+    "label": "The Vine and the Branches",
+    "synonyms": ["vine and branches", "I am the vine", "abide in me"],
+    "category": "event",
+    "passage": {"book": "John", "chapter": "15", "verseStart": "1", "verseEnd": "8"}
+  },
+  {
+    "label": "Philippians 4:13",
+    "synonyms": ["I can do all things", "strength through Christ", "all things through Christ"],
+    "category": "event",
+    "passage": {"book": "Philippians", "chapter": "4", "verseStart": "13", "verseEnd": "13"}
+  },
+  {
+    "label": "Jeremiah 29:11",
+    "synonyms": ["plans to prosper you", "I know the plans", "hope and a future"],
+    "category": "event",
+    "passage": {"book": "Jeremiah", "chapter": "29", "verseStart": "11", "verseEnd": "11"}
+  },
+  {
+    "label": "Proverbs 3:5-6",
+    "synonyms": ["trust in the Lord", "lean not on your own understanding", "acknowledge Him"],
+    "category": "event",
+    "passage": {"book": "Proverbs", "chapter": "3", "verseStart": "5", "verseEnd": "6"}
+  }
+]
