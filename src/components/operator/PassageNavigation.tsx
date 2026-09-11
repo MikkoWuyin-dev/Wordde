@@ -20,7 +20,7 @@ export function PassageNavigation() {
         size="sm"
         onClick={goToPreviousChapter}
         title="Previous chapter"
-        className="text-muted-foreground hover:text-foreground"
+        className="hidden xl:inline-flex text-muted-foreground hover:text-foreground"
       >
         <ChevronsLeft className="h-4 w-4" />
       </Button>
@@ -33,7 +33,7 @@ export function PassageNavigation() {
       >
         <ChevronLeft className="h-4 w-4" />
       </Button>
-      <span className="px-2 text-sm font-medium tracking-tight text-snow-soft min-w-[140px] text-center">
+      <span className="px-2 text-sm font-medium tracking-tight text-snow-soft min-w-[84px] sm:min-w-[140px] max-w-[200px] truncate text-center">
         {committedPassage.displayReference}
       </span>
       <Button
@@ -50,7 +50,7 @@ export function PassageNavigation() {
         size="sm"
         onClick={goToNextChapter}
         title="Next chapter"
-        className="text-muted-foreground hover:text-foreground"
+        className="hidden xl:inline-flex text-muted-foreground hover:text-foreground"
       >
         <ChevronsRight className="h-4 w-4" />
       </Button>
