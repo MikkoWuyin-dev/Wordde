@@ -204,18 +204,12 @@ export function PresenterPanel() {
 
   return (
     <div className="h-full flex flex-col">
-      {/* Header bar */}
+      {/* Header bar — identity left; state + transport grouped on one scan line */}
       <div className="flex items-center justify-between px-4 py-2 border-b border-border shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <div className="p-1 rounded bg-paprika/20">
-              <Monitor className="h-3.5 w-3.5 text-paprika-bright" />
-            </div>
-            <span className="text-xs font-medium text-muted-foreground">Presenter</span>
-          </div>
+        <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/70">Presenter</span>
+        <div className="flex items-center gap-[9px]">
           <ProjectionStatus />
-        </div>
-        <div className="flex items-center gap-2">
+          <span aria-hidden className="w-px h-4 bg-border" />
           <Button
             variant="outline"
             size="sm"
@@ -227,18 +221,13 @@ export function PresenterPanel() {
             {projectionLocked ? 'Unlock' : 'Lock'}
           </Button>
           {projectionLocked && (
-            <Button
-              variant="default"
-              size="sm"
-              className="h-6 px-2 text-xs gap-1"
-              onClick={projectNow}
-              title="Project now (P)"
-            >
+            <Button variant="default" size="sm" className="h-6 px-2 text-xs gap-1" onClick={projectNow} title="Project now (P)">
               <Send className="h-3 w-3" />
               Project Now
             </Button>
           )}
-          <div className="flex items-center gap-1" data-tutorial="jump">
+          <span aria-hidden className="w-px h-4 bg-border" />
+          <div className="flex items-center gap-1.5" data-tutorial="jump">
             <Input
               type="text"
               inputMode="numeric"
@@ -251,10 +240,10 @@ export function PresenterPanel() {
               title="Jump to passage"
             />
             {jumpError && <span className="text-[10px] text-destructive whitespace-nowrap">{jumpError}</span>}
+            <span className="text-xs text-muted-foreground tabular-nums">
+              {currentSlideIndex + 1} / {projectionQueue.length}
+            </span>
           </div>
-          <span className="text-xs text-muted-foreground">
-            {currentSlideIndex + 1} / {projectionQueue.length}
-          </span>
         </div>
       </div>
 
