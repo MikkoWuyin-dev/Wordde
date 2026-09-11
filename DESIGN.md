@@ -25,42 +25,56 @@ colors:
   border: "hsl(240 7% 16%)"
 typography:
   display:
-    fontFamily: "Crimson Pro, Georgia, serif"
+    fontFamily: "Playfair Display, Georgia, serif"
     fontSize: "auto-fit 16–72px"
     fontWeight: 400
     lineHeight: 1.5
     letterSpacing: "0.01em"
   headline:
-    fontFamily: "Inter, system-ui, sans-serif"
+    fontFamily: "Poppins, system-ui, sans-serif"
     fontSize: "1.25rem"
     fontWeight: 600
     lineHeight: 1.3
     letterSpacing: "-0.02em"
   title:
-    fontFamily: "Inter, system-ui, sans-serif"
+    fontFamily: "Poppins, system-ui, sans-serif"
     fontSize: "0.875rem"
     fontWeight: 600
     lineHeight: 1.4
     letterSpacing: "-0.01em"
   body:
-    fontFamily: "Inter, system-ui, sans-serif"
+    fontFamily: "Poppins, system-ui, sans-serif"
     fontSize: "0.875rem"
     fontWeight: 400
     lineHeight: 1.55
     letterSpacing: "normal"
   label:
-    fontFamily: "Inter, system-ui, sans-serif"
+    fontFamily: "Poppins, system-ui, sans-serif"
     fontSize: "0.6875rem"
     fontWeight: 600
     lineHeight: 1.4
     letterSpacing: "0.05em"
     fontFeature: "uppercase by convention"
   scripture-reference:
-    fontFamily: "Inter, system-ui, sans-serif"
+    fontFamily: "Poppins, system-ui, sans-serif"
     fontSize: "0.8rem"
     fontWeight: 500
     lineHeight: 1.4
     letterSpacing: "0.08em"
+  wordmark:
+    fontFamily: "Autography, cursive"
+    fontSize: "1.125rem"
+    fontWeight: 400
+    lineHeight: 1
+    letterSpacing: "normal"
+    fontFeature: "header wordmark only"
+  mono:
+    fontFamily: "ui-monospace, SF Mono, Menlo, Consolas, monospace"
+    fontSize: "0.7rem"
+    fontWeight: 400
+    lineHeight: 1.4
+    letterSpacing: "normal"
+    fontFeature: "kbd caps and numeric indices only"
 rounded:
   sm: "0.625rem"
   md: "0.75rem"
@@ -143,7 +157,7 @@ Density is console-grade: compact rows (28–32px controls), tight list rhythm, 
 - Four accent lamps with fixed roles: paprika (live/action), hunter (prepared/secure), yellow (transitional signal only), snow (reading hierarchy).
 - Console density: 28px controls, 4–6px list gaps, 10–12px uppercase tracked labels.
 - One authored live moment: the breathing paprika halo on the LIVE slide. No other ambient animation.
-- Serif scripture (Crimson Pro) appears only where text is destined for the congregation; UI chrome is Inter.
+- Serif scripture (Playfair Display) appears only where text is destined for the congregation; UI chrome is Poppins; the header wordmark is Autography.
 
 ## Colors
 
@@ -182,22 +196,24 @@ A near-black instrument surface carrying exactly four signal hues; everything el
 
 ## Typography
 
-**Display Font:** Crimson Pro (with Georgia, serif) — scripture only
-**Body Font:** Inter (with system-ui, sans-serif) — committed UI face for all chrome, labels, and controls
+**Display Font:** Playfair Display (with Georgia, serif) — scripture only
+**Body Font:** Poppins (with system-ui, sans-serif) — committed UI face for all chrome, labels, and controls
+**Wordmark Font:** Autography — the "Wordde" header signature only; never functional text
 **Label/Mono Font:** ui-monospace stack — kbd caps and numeric indices only
 
-**Character:** A liturgical serif reserved exclusively for the Word, set against a workmanlike grotesque for the machinery around it. The pairing enforces the product's core division: what the congregation sees is scripture; what the operator touches is a console.
+**Character:** A liturgical serif reserved exclusively for the Word, set against a round geometric grotesque for the machinery around it, with a single handwritten signature reserved for the product name. All three ship self-hosted from /fonts/ — no CDN, honoring the offline sanctuary. The pairing enforces the product's core division: what the congregation sees is scripture; what the operator touches is a console; what names the product is a mark, not a label.
 
 ### Hierarchy
-- **Display** (Crimson Pro 400–500, auto-fit 16–72px, 1.5): LIVE/preview scripture text. Font size is computed by the auto-fitter, never hand-picked.
-- **Headline** (Inter 600, 1.25rem, -0.02em): dialog titles, screen titles.
-- **Title** (Inter 600, 0.875rem, -0.01em): card titles, service/service names, menu headers.
-- **Body** (Inter 400, 0.875rem, 1.55): list rows, descriptions, helper text. UI stays dense; measure is column-constrained by the 380px sidebar, not by a prose measure.
-- **Label** (Inter 600, 0.6875rem, 0.05em, uppercase): switch legends — section headers, card flags (LIVE / NEXT / PREVIEW), emergency legend, form field labels.
-- **Scripture Reference** (Inter 500, 0.8rem, 0.08em, uppercase, paprika-bright): the citation line on slides and results. This is the one place paprika is a *reading* color, and it is always short.
+- **Display** (Playfair Display 400–500, auto-fit 16–72px, 1.5): LIVE/preview scripture text. Font size is computed by the auto-fitter, never hand-picked.
+- **Headline** (Poppins 600, 1.25rem, -0.02em): dialog titles, screen titles.
+- **Title** (Poppins 600, 0.875rem, -0.01em): card titles, service/service names, menu headers.
+- **Body** (Poppins 400, 0.875rem, 1.55): list rows, descriptions, helper text. UI stays dense; measure is column-constrained by the 380px sidebar, not by a prose measure.
+- **Label** (Poppins 600, 0.6875rem, 0.05em, uppercase): switch legends — section headers, card flags (LIVE / NEXT / PREVIEW), emergency legend, form field labels.
+- **Scripture Reference** (Poppins 500, 0.8rem, 0.08em, uppercase, paprika-bright): the citation line on slides and results. This is the one place paprika is a *reading* color, and it is always short.
+- **Wordmark** (Autography 400, ~1.125rem): the "Wordde" header only. Never applied to controls, body text, or anything projected.
 
 ### Named Rules
-**The Sermon Voice Rule.** Crimson Pro renders scripture and nothing else; Inter never renders scripture. If text will appear on the projector, it is Crimson Pro on snow.
+**The Sermon Voice Rule.** Playfair Display renders scripture and nothing else; Poppins never renders scripture. If text will appear on the projector, it is Playfair Display on snow. Autography renders only the wordmark — never scripture, never functional UI.
 
 ## Layout
 
@@ -257,7 +273,7 @@ The console at rest is quiet: flat dark fields, muted legends, no shadows shouti
 - **Status indicators:** 8px round lamps + 11px label (`.animate-spark` blink while connecting/live), colored by state — paprika live, yellow transitional, hunter blanked, muted idle.
 
 ### Signature — The LIVE Slide Card
-The system's hero. 57% of the presenter stack, card ground, 1px paprika/30 border, breathing paprika ring+halo, LIVE legend in paprika-bright, Crimson Pro scripture in snow-soft with the reference line in paprika-bright above it. It is the only element permitted ambient motion, the only place the serif reads large, and the operator's constant "this is what the congregation sees" anchor.
+The system's hero. 57% of the presenter stack, card ground, 1px paprika/30 border, breathing paprika ring+halo, LIVE legend in paprika-bright, Playfair Display scripture in snow-soft with the reference line in paprika-bright above it. It is the only element permitted ambient motion, the only place the serif reads large, and the operator's constant "this is what the congregation sees" anchor.
 
 ## Do's and Don'ts
 
@@ -274,4 +290,4 @@ The system's hero. 57% of the presenter stack, card ground, 1px paprika/30 borde
 - **Don't** use yellow for text, fills, or decoration; it is a signal lamp only.
 - **Don't** mark selection with a thick colored edge (border-l-4) — use the inset ring.
 - **Don't** stack a 1px border under a wide soft shadow (ghost card), and don't add a second halo while the LIVE glow exists.
-- **Don't** set scripture in Inter, or UI labels in Crimson Pro.
+- **Don't** set scripture in Poppins, UI labels in Playfair Display, or anything functional in Autography.
