@@ -118,11 +118,9 @@ export function OperatorScreen() {
       {/* Header */}
       <header className="glass shrink-0">
         <div className="px-4 py-2">
-          <div className="flex items-center justify-between">
-            <h1 className="font-wordmark font-normal text-lg leading-none tracking-normal text-foreground">Wordde</h1>
-
-            <div className="flex items-center gap-2">
-              {/* Translation selector */}
+          <div className="flex items-center justify-between gap-4">
+            <h1 className="font-wordmark font-normal text-3xl min-[1100px]:text-4xl leading-none tracking-normal text-foreground">Wordde</h1>
+            <div className="flex items-center gap-2 min-w-0">
               <Select
                 value={currentTranslation}
                 onValueChange={(value) => {
@@ -130,7 +128,7 @@ export function OperatorScreen() {
                 }}
               >
                 <SelectTrigger
-                  className="h-8 px-2 text-xs font-medium min-w-[96px] bg-card border-border text-snow-soft"
+                  className="h-8 px-2 text-xs font-medium min-w-[92px] bg-transparent border-border/60 text-muted-foreground"
                   title="Switch translation"
                 >
                   <SelectValue />
@@ -141,12 +139,10 @@ export function OperatorScreen() {
                   ))}
                 </SelectContent>
               </Select>
-
-              {/* Undo button - quiet, secondary */}
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-7 px-1.5 text-xs gap-1 text-muted-foreground hover:text-foreground"
+                className="h-7 px-1.5 text-xs gap-1 text-muted-foreground/80 hover:text-foreground"
                 onClick={undoProjection}
                 disabled={historyStack.length === 0}
                 title="Undo last projection (Ctrl+Z)"
@@ -154,27 +150,21 @@ export function OperatorScreen() {
                 <Undo2 className="h-3 w-3" />
                 <span className="hidden sm:inline">Undo</span>
                 {historyStack.length > 0 && (
-                  <span className="ml-0.5 text-[10px] text-muted-foreground">({historyStack.length})</span>
+                  <span className="ml-0.5 text-[10px] text-muted-foreground tabular-nums">({historyStack.length})</span>
                 )}
               </Button>
-
-              {/* Live projection indicator */}
-              {committedPassage && (
-                <div className="h-7 flex items-center gap-1.5 px-2 rounded-md chip-paprika">
-                  <Monitor className="h-3 w-3" />
-                  <PassageNavigation />
-                </div>
-              )}
-
-              {/* Spacer to push projection control to the edge */}
-              <div className="flex-1" />
-
-              {/* Projection control - primary action, prominent */}
-              <ProjectionControl />
-              <span className="text-[10px] text-muted-foreground/60 select-none pointer-events-none">Beta</span>
-            </div>
+            {committedPassage && (
+              <div className="chip-onair-slim">
+                <Monitor className="h-3.5 w-3.5" />
+                <PassageNavigation />
+              </div>
+            )}
+            <div className="flex-1" />
+            <ProjectionControl />
+            <span className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground/40 select-none pointer-events-none">Beta</span>
           </div>
         </div>
+      </div>
       </header>
 
       {/* Main dual-column layout */}

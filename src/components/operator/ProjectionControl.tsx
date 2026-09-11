@@ -179,16 +179,15 @@ export function ProjectionControl() {
           </span>
         </div>
 
-        <Button
-          variant={config.variant}
-          size="sm"
-          className="h-7 text-xs gap-1.5"
-          onClick={startProjection}
-          disabled={config.disabled}
-        >
-          <Icon className="h-3.5 w-3.5" />
-          {config.label}
-        </Button>
+            <button
+              type="button"
+              className="btn-projection-glass"
+              onClick={startProjection}
+              disabled={config.disabled}
+            >
+              <Icon className="h-3.5 w-3.5" />
+              {config.label}
+            </button>
       </div>
 
       {/* Setup Guide Dialog */}

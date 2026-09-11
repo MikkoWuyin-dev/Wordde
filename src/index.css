@@ -274,6 +274,82 @@
     box-shadow: inset 0 0 0 1px hsl(var(--paprika) / 0.55);
   }
 
+  /* The projection button as quiet dark glass: the header's glass morphism
+     on the console's primary action with the halo damped to zero — the
+     paprika-bright legend alone carries the action voice. */
+  .btn-projection-glass {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 28px;
+    padding: 0 12px;
+    white-space: nowrap;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 16px;
+    border-radius: 10px;
+    background: hsl(240 9% 10% / 0.5);
+    backdrop-filter: blur(18px) saturate(1.2);
+    -webkit-backdrop-filter: blur(18px) saturate(1.2);
+    border: 1px solid hsl(0 0% 100% / 0.16);
+    color: hsl(var(--paprika-bright));
+    box-shadow:
+      inset 0 1px 0 hsl(0 0% 100% / 0.2),
+      0 1px 2px hsl(240 11% 2% / 0.5);
+    transition: border-color 120ms ease, color 120ms ease;
+  }
+  .btn-projection-glass:hover {
+    border-color: hsl(14 85% 68% / 0.45);
+    color: hsl(14 90% 74%);
+  }
+  .btn-projection-glass:active {
+    transform: translateY(0.5px);
+  }
+  .btn-projection-glass:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .btn-projection-glass:focus-visible {
+    outline: none;
+    box-shadow:
+      inset 0 1px 0 hsl(0 0% 100% / 0.2),
+      0 0 0 2px hsl(var(--paprika) / 0.55);
+  }
+
+  /* The on-air transport chip, slimmed: a whisper of paprika field rather
+     than a full lamp — the glowing projection button now carries the action
+     voice, so the chip recedes to a state readout. */
+  .chip-onair-slim {
+    height: 35px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 10px;
+    border-radius: 10px;
+    background: hsl(var(--paprika) / 0.1);
+    box-shadow: inset 0 0 0 1px hsl(var(--paprika) / 0.25);
+  }
+  .chip-onair-slim > svg {
+    width: 12px;
+    height: 12px;
+    color: hsl(var(--paprika-bright) / 0.85);
+  }
+  .chip-onair-slim button {
+    padding-left: 6px;
+    padding-right: 6px;
+    color: hsl(var(--muted-foreground));
+  }
+  .chip-onair-slim button:hover {
+    color: hsl(var(--foreground));
+    background: hsl(var(--secondary) / 0.5);
+  }
+  .chip-onair-slim span {
+    font-size: 13px;
+    color: hsl(var(--snow-soft));
+    font-variant-numeric: tabular-nums;
+  }
+
   .preview-panel {
     background: hsl(var(--card) / 0.72);
     backdrop-filter: blur(6px);

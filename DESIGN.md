@@ -88,16 +88,22 @@ spacing:
   xl: "24px"
 components:
   button-primary:
-    backgroundColor: "{colors.paprika}"
-    textColor: "{colors.paprika-foreground}"
-    rounded: "{rounded.md}"
+    backgroundColor: "hsl(240 9% 10% / 0.5) + backdrop-blur(18px)"
+    textColor: "{colors.paprika-bright}"
+    borderColor: "hsl(0 0% 100% / 0.16)"
+    rounded: "10px"
     height: "28px"
     width: "auto"
     padding: "0 12px"
+    shadow: "inset white top edge + 1px black contact; no halo"
   button-primary-hover:
-    backgroundColor: "hsl(14 77% 49%)"
+    borderColor: "hsl(14 85% 68% / 0.45)"
+    textColor: "hsl(14 90% 74%)"
+  button-primary-solid:
+    backgroundColor: "{colors.paprika}"
     textColor: "{colors.paprika-foreground}"
     rounded: "{rounded.md}"
+    note: "dialog and form submits only"
   button-outline:
     backgroundColor: "{colors.card}"
     textColor: "{colors.foreground}"
@@ -113,12 +119,14 @@ components:
     width: "auto"
     padding: "0 8px"
   chip-live:
-    backgroundColor: "hsl(14 77% 54% / 0.14)"
-    textColor: "{colors.paprika-bright}"
-    rounded: "{rounded.md}"
-    height: "28px"
+    backgroundColor: "hsl(14 77% 54% / 0.1)"
+    textColor: "{colors.snow-soft}"
+    borderColor: "hsl(14 77% 54% / 0.25) inset"
+    rounded: "10px"
+    height: "35px"
     width: "auto"
-    padding: "0 8px"
+    padding: "0 10px"
+    note: ".chip-onair-slim — state readout; quieter than the action button"
   input-search:
     backgroundColor: "{colors.card}"
     textColor: "{colors.foreground}"
@@ -164,7 +172,7 @@ Density is console-grade: compact rows (28–32px controls), tight list rhythm, 
 A near-black instrument surface carrying exactly four signal hues; everything else is a lightness ramp on the ground hue.
 
 ### Primary — Paprika (Live / Action)
-- **Paprika** (hsl(14 77% 54%), the brand `#e4572e`): the single action voice. Primary buttons (Start Projection, Project Now, Add to Plan), the LIVE slide's border and halo, active tab underline, selected result ring, scripture reference lines. If it clicks to advance the service or is currently on air, it may be paprika. Nothing else may.
+- **Paprika** (hsl(14 77% 54%), the brand `#e4572e`): the single action voice. Service-advancing actions (Start Projection, Project Now, Add to Plan) speak paprika — as a `-bright` legend and warm edge on the quiet-glass primary in bars, or as a solid fill on dialog/form submits — plus the LIVE slide's border and halo, active tab underline, selected result ring, scripture reference lines. If it clicks to advance the service or is currently on air, it may be paprika. Nothing else may.
 - **Paprika Bright** (hsl(14 85% 68%)): paprika raised in lightness for *small text on the black ground* (chip labels, 10–12px section markers, icon strokes). Base paprika at text sizes fails AA on black; bright passes ~5.5:1.
 - **Paprika Foreground** (hsl(240 11% 7%)): near-black text on solid paprika fills.
 
@@ -223,13 +231,14 @@ Spacing rhythm is Tailwind's 4px base at console density: 4–6px inside lists, 
 
 ## Elevation & Depth
 
-Hybrid: tonal layering does the structural work (the ground→card→popover lightness ladder), while short-offset soft shadows lift interactive instruments and glass (`backdrop-filter` blur) marks the fixed chrome over scrolling content. A zero-offset colored halo is decoration — the one permitted halo is the LIVE slide's `glow-pulse`, where it functions as an on-air lamp, not a shadow.
+Hybrid: tonal layering does the structural work (the ground→card→popover lightness ladder), while short-offset soft shadows lift interactive instruments and glass (`backdrop-filter` blur) marks the fixed chrome — and, by extension, the console's primary action, which shares the header's material. On glass instruments the paprika halo is damped to zero: a glow on the button would compete with the LIVE slide, so the quiet glass reads through its edge and legend instead. A zero-offset colored halo is otherwise decoration — the one permitted halo is the LIVE slide's `glow-pulse`, where it functions as an on-air lamp, not a shadow.
 
 ### Shadow Vocabulary
 - **Raised** (`var(--neu-raised)` — 0 1px 2px + 0 2px 6px black + 1px inset white highlight): resting inputs and small panels.
 - **Raised Strong** (`var(--neu-raised-strong)` — adds 0 8px 22px): focused inputs, popovers, dialogs.
 - **Depressed** (`var(--neu-depressed)` / `--neu-flat-depressed`): inset states — selected result field, pressed feel.
 - **On-Air** (`@keyframes glow-pulse` — 1px paprika ring + 18–30px paprika halo over a base black shadow): the LIVE slide only.
+- **Quiet Glass** (`.glass` chrome, `.btn-projection-glass` action): translucent ground (`240 9% 10% / 0.5`), `backdrop-filter` blur 14–18px, 1px white top-edge highlight (`inset 0 1px 0 white/0.14–0.2`), at most a 1–3px black contact shadow. **Never a paprika halo** — the halo belongs to the LIVE slide alone. Accent voice on glass comes from border warmth and a `-bright` legend, not from light.
 
 ### Named Rules
 **Declared Once Rule.** A surface declares depth with a border *or* a shadow, never both at full strength. The ghost card — 1px border under a wide soft shadow — is banned.
@@ -244,15 +253,16 @@ The console at rest is quiet: flat dark fields, muted legends, no shadows shouti
 
 ### Buttons
 - **Shape:** radius-md (12px), compact heights — 28px (h-7) in bars, 32–36px in dialogs/forms.
-- **Primary:** solid paprika fill, near-black label, subtle black drop shadow. Reserved for the service-advancing action (Start/Reconnect Projection, Project Now, form submits). Hover: paprika darkens ~5% lightness.
+- **Primary:** **quiet dark glass** (`.btn-projection-glass`) — translucent ground, 18px blur, 1px white/16 edge, short black contact shadow, paprika-bright legend, **no halo**. Reserved for the service-advancing action (Start/Reconnect Projection, Project Now). Hover: border warms to paprika/45 and the legend brightens one step; no added glow. Focus: 2px paprika ring (`.focus-console` grammar).
+- **Primary (solid):** paprika fill, near-black label — dialog and form submits only (e.g. "Projection Ready"). Hover: paprika darkens ~5% lightness.
 - **Secondary/Outline:** card fill, 1px border; when the button's *meaning* is hunter-domain (Lock, Load Full Chapter, Add Session Screen) it tints hunter — border hunter/40, label hunter-bright.
 - **Ghost:** transparent until hover; muted-foreground label that brightens on hover. The default for dense toolbar actions (undo, navigation arrows).
 - **Destructive:** solid destructive fill; deletion confirms and Reconnect only.
 - **Focus:** 2px paprika ring with 2px offset (`focus-visible` only).
 
 ### Chips
-- **Style:** pill-less rounded-md tags — 14% alpha accent field, 35–40% alpha accent border, `-bright` accent label (`.chip-paprika`, `.chip-hunter`, `.chip-yellow`, `.chip-ghost`).
-- **State:** the LIVE transport chip (paprika) and status dots follow the signal rules; ghost chips label neutral metadata.
+- **Style:** pill-less rounded-md tags — 14% alpha accent field, 35–40% alpha accent border, `-bright` accent label (`.chip-paprika`, `.chip-hunter`, `.chip-yellow`, `.chip-ghost`; defined vocabulary).
+- **State:** the LIVE transport chip is **`.chip-onair-slim`** — 35px tall, 10% paprika field, inset paprika/25 ring, muted transport arrows that brighten on hover, snow reference in tabular figures, 12px monitor icon in paprika-bright/85. Deliberately quieter than the projection button: when a passage is committed, the button carries the action voice and the chip recedes to a state readout. Status dots follow the signal rules; ghost chips label neutral metadata.
 
 ### Cards / Containers
 - **Corner Style:** radius-xl (16–20px).
@@ -289,5 +299,5 @@ The system's hero. 57% of the presenter stack, card ground, 1px paprika/30 borde
 - **Don't** set small text in base paprika or base hunter on black — that is what the bright variants exist for.
 - **Don't** use yellow for text, fills, or decoration; it is a signal lamp only.
 - **Don't** mark selection with a thick colored edge (border-l-4) — use the inset ring.
-- **Don't** stack a 1px border under a wide soft shadow (ghost card), and don't add a second halo while the LIVE glow exists.
+- **Don't** stack a 1px border under a wide soft shadow (ghost card), and don't add a second halo while the LIVE glow exists — the projection button's damped glass (`.btn-projection-glass`) is the enforcement example, not an exception.
 - **Don't** set scripture in Poppins, UI labels in Playfair Display, or anything functional in Autography.
