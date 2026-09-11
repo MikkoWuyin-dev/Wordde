@@ -61,6 +61,27 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        // Wordde operator palette
+        paprika: {
+          DEFAULT: "hsl(var(--paprika))",
+          foreground: "hsl(var(--paprika-foreground))",
+          bright: "hsl(var(--paprika-bright))",
+        },
+        hunter: {
+          DEFAULT: "hsl(var(--hunter))",
+          foreground: "hsl(var(--hunter-foreground))",
+          bright: "hsl(var(--hunter-bright))",
+        },
+        snow: {
+          DEFAULT: "hsl(var(--snow))",
+          soft: "hsl(var(--snow-soft))",
+          foreground: "hsl(var(--snow-foreground))",
+        },
+        yellow: {
+          DEFAULT: "hsl(var(--yellow))",
+          foreground: "hsl(var(--yellow-foreground))",
+        },
+        black: "hsl(var(--black))",
         // Scripture-specific colors
         scripture: "hsl(var(--scripture-text))",
         reference: "hsl(var(--scripture-reference))",

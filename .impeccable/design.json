@@ -1,0 +1,176 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-11T00:00:00.000Z",
+  "title": "Design System: Wordde",
+  "extensions": {
+    "colorMeta": {
+      "paprika": {
+        "role": "primary",
+        "displayName": "Spicy Paprika",
+        "canonical": "hsl(14 77% 54%)",
+        "tonalRamp": ["hsl(14 70% 15%)", "hsl(14 74% 24%)", "hsl(14 76% 34%)", "hsl(14 77% 44%)", "hsl(14 77% 54%)", "hsl(14 80% 62%)", "hsl(14 84% 71%)", "hsl(14 86% 80%)"]
+      },
+      "paprika-bright": {
+        "role": "primary-text",
+        "displayName": "Paprika Bright",
+        "canonical": "hsl(14 85% 68%)",
+        "tonalRamp": ["hsl(14 74% 24%)", "hsl(14 76% 34%)", "hsl(14 77% 44%)", "hsl(14 77% 54%)", "hsl(14 80% 62%)", "hsl(14 85% 68%)", "hsl(14 86% 76%)", "hsl(14 88% 84%)"]
+      },
+      "hunter": {
+        "role": "secondary",
+        "displayName": "Hunter Green",
+        "canonical": "hsl(134 31% 29%)",
+        "tonalRamp": ["hsl(134 32% 9%)", "hsl(134 32% 14%)", "hsl(134 31% 19%)", "hsl(134 31% 24%)", "hsl(134 31% 29%)", "hsl(134 30% 42%)", "hsl(134 30% 56%)", "hsl(134 30% 70%)"]
+      },
+      "hunter-bright": {
+        "role": "secondary-text",
+        "displayName": "Hunter Bright",
+        "canonical": "hsl(134 30% 70%)",
+        "tonalRamp": ["hsl(134 31% 19%)", "hsl(134 31% 24%)", "hsl(134 31% 29%)", "hsl(134 30% 42%)", "hsl(134 30% 56%)", "hsl(134 30% 70%)", "hsl(134 28% 78%)", "hsl(134 26% 86%)"]
+      },
+      "yellow": {
+        "role": "signal",
+        "displayName": "Signal Yellow",
+        "canonical": "hsl(60 100% 50%)",
+        "tonalRamp": ["hsl(60 100% 12%)", "hsl(60 100% 22%)", "hsl(60 100% 32%)", "hsl(60 100% 42%)", "hsl(60 100% 50%)", "hsl(60 100% 62%)", "hsl(60 100% 74%)", "hsl(60 100% 86%)"]
+      },
+      "black-ground": {
+        "role": "neutral",
+        "displayName": "Black",
+        "canonical": "hsl(240 11% 3%)",
+        "tonalRamp": ["hsl(240 11% 3%)", "hsl(240 10% 4%)", "hsl(240 9% 6%)", "hsl(240 8% 7%)", "hsl(240 9% 8%)", "hsl(240 7% 12%)", "hsl(240 6% 14%)", "hsl(240 5% 20%)"]
+      },
+      "snow": {
+        "role": "neutral-text",
+        "displayName": "Bright Snow",
+        "canonical": "hsl(0 0% 99%)",
+        "tonalRamp": ["hsl(240 5% 20%)", "hsl(240 5% 34%)", "hsl(240 5% 48%)", "hsl(240 5% 62%)", "hsl(240 4% 76%)", "hsl(0 0% 88%)", "hsl(0 0% 96%)", "hsl(0 0% 99%)"]
+      },
+      "destructive": {
+        "role": "error",
+        "displayName": "Destructive Red",
+        "canonical": "hsl(0 72% 56%)",
+        "tonalRamp": ["hsl(0 70% 15%)", "hsl(0 71% 24%)", "hsl(0 71% 34%)", "hsl(0 72% 45%)", "hsl(0 72% 56%)", "hsl(0 74% 66%)", "hsl(0 78% 76%)", "hsl(0 82% 86%)"]
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Scripture", "purpose": "Crimson Pro renders only congregation-facing scripture; size is set by the auto-fitter, never hand-picked." },
+      "label": { "displayName": "Switch Legend", "purpose": "Uppercase tracked 11px Inter labels act as engraved console legends." },
+      "scripture-reference": { "displayName": "Citation", "purpose": "The one place paprika is a reading color; always uppercase, tracked, short." }
+    },
+    "shadows": [
+      { "name": "neu-raised", "value": "0 1px 2px hsl(240 11% 2% / 0.7), 0 2px 6px hsl(240 11% 2% / 0.55), inset 0 1px 0 hsl(0 0% 100% / 0.06)", "purpose": "Resting inputs and small panels." },
+      { "name": "neu-raised-strong", "value": "0 4px 10px -2px hsl(240 11% 2% / 0.75), 0 8px 22px -4px hsl(240 11% 2% / 0.6), inset 0 1px 0 hsl(0 0% 100% / 0.08)", "purpose": "Focused inputs, popovers, dialogs." },
+      { "name": "neu-flat-depressed", "value": "inset 0 1px 2px hsl(240 11% 2% / 0.6)", "purpose": "Pressed/inset fields such as the selected search result." },
+      { "name": "on-air", "value": "0 10px 26px -4px hsl(240 11% 2% / 0.7), 0 0 0 1px hsl(14 77% 54% / 0.28), 0 0 18px hsl(14 77% 54% / 0.18)", "purpose": "The LIVE slide card only — an on-air lamp, animated between this and a 0.45/0.30 alpha peak by @keyframes glow-pulse." }
+    ],
+    "motion": [
+      { "name": "ease-console", "value": "cubic-bezier(0.2, 0, 0, 1)", "purpose": "Default easing for entrances and state transitions (fade-in, slide-up, scale-in)." },
+      { "name": "spark-blink", "value": "opacity 0.45→1, 1.8s ease-in-out infinite", "purpose": "Status lamp blink while connecting/live." },
+      { "name": "glow-pulse", "value": "paprika ring 0.28→0.45 alpha, halo 0.18→0.30, 2.4s ease-in-out infinite", "purpose": "The single breathing element: the LIVE slide card." }
+    ],
+    "breakpoints": [
+      { "name": "min-desktop", "value": "768px", "purpose": "Below this the operator app refuses to render; a phone cannot drive a projector." }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Solid paprika action for service-advancing commands (Start Projection, Project Now).",
+      "html": "<button class=\"ds-btn-primary\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6\"/><polyline points=\"15 3 21 3 21 9\"/><line x1=\"10\" y1=\"14\" x2=\"21\" y2=\"3\"/></svg>Start Projection</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; gap: 6px; background: hsl(14 77% 54%); color: hsl(240 11% 7%); font-family: Inter, system-ui, sans-serif; font-size: 12px; font-weight: 500; height: 28px; padding: 0 12px; border: none; border-radius: 12px; cursor: pointer; transition: background 150ms ease; } .ds-btn-primary:hover { background: hsl(14 77% 49%); } .ds-btn-primary:focus-visible { outline: none; box-shadow: 0 0 0 2px hsl(240 11% 3%), 0 0 0 4px hsl(14 77% 54%); }"
+    },
+    {
+      "name": "Hunter Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Secure/prepared-state action (Lock, Load Full Chapter) — hunter-tinted border, bright green label.",
+      "html": "<button class=\"ds-btn-hunter\"><svg width=\"12\" height=\"12\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"11\" width=\"18\" height=\"11\" rx=\"2\" ry=\"2\"/><path d=\"M7 11V7a5 5 0 0 1 10 0v4\"/></svg>Lock</button>",
+      "css": ".ds-btn-hunter { display: inline-flex; align-items: center; gap: 4px; background: hsl(240 8% 7%); color: hsl(134 30% 70%); font-family: Inter, system-ui, sans-serif; font-size: 12px; height: 24px; padding: 0 8px; border: 1px solid hsl(134 31% 29% / 0.4); border-radius: 8px; cursor: pointer; transition: background 150ms ease; } .ds-btn-hunter:hover { background: hsl(134 31% 29% / 0.1); } .ds-btn-hunter:focus-visible { outline: none; box-shadow: 0 0 0 2px hsl(240 11% 3%), 0 0 0 4px hsl(14 77% 54%); }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Quiet toolbar action (undo, navigation arrows); muted until hover.",
+      "html": "<button class=\"ds-btn-ghost\"><svg width=\"12\" height=\"12\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3 7v6h6\"/><path d=\"M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13\"/></svg>Undo</button>",
+      "css": ".ds-btn-ghost { display: inline-flex; align-items: center; gap: 4px; background: transparent; color: hsl(240 5% 62%); font-family: Inter, system-ui, sans-serif; font-size: 12px; height: 24px; padding: 0 6px; border: none; border-radius: 8px; cursor: pointer; transition: color 150ms ease, background 150ms ease; } .ds-btn-ghost:hover { background: hsl(240 7% 14%); color: hsl(0 0% 96%); } .ds-btn-ghost:disabled { opacity: 0.5; cursor: not-allowed; }"
+    },
+    {
+      "name": "Search Input",
+      "kind": "input",
+      "refersTo": "input-search",
+      "description": "The canonical 48px reference/keyword field with leading ghost icon and paprika focus.",
+      "html": "<div class=\"ds-input-wrap\"><svg class=\"ds-input-icon\" width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"11\" cy=\"11\" r=\"8\"/><line x1=\"21\" y1=\"21\" x2=\"16.65\" y2=\"16.65\"/></svg><input class=\"ds-input\" type=\"text\" placeholder=\"Search reference or keyword...\" /></div>",
+      "css": ".ds-input-wrap { position: relative; width: 100%; } .ds-input-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: hsl(240 5% 62%); pointer-events: none; } .ds-input { width: 100%; height: 48px; background: hsl(240 8% 7%); color: hsl(0 0% 96%); font-family: Inter, system-ui, sans-serif; font-size: 16px; padding: 0 40px; border: 1px solid hsl(240 7% 16%); border-radius: 12px; box-shadow: 0 1px 2px hsl(240 11% 2% / 0.7), inset 0 1px 0 hsl(0 0% 100% / 0.06); transition: border-color 150ms ease, box-shadow 150ms ease; } .ds-input::placeholder { color: hsl(240 5% 62% / 0.6); } .ds-input:focus-visible { outline: none; border-color: hsl(14 77% 54%); box-shadow: 0 0 0 2px hsl(14 77% 54%), 0 4px 10px -2px hsl(240 11% 2% / 0.75), 0 8px 22px -4px hsl(240 11% 2% / 0.6); }"
+    },
+    {
+      "name": "Live Slide Card",
+      "kind": "card",
+      "refersTo": "card-live",
+      "description": "The on-air instrument: breathing paprika ring+halo, LIVE legend, Crimson Pro scripture — the only ambient-animated element.",
+      "html": "<div class=\"ds-card-live\"><div class=\"ds-card-head\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"2\" y=\"3\" width=\"20\" height=\"14\" rx=\"2\" ry=\"2\"/><line x1=\"8\" y1=\"21\" x2=\"16\" y2=\"21\"/><line x1=\"12\" y1=\"17\" x2=\"12\" y2=\"21\"/></svg><span>LIVE</span></div><p class=\"ds-ref\">DEUTERONOMY 14:1</p><p class=\"ds-scripture\">Ye are the children of the LORD your God: ye shall not cut yourselves, nor make any baldness between your eyes for the dead.</p></div>",
+      "css": ".ds-card-live { display: flex; flex-direction: column; gap: 12px; background: hsl(240 8% 7%); border: 1px solid hsl(14 77% 54% / 0.3); border-radius: 20px; padding: 24px; min-height: 200px; box-shadow: 0 10px 26px -4px hsl(240 11% 2% / 0.7), 0 0 0 1px hsl(14 77% 54% / 0.28), 0 0 18px hsl(14 77% 54% / 0.18); animation: ds-glow 2.4s ease-in-out infinite; } @keyframes ds-glow { 0%, 100% { box-shadow: 0 10px 26px -4px hsl(240 11% 2% / 0.7), 0 0 0 1px hsl(14 77% 54% / 0.28), 0 0 18px hsl(14 77% 54% / 0.18); } 50% { box-shadow: 0 10px 26px -4px hsl(240 11% 2% / 0.7), 0 0 0 1px hsl(14 77% 54% / 0.45), 0 0 30px hsl(14 77% 54% / 0.3); } } .ds-card-head { display: flex; align-items: center; gap: 8px; color: hsl(14 85% 68%); font-family: Inter, system-ui, sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; } .ds-ref { margin: 0; color: hsl(14 85% 68%); font-family: Inter, system-ui, sans-serif; font-size: 12px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; } .ds-scripture { margin: 0; color: hsl(0 0% 88%); font-family: 'Crimson Pro', Georgia, serif; font-size: 24px; line-height: 1.5; letter-spacing: 0.01em; }"
+    },
+    {
+      "name": "Next Slide Card",
+      "kind": "card",
+      "refersTo": "card-next",
+      "description": "The prepared/standby card — hunter legend, quiet border, no shadow, 60% alpha fill.",
+      "html": "<div class=\"ds-card-next\"><div class=\"ds-card-head-hunter\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polygon points=\"5 4 15 12 5 20 5 4\"/><line x1=\"19\" y1=\"5\" x2=\"19\" y2=\"19\"/></svg><span>NEXT</span></div><p class=\"ds-ref-hunter\">DEUTERONOMY 14:2</p><p class=\"ds-scripture-sm\">For thou art an holy people unto the LORD thy God, and the LORD hath chosen thee to be a peculiar people unto himself.</p></div>",
+      "css": ".ds-card-next { display: flex; flex-direction: column; gap: 12px; background: hsl(240 8% 7% / 0.6); border: 1px solid hsl(240 7% 16% / 0.7); border-radius: 20px; padding: 20px; min-height: 140px; } .ds-card-head-hunter { display: flex; align-items: center; gap: 8px; color: hsl(134 30% 70%); font-family: Inter, system-ui, sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; } .ds-ref-hunter { margin: 0; color: hsl(134 30% 70%); font-family: Inter, system-ui, sans-serif; font-size: 12px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; } .ds-scripture-sm { margin: 0; color: hsl(0 0% 88%); font-family: 'Crimson Pro', Georgia, serif; font-size: 18px; line-height: 1.5; letter-spacing: 0.01em; }"
+    },
+    {
+      "name": "Status Lamp",
+      "kind": "chip",
+      "refersTo": "chip-live",
+      "description": "8px signal lamp + label; color encodes state (paprika live, yellow transitional, hunter blanked, muted idle).",
+      "html": "<span class=\"ds-lamp\"><span class=\"ds-lamp-dot ds-lamp-live\"></span>Live</span>",
+      "css": ".ds-lamp { display: inline-flex; align-items: center; gap: 6px; font-family: Inter, system-ui, sans-serif; font-size: 12px; font-weight: 500; color: hsl(14 85% 68%); } .ds-lamp-dot { width: 8px; height: 8px; border-radius: 999px; } .ds-lamp-live { background: hsl(14 77% 54%); animation: ds-blink 1.8s ease-in-out infinite; } @keyframes ds-blink { 0%, 100% { opacity: 0.45; } 50% { opacity: 1; } }"
+    },
+    {
+      "name": "Tab Navigation",
+      "kind": "nav",
+      "refersTo": "button-primary",
+      "description": "Sidebar workflow tabs; active takes a 2px paprika underline and bright label.",
+      "html": "<nav class=\"ds-tabs\"><button class=\"ds-tab ds-tab-active\">Search</button><button class=\"ds-tab\">Browse</button><button class=\"ds-tab\">Plan</button><button class=\"ds-tab\">Recent</button></nav>",
+      "css": ".ds-tabs { display: flex; border-bottom: 1px solid hsl(240 7% 16% / 0.6); background: hsl(240 10% 4%); } .ds-tab { flex: 1; padding: 10px 12px; background: transparent; border: none; border-bottom: 2px solid transparent; margin-bottom: -1px; font-family: Inter, system-ui, sans-serif; font-size: 14px; font-weight: 500; color: hsl(240 5% 62%); cursor: pointer; transition: color 150ms ease, background 150ms ease; } .ds-tab:hover { color: hsl(0 0% 96%); background: hsl(240 7% 12% / 0.6); } .ds-tab-active { border-bottom-color: hsl(14 77% 54%); color: hsl(14 85% 68%); } .ds-tab:focus-visible { outline: none; box-shadow: inset 0 0 0 1px hsl(14 77% 54%); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Broadcast Console",
+    "overview": "Wordde's operator interface is the A/V desk at the back of a dark hall: a matte black surface where nothing glows unless it is carrying a signal. The black ground (#08090a family) is not a theme applied to the product — it is the product's environment. Every accent is an indicator lamp with a dedicated meaning: paprika for the live circuit, hunter for the prepared/standby circuit, yellow for a transitional caution blink. Color encodes state before any label is parsed, because rotating volunteers read this screen in seconds under service pressure.",
+    "keyCharacteristics": [
+      "Near-neutral cool black ground with one soft radial lift of light; never navy, never flat",
+      "Four accent lamps with fixed roles: paprika live/action, hunter prepared/secure, yellow signal-only, snow reading",
+      "Console density: 28px controls, 4–6px list gaps, uppercase tracked switch legends",
+      "One breathing element (LIVE slide) and one blink grammar (status lamps)",
+      "Crimson Pro for scripture only; Inter for all console chrome"
+    ],
+    "rules": [
+      { "name": "The Black Is the Room Rule", "body": "#08090a is the environment, not a surface color. Cards, popovers, and panels are lamps on the console — they lighten by 3–5 lightness steps from the ground, never sit at ground level with a border pretending to be a card.", "section": "colors" },
+      { "name": "The One Voice Rule", "body": "Paprika speaks only for what is live or what advances the service. At most one breathing/live element on screen; if two things pulse, one of them is wrong.", "section": "colors" },
+      { "name": "The Signal, Not the Paint Rule", "body": "Yellow is a state signal (dots, blinks). Never yellow text paragraphs, yellow fills on large regions, or yellow decoration.", "section": "colors" },
+      { "name": "The Bright Variant Rule", "body": "Base paprika and hunter are for fills, borders, and large graphic marks. On the black ground, any accent text or icon below ~16px uses the -bright variant. This is how the system holds AA contrast without washing out the brand hues.", "section": "colors" },
+      { "name": "The Sermon Voice Rule", "body": "Crimson Pro renders scripture and nothing else; Inter never renders scripture. If text will appear on the projector, it is Crimson Pro on snow.", "section": "typography" },
+      { "name": "Declared Once Rule", "body": "A surface declares depth with a border or a shadow, never both at full strength. The ghost card — 1px border under a wide soft shadow — is banned.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do use -bright accent variants for any accent text or icon on the black ground below ~16px (paprika-bright, hunter-bright).",
+      "Do step surfaces up the lightness ladder (ground 3% → card 7% → popover 8%) instead of adding borders to same-tone panels.",
+      "Do keep exactly one breathing element (the LIVE card) and one blink grammar (.animate-spark) in the interface.",
+      "Do dissolve scrolling card edges with a gradient fade matching the card fill.",
+      "Do keep the projection window pure: #000 ground, snow text, no UI chrome — it faces the congregation, not the operator."
+    ],
+    "donts": [
+      "Don't introduce new hues. The system is five colors plus destructive; the incumbent's old navy-blue drift at hsl(228 …) is the named anti-reference.",
+      "Don't set small text in base paprika or base hunter on black — that is what the bright variants exist for.",
+      "Don't use yellow for text, fills, or decoration; it is a signal lamp only.",
+      "Don't mark selection with a thick colored edge (border-l-4) — use the inset ring.",
+      "Don't stack a 1px border under a wide soft shadow (ghost card), and don't add a second halo while the LIVE glow exists.",
+      "Don't set scripture in Inter, or UI labels in Crimson Pro."
+    ]
+  }
+}

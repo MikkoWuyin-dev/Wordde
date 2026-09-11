@@ -224,7 +224,7 @@ export function ServicePlan() {
       <div>
         <div className="flex items-center justify-between px-3 py-2 border-b border-border shrink-0">
           <span className="text-xs font-medium text-foreground">Services</span>
-          <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => setShowNewService(!showNewService)}>
+          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground" onClick={() => setShowNewService(!showNewService)}>
             <Plus className="h-3.5 w-3.5" />
           </Button>
         </div>
@@ -239,16 +239,15 @@ export function ServicePlan() {
               onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); createService(); } }}
               autoFocus
             />
-            <Button onClick={createService} size="sm" className="w-full h-7 text-xs">Create Service</Button>
+            <Button onClick={createService} size="sm" className="w-full h-7 text-xs shadow-[0_4px_10px_-2px_hsl(12_84%_56%_/_0.5)]">Create Service</Button>
           </div>
         )}
 
         <div>
           {services.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full p-6 text-center">
-              <FolderOpen className="h-8 w-8 text-muted-foreground/40 mb-2" />
-              <p className="text-xs text-muted-foreground font-medium mb-1">No services yet</p>
-              <p className="text-[11px] text-muted-foreground/70">Click <Plus className="inline h-3 w-3" /> to create one</p>
+              <FolderOpen className="h-8 w-8 text-muted-foreground/40 mb-2" />                    <p className="text-xs text-muted-foreground font-medium mb-1">No services yet</p>
+              <p className="text-[11px] text-muted-foreground/70">Click <Plus className="inline h-3 w-3 text-muted-foreground/60" /> to create one</p>
             </div>
           ) : (
             <div className="p-1.5 space-y-1">
@@ -266,14 +265,12 @@ export function ServicePlan() {
                       <button onClick={confirmRename} className="p-0.5 rounded hover:bg-accent"><Check className="h-3 w-3 text-primary" /></button>
                       <button onClick={() => setRenamingId(null)} className="p-0.5 rounded hover:bg-accent"><X className="h-3 w-3 text-muted-foreground" /></button>
                     </div>
-                  ) : (
-                    <div
-                      className="flex items-start gap-2 px-2.5 py-2 cursor-pointer"
-                      onClick={() => { setActiveServiceId(svc.id); setActivePassageIndex(null); }}
-                    >
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-foreground truncate">{svc.name}</p>
-                        <p className="text-[11px] text-muted-foreground">{svc.passages.length} passage{svc.passages.length !== 1 ? 's' : ''}</p>
+                  ) : (                  <div className="flex items-start gap-2 px-2.5 py-2 cursor-pointer"
+                    onClick={() => { setActiveServiceId(svc.id); setActivePassageIndex(null); }}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-foreground truncate">{svc.name}</p>
+                        <p className="text-[11px] text-muted-foreground/70">{svc.passages.length} passage{svc.passages.length !== 1 ? 's' : ''}</p>
                       </div>
                       <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
                         <button onClick={e => { e.stopPropagation(); setRenamingId(svc.id); setRenameValue(svc.name); }} className="p-0.5 rounded hover:bg-accent" title="Rename">
@@ -332,7 +329,7 @@ export function ServicePlan() {
             className="h-8 text-xs"
             onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); addPassage(); } }}
           />
-          <Button onClick={addPassage} size="sm" className="w-full h-7 text-xs">Add to Plan</Button>
+          <Button onClick={addPassage} size="sm" className="w-full h-7 text-xs shadow-[0_4px_10px_-2px_hsl(12_84%_56%_/_0.5)]">Add to Plan</Button>
         </div>
       )}
 
@@ -349,8 +346,7 @@ export function ServicePlan() {
               <div
                 key={item.id}
                 className={cn(
-                  'group rounded-md border transition-colors',
-                  activePassageIndex === idx ? 'border-primary bg-primary/10' : 'border-border hover:bg-accent/50'
+                  'group rounded-md border transition-colors',                      activePassageIndex === idx ? 'border-paprika/60 bg-paprika/10 shadow-sm' : 'border-border hover:bg-secondary/60'
                 )}
               >
                 {editingPassageIdx === idx ? (
@@ -384,27 +380,26 @@ export function ServicePlan() {
                   <div className="flex items-start gap-2 px-2.5 py-2 cursor-pointer" onClick={() => loadPassageAtIndex(idx)}>
                     <div className="mt-0.5 shrink-0">
                       {activePassageIndex === idx ? (
-                        <Play className="h-3 w-3 text-primary fill-primary" />
+                        <Play className="h-3 w-3 text-paprika fill-paprika" />
                       ) : (
                         <span className="text-[10px] text-muted-foreground font-mono w-3 inline-block text-center">{idx + 1}</span>
                       )}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-foreground truncate">{item.label}</p>
-                      <p className="text-[11px] text-muted-foreground truncate">{item.reference}</p>
+                    <div className="flex-1 min-w-0">          <p className="text-xs font-medium text-foreground truncate">{item.label}</p>
+                        <p className="text-[11px] text-muted-foreground/70 truncate">{item.reference}</p>
                     </div>
                     <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                      <button onClick={e => { e.stopPropagation(); startEditPassage(idx); }} className="p-0.5 rounded hover:bg-accent" title="Edit">
+                      <button onClick={e => { e.stopPropagation(); startEditPassage(idx); }} className="p-0.5 rounded hover:bg-secondary/70" title="Edit">
                         <Pencil className="h-3 w-3 text-muted-foreground" />
                       </button>
-                      <button onClick={e => { e.stopPropagation(); movePassage(idx, 'up'); }} disabled={idx === 0} className="p-0.5 rounded hover:bg-accent disabled:opacity-30">
+                      <button onClick={e => { e.stopPropagation(); movePassage(idx, 'up'); }} disabled={idx === 0} className="p-0.5 rounded hover:bg-secondary/70 disabled:opacity-30">
                         <ChevronUp className="h-3 w-3 text-muted-foreground" />
                       </button>
-                      <button onClick={e => { e.stopPropagation(); movePassage(idx, 'down'); }} disabled={idx === activeService!.passages.length - 1} className="p-0.5 rounded hover:bg-accent disabled:opacity-30">
+                      <button onClick={e => { e.stopPropagation(); movePassage(idx, 'down'); }} disabled={idx === activeService!.passages.length - 1} className="p-0.5 rounded hover:bg-secondary/70 disabled:opacity-30">
                         <ChevronDown className="h-3 w-3 text-muted-foreground" />
                       </button>
-                      <button onClick={e => { e.stopPropagation(); setDeleteConfirmIdx(idx); }} className="p-0.5 rounded hover:bg-destructive/20" title="Delete">
-                        <Trash2 className="h-3 w-3 text-destructive" />
+                      <button onClick={e => { e.stopPropagation(); setDeleteConfirmIdx(idx); }} className="p-0.5 rounded hover:bg-destructive/10" title="Delete">
+                        <Trash2 className="h-3 w-3 text-muted-foreground hover:text-destructive" />
                       </button>
                     </div>
                   </div>
