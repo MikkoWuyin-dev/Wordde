@@ -277,7 +277,7 @@ function MainView({
                 key={opt.value}
                 onClick={() => update({ style: opt.value })}
                 className={cn(
-                  'w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left transition-all',
+                  'focus-console w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left transition-all',
                   active
                     ? 'bg-paprika/14 border border-paprika/35 shadow-sm'
                     : 'border-transparent hover:bg-secondary/60'
@@ -344,7 +344,7 @@ function SubmenuRow({
   return (
     <button
       onClick={onClick}
-      className="w-full flex items-center justify-between gap-2 px-2.5 py-2 rounded-lg border border-border hover:border-muted-foreground/50 hover:bg-secondary/60 transition-all text-left"
+      className="focus-console w-full flex items-center justify-between gap-2 px-2.5 py-2 rounded-lg border border-border hover:border-muted-foreground/50 hover:bg-secondary/60 transition-all text-left"
     >
       <div className="min-w-0">
         <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">{label}</p>

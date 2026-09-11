@@ -87,6 +87,9 @@ function AutoFitVerse({ passage }: { passage: Passage }) {
 
     fit();
     window.addEventListener('resize', fit);
+    // Playfair Display loads asynchronously; re-fit once the real face is in
+    // so the verse is sized to true metrics, not the fallback serif.
+    document.fonts?.ready.then(fit);
     return () => window.removeEventListener('resize', fit);
   }, [verseContent, reference]);  return (
     <div className="h-screen w-screen flex flex-col"

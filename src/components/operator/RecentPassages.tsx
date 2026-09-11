@@ -116,7 +116,7 @@ export function RecentPassages() {
             <div
               key={`${ref}-${idx}`}
               className={cn(
-                'group w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-left transition-all',
+                'group focus-console w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-left transition-all',
                 active
                   ? 'bg-paprika/12 border border-paprika/30 shadow-sm'
                   : 'border-transparent hover:bg-secondary/60'

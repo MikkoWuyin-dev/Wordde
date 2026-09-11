@@ -193,7 +193,7 @@ export function SearchInput({
               >
                 <Icon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                 <span className="truncate">{suggestion.display}</span>
-                <span className="ml-auto text-[10px] text-muted-foreground/60 capitalize">
+                <span className="ml-auto text-[10px] text-muted-foreground capitalize">
                   {suggestion.type}
                 </span>
               </button>

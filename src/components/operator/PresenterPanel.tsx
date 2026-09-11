@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useLayoutEffect } from 'react';
 import { useStateManager } from '@/core/stateManager';
 import { BibleRepository } from '@/core/bibleRepository';
 import { cn } from '@/lib/utils';
@@ -7,6 +7,26 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ProjectionStatus } from './ProjectionStatus';
 import type { Slide } from '@/core/types';
+
+/** A scrollable slide body shows its boundary fade only on true overflow —
+    an idle fade dims a short verse's final line for no reason. */
+function useOverflows(dep: unknown): [(node: HTMLDivElement | null) => void, boolean] {
+  const [el, setEl] = useState<HTMLDivElement | null>(null);
+  const [overflows, setOverflows] = useState(false);
+
+  useLayoutEffect(() => {
+    if (!el) return;
+    const check = () => setOverflows(el.scrollHeight > el.clientHeight + 1);
+    check();
+    window.addEventListener('resize', check);
+    // Re-measure once webfonts land: Playfair's metrics differ from the
+    // fallback serif, so overflow can change after the face finishes loading.
+    document.fonts?.ready.then(check);
+    return () => window.removeEventListener('resize', check);
+  }, [el, dep]);
+
+  return [setEl, overflows];
+}
 
 function SlideCard({
   slide,
@@ -19,6 +39,8 @@ function SlideCard({
   icon: React.ElementType;
   variant: 'live' | 'next';
 }) {
+  const [bodyRef, overflows] = useOverflows(slide?.text);
+
   const styles = {
     live: {
       base: 'bg-card border border-paprika/30',
@@ -64,7 +86,10 @@ function SlideCard({
               {slide.reference}
             </p>
             <div className="relative flex-1 min-h-0">
-              <div className="h-full overflow-y-auto">
+              <div
+                ref={bodyRef}
+                className="h-full overflow-y-auto"
+              >
                 <p
                   className={cn(
                     'scripture-text leading-relaxed whitespace-normal break-words text-snow-soft',
@@ -74,11 +99,17 @@ function SlideCard({
                   {slide.text}
                 </p>
               </div>
-              {/* Scroll boundary fades out instead of slicing a line mid-glyph */}
-              <div
-                aria-hidden
-                className="pointer-events-none absolute inset-x-0 bottom-0 h-7 rounded-b-xl bg-gradient-to-t from-card to-transparent"
-              />
+              {/* Scroll boundary fades out only when content actually overflows —
+                  an idle fade dims a short verse's final line for no reason. */}
+              {slide && overflows && (
+                <div
+                  aria-hidden
+                  className={cn(
+                    'pointer-events-none absolute inset-x-0 bottom-0 h-7 rounded-b-xl',
+                    variant === 'live' ? 'fade-bottom' : 'fade-bottom-soft'
+                  )}
+                />
+              )}
             </div>
           </>
         ) : (

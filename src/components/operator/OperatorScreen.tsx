@@ -119,7 +119,7 @@ export function OperatorScreen() {
       <header className="glass shrink-0">
         <div className="px-4 py-2">
           <div className="flex items-center justify-between">
-            <h1 className="font-semibold text-sm tracking-tight">Wordde</h1>
+            <h1 className="font-wordmark font-normal text-lg leading-none tracking-normal text-foreground">Wordde</h1>
 
             <div className="flex items-center gap-2">
               {/* Translation selector */}
@@ -194,7 +194,7 @@ export function OperatorScreen() {
                     if (tab.id === 'plan') setPlanOpened(true);
                   }}
                   className={cn(
-                    'flex-1 px-3 py-2.5 text-sm font-medium transition-all border-b-2 -mb-px',
+                    'focus-console flex-1 px-3 py-2.5 text-sm font-medium transition-all border-b-2 -mb-px',
                     isActive
                       ? 'border-paprika text-paprika shadow-[0_1px_0_0_hsl(12_84%_56%_/_0.5)]'
                       : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-secondary/60'
@@ -256,7 +256,7 @@ export function OperatorScreen() {
           <div className="border-t border-border shrink-0">
             <Popover onOpenChange={(open) => { if (open) setSettingsOpened(true); }}>
               <PopoverTrigger asChild>
-                <button className="w-full flex items-center gap-1.5 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors">
+                <button className="focus-console w-full flex items-center gap-1.5 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors">
                   <Settings2 className="h-3.5 w-3.5" />
                   <span className="font-medium">Display Settings</span>
                 </button>
@@ -285,9 +285,10 @@ export function OperatorScreen() {
       {/* Keyboard shortcut hint bar */}
       <footer className="glass shrink-0">
         <div className="px-4 py-1.5 flex items-center justify-between text-[11px] text-muted-foreground">
-          <div className="flex items-center gap-2">              <button
+          <div className="flex items-center gap-2">
+              <button
               onClick={resetOnboarding}
-              className="flex items-center gap-1 px-2 py-0.5 rounded hover:bg-secondary/70 transition-colors text-muted-foreground hover:text-foreground"
+              className="focus-console flex items-center gap-1 px-2 py-0.5 rounded hover:bg-secondary/70 transition-colors text-muted-foreground hover:text-foreground"
               title="Replay full onboarding and reset all hints"
             >
               <HelpCircle className="h-3 w-3" />
@@ -309,7 +310,7 @@ export function OperatorScreen() {
             <Popover>
               <PopoverTrigger asChild>
                 <button
-                  className="flex items-center gap-1 px-1.5 py-0.5 rounded hover:bg-secondary/70 transition-colors text-muted-foreground hover:text-foreground"
+                  className="focus-console flex items-center gap-1 px-1.5 py-0.5 rounded hover:bg-secondary/70 transition-colors text-muted-foreground hover:text-foreground"
                   title="Show all keyboard shortcuts"
                 >
                   <span className="text-[10px] font-mono">?</span>

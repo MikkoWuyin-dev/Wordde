@@ -101,7 +101,8 @@ export function BibleNavigator() {
         {books.map((book) => (
           <button
             key={book}
-            onClick={() => handleBookClick(book)}              className="w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-xs text-left transition-all group"
+            onClick={() => handleBookClick(book)}
+            className="focus-console w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-xs text-left transition-all group"
           >
             <span className="truncate text-foreground">{book}</span>
             <ChevronRight className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 shrink-0" />
@@ -138,7 +139,7 @@ export function BibleNavigator() {
             <button
               key={ch}
               onClick={() => handleChapterClick(ch)}
-              className="flex items-center justify-center h-8 rounded-lg text-sm font-medium transition-all hover:bg-secondary/70 text-foreground"
+              className="focus-console flex items-center justify-center h-8 rounded-lg text-sm font-medium transition-all hover:bg-secondary/70 text-foreground"
             >
               {ch}
             </button>
@@ -161,7 +162,7 @@ export function BibleNavigator() {
               <button
                 key={v.verse}
                 onClick={() => handleVerseClick(v.verse)}
-                className="flex items-center justify-center h-8 rounded-lg text-sm font-medium transition-all hover:bg-secondary/70 text-foreground"
+                className="focus-console flex items-center justify-center h-8 rounded-lg text-sm font-medium transition-all hover:bg-secondary/70 text-foreground"
               >
                 {v.verse}
               </button>

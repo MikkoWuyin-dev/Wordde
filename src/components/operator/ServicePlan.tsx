@@ -346,7 +346,8 @@ export function ServicePlan() {
               <div
                 key={item.id}
                 className={cn(
-                  'group rounded-md border transition-colors',                      activePassageIndex === idx ? 'border-paprika/60 bg-paprika/10 shadow-sm' : 'border-border hover:bg-secondary/60'
+                  'group focus-console rounded-md border transition-colors',
+                  activePassageIndex === idx ? 'border-paprika/60 bg-paprika/10 shadow-sm' : 'border-border hover:bg-secondary/60'
                 )}
               >
                 {editingPassageIdx === idx ? (

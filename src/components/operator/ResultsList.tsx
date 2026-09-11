@@ -42,31 +42,29 @@ export function ResultsList({ results, selectedIndex, onSelect }: ResultsListPro
               key={`${result.passage.displayReference}-${index}`}
               onClick={() => onSelect(index)}
               className={cn(
-                "w-full text-left p-3 rounded-md border transition-all duration-150",
-                "result-item",
-                isSelected
-                  ? "bg-secondary/70 border-transparent"
-                  : "bg-card/40 border-transparent hover:bg-secondary/40"
+                'result-item w-full text-left p-3 rounded-md border border-transparent',
+                'focus-console',
+                isSelected && 'selected'
               )}
             >
               <div className="flex items-start gap-3">
                 <div className={cn(
-                  "p-1.5 rounded-md",
-                  isSelected ? "bg-paprika/18 text-paprika-bright" : "bg-muted/60 text-muted-foreground"
+                  'p-1.5 rounded-md',
+                  isSelected ? 'bg-paprika/18 text-paprika-bright' : 'bg-muted/60 text-muted-foreground'
                 )}>
                   <Icon className="h-4 w-4" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className={cn(
-                      "font-semibold tracking-tight",
-                      isSelected ? "text-paprika-bright" : "text-foreground"
+                      'font-semibold tracking-tight',
+                      isSelected ? 'text-paprika-bright' : 'text-foreground'
                     )}>
                       {result.passage.displayReference}
                     </span>
                     <span className={cn(
-                      "text-[10px] px-1.5 py-0.5 rounded-md font-medium uppercase tracking-wider",
-                      isSelected ? "bg-paprika/15 text-paprika-bright" : "bg-secondary/70 text-muted-foreground"
+                      'text-[10px] px-1.5 py-0.5 rounded-md font-medium uppercase tracking-wider',
+                      isSelected ? 'bg-paprika/15 text-paprika-bright' : 'bg-secondary/70 text-muted-foreground'
                     )}>
                       {matchTypeLabels[result.matchType]}
                     </span>
