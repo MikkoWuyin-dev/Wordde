@@ -161,7 +161,18 @@ function projectSlide(
   } catch (error) {
     console.warn('[projectSlide] Failed to persist projection state:', error);
   }
+
   get().addToRecent(slide.reference);
+
+  // Treat a passage replacement as an immediate commit, so the Recent list's
+  // live highlight tracks the new current passage on the same click.
+  if (oldLiveSlideOverride === undefined) {
+    const projectedSlide = get().projectionQueue[get().currentSlideIndex];
+    if (projectedSlide) {
+      const projectedPassage = slideToPassage(projectedSlide, get().currentTranslation);
+      set({ committedPassage: projectedPassage });
+    }
+  }
 
   // Pre-load next slide
   if (currentSlideIndex >= get().projectionQueue.length - 1) {

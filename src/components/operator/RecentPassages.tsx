@@ -5,7 +5,22 @@ import { cn } from '@/lib/utils';
 import { Clock, Play, Trash2, X } from 'lucide-react';
 
 export function RecentPassages() {
-  const { recentPassages, projectionQueue, buildQueueFromPassage, buildQueueFromChapter, removeFromRecent, clearAllRecent, currentTranslation } = useStateManager();
+  const {
+    recentPassages,
+    buildQueueFromPassage,
+    buildQueueFromChapter,
+    removeFromRecent,
+    clearAllRecent,
+    currentTranslation,
+    liveSlideIndex,
+    liveProjectionQueue,
+  } = useStateManager();
+
+  // RecentPassages runs before the rest of the app has fully wired these two
+  // slice states. If it receives undefined at mount / hot reload, fall back
+  // to safe local defaults so the Recent tab can render without throwing.
+  const safeQueue = Array.isArray(liveProjectionQueue) ? liveProjectionQueue : [];
+  const safeLiveIndex = typeof liveSlideIndex === 'number' ? liveSlideIndex : null;
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [confirmClearAll, setConfirmClearAll] = useState(false);
 
@@ -16,9 +31,9 @@ export function RecentPassages() {
     const rangeMatch = reference.match(rangePattern);
     if (rangeMatch) {
       const [, bookPart, chapter, verseStart, verseEnd] = rangeMatch;
-      const bookName = BibleRepository.resolveBookName(bookPart.trim());
-      if (!bookName) return;
-      const passage = BibleRepository.getPassage({ book: bookName, chapter, verseStart, verseEnd, translation: currentTranslation });
+      const bookNames = BibleRepository.resolveBookName(bookPart.trim());
+      if (bookNames.length === 0) return;
+      const passage = BibleRepository.getPassage({ book: bookNames[0], chapter, verseStart, verseEnd, translation: currentTranslation });
       if (passage) buildQueueFromPassage(passage);
       return;
     }
@@ -26,17 +41,24 @@ export function RecentPassages() {
     const chapterMatch = reference.match(chapterPattern);
     if (chapterMatch) {
       const [, bookPart, chapter] = chapterMatch;
-      const bookName = BibleRepository.resolveBookName(bookPart.trim());
-      if (!bookName) return;
-      buildQueueFromChapter(bookName, chapter);
+      const bookNames = BibleRepository.resolveBookName(bookPart.trim());
+      if (bookNames.length === 0) return;
+      buildQueueFromChapter(bookNames[0], chapter);
     }
   }, [buildQueueFromPassage, buildQueueFromChapter, currentTranslation]);
 
+  const getCurrentReference = useCallback((): string | null => {
+    if (safeLiveIndex == null || safeLiveIndex < 0 || safeLiveIndex >= safeQueue.length) {
+      return safeQueue.length > 0 ? safeQueue[0].reference : null;
+    }
+    return safeQueue[safeLiveIndex].reference;
+  }, [safeLiveIndex, safeQueue]);
+
   const isActive = useCallback((reference: string) => {
-    if (!projectionQueue.length) return false;
-    const first = projectionQueue[0];
-    return reference.startsWith(`${first.book} ${first.chapter}`);
-  }, [projectionQueue]);
+    const current = getCurrentReference();
+    if (!current) return false;
+    return reference === current;
+  }, [getCurrentReference]);
 
   if (recentPassages.length === 0) {
     return (
