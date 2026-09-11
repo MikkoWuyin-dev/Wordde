@@ -145,9 +145,9 @@ export function SearchInput({
         placeholder={placeholder}
         className={cn(
           "h-12 pl-10 pr-10 text-lg rounded-xl",
-          "bg-card border border-border shadow-[0_1px_2px_hsl(240_20%_8%_/_0.45),inset_0_1px_0_hsl(240_28%_96%_/_0.08)]",
-          "focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-primary",
-          "focus-visible:shadow-[0_4px_10px_-2px_hsl(240_20%_8%_/_0.55),0_8px_22px_-4px_hsl(240_20%_8%_/_0.4),inset_0_1px_0_hsl(240_28%_96%_/_0.1)]",
+          "bg-card border border-border shadow-[0_1px_2px_hsl(240_11%_2%_/_0.7),inset_0_1px_0_hsl(0_0%_100%_/_0.06)]",
+          "focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-paprika",
+          "focus-visible:shadow-[0_4px_10px_-2px_hsl(240_11%_2%_/_0.75),0_8px_22px_-4px_hsl(240_11%_2%_/_0.6),inset_0_1px_0_hsl(0_0%_100%_/_0.08)]",
           "placeholder:text-muted-foreground/60",
           "font-sans"
         )}
@@ -157,7 +157,7 @@ export function SearchInput({
       {value && (
         <button
           onClick={onClear}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-snow-soft transition-colors"
           tabIndex={-1}
           aria-label="Clear search"
         >
@@ -172,7 +172,7 @@ export function SearchInput({
 
       {/* Autocomplete dropdown */}
       {showSuggestions && suggestions.length > 0 && (
-        <div className="absolute left-0 right-0 top-full mt-1.5 z-50 rounded-xl border border-border bg-popover shadow-[0_6px_18px_-4px_hsl(240_20%_8%_/_0.5)] overflow-hidden">
+        <div className="absolute left-0 right-0 top-full mt-1.5 z-50 rounded-xl border border-border bg-popover shadow-[0_6px_18px_-4px_hsl(240_11%_2%_/_0.6)] overflow-hidden">
           {suggestions.map((suggestion, index) => {
             const Icon = typeIcons[suggestion.type];
             return (
@@ -181,7 +181,7 @@ export function SearchInput({
                 className={cn(
                   "w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left transition-colors",
                   index === selectedSuggestion
-                    ? "bg-accent text-accent-foreground"
+                    ? "bg-hunter/15 text-hunter-bright border border-hunter/30"
                     : "hover:bg-muted/50 text-foreground"
                 )}
                 onMouseDown={(e) => {

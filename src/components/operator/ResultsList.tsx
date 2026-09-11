@@ -26,7 +26,7 @@ export function ResultsList({ results, selectedIndex, onSelect }: ResultsListPro
   if (results.length === 0) {
     return null;
   }
-  
+
   return (
     <div className="space-y-1">
       <div className="text-xs uppercase tracking-wider text-muted-foreground px-2 py-1">
@@ -36,7 +36,7 @@ export function ResultsList({ results, selectedIndex, onSelect }: ResultsListPro
         {results.map((result, index) => {
           const Icon = matchTypeIcons[result.matchType];
           const isSelected = index === selectedIndex;
-          
+
           return (
             <button
               key={`${result.passage.displayReference}-${index}`}
@@ -44,27 +44,30 @@ export function ResultsList({ results, selectedIndex, onSelect }: ResultsListPro
               className={cn(
                 "w-full text-left p-3 rounded-md border transition-all duration-150",
                 "result-item",
-                isSelected 
-                  ? "bg-secondary/70 border-l-4 border-l-primary" 
+                isSelected
+                  ? "bg-secondary/70 border-transparent"
                   : "bg-card/40 border-transparent hover:bg-secondary/40"
               )}
             >
               <div className="flex items-start gap-3">
                 <div className={cn(
                   "p-1.5 rounded-md",
-                  isSelected ? "bg-primary/20 text-primary shadow-sm" : "bg-muted/60 text-muted-foreground"
+                  isSelected ? "bg-paprika/18 text-paprika-bright" : "bg-muted/60 text-muted-foreground"
                 )}>
                   <Icon className="h-4 w-4" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className={cn(
-                      "font-semibold",
-                      isSelected ? "text-primary" : "text-foreground"
+                      "font-semibold tracking-tight",
+                      isSelected ? "text-paprika-bright" : "text-foreground"
                     )}>
                       {result.passage.displayReference}
                     </span>
-                    <span className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+                    <span className={cn(
+                      "text-[10px] px-1.5 py-0.5 rounded-md font-medium uppercase tracking-wider",
+                      isSelected ? "bg-paprika/15 text-paprika-bright" : "bg-secondary/70 text-muted-foreground"
+                    )}>
                       {matchTypeLabels[result.matchType]}
                     </span>
                   </div>

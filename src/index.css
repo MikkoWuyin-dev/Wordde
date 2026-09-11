@@ -1,73 +1,79 @@
+@import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /* Wordde Design System
-   Premium operator interface for church service use
-   Black ground, paprika action voice, hunter green confirmation,
-   yellow spark only as a controlled signal, snow for clarity on dark surfaces
+   Operator interface for church service use.
+   Black (#08090a) owns the ground — a near-neutral cool black that lets the
+   congregation-facing content breathe. Paprika (#e4572e) is the single action
+   voice: it marks what is LIVE and what the operator's next move is.
+   Hunter (#34623f) confirms and secures: prepared, blanked, safe.
+   Yellow (#faff00) is a controlled signal only — transitional states, never text.
+   Snow (#fcfcfc) carries reading hierarchy on the dark ground.
 */
-
-@import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap');
 
 @layer base {
   :root {
-    /* ---------- Climate ---------- */
-    --background: 228 23% 7%;
-    --background-elevated: 228 21% 10%;
-    --foreground: 225 12% 96%;
+    /* ---------- Ground: #08090a family (hue 240, chroma falls toward black) ---------- */
+    --black: 240 11% 3%;
+    --background: 240 10% 4%;
+    --background-elevated: 240 9% 6%;
+    --foreground: 0 0% 96%;
 
-    --card: 228 20% 11%;
-    --card-foreground: 225 12% 95%;
+    --card: 240 8% 7%;
+    --card-foreground: 240 10% 94%;
 
-    --popover: 228 19% 13%;
-    --popover-foreground: 225 12% 95%;
+    --popover: 240 9% 8%;
+    --popover-foreground: 240 10% 94%;
 
-    --secondary: 228 16% 17%;
-    --secondary-foreground: 225 12% 86%;
+    --secondary: 240 7% 12%;
+    --secondary-foreground: 240 8% 84%;
 
-    --muted: 228 14% 19%;
-    --muted-foreground: 225 10% 58%;
+    --muted: 240 6% 14%;
+    --muted-foreground: 240 5% 62%;
 
     /* ---------- Core palette ---------- */
-    --paprika: 12 84% 56%;
-    --paprika-foreground: 228 20% 9%;
+    --paprika: 14 77% 54%;
+    --paprika-foreground: 240 11% 7%;
+    --paprika-bright: 14 85% 68%;
 
-    --hunter: 134 32% 32%;
-    --hunter-foreground: 228 20% 95%;
+    --hunter: 134 31% 29%;
+    --hunter-foreground: 0 0% 98%;
+    --hunter-bright: 134 30% 70%;
 
     --snow: 0 0% 99%;
-    --snow-foreground: 228 23% 7%;
+    --snow-soft: 0 0% 88%;
+    --snow-foreground: 240 11% 4%;
 
     --yellow: 60 100% 50%;
-    --yellow-foreground: 228 28% 12%;
-
-    --black: 228 22% 4%;
+    --yellow-foreground: 240 11% 6%;
 
     /* ---------- Semantic reuse ---------- */
     --primary: var(--paprika);
     --primary-foreground: var(--paprika-foreground);
 
-    --accent: var(--hunter);
-    --accent-foreground: var(--hunter-foreground);
+    --accent: 240 7% 14%;
+    --accent-foreground: 240 8% 88%;
 
-    --destructive: 0 78% 56%;
-    --destructive-foreground: 225 12% 96%;
+    --destructive: 0 72% 56%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 228 16% 20%;
-    --input: 228 16% 16%;
+    --border: 240 7% 16%;
+    --input: 240 7% 12%;
     --ring: var(--paprika);
 
-    /* ---------- Neumorphic depth (tuned for black ground) ---------- */
-    --neu-raised: 0 1px 2px hsl(228 22% 4% / 0.7),
-                  0 2px 6px hsl(228 22% 4% / 0.55),
+    /* ---------- Depth (offset shadows on the black ground) ---------- */
+    --neu-raised: 0 1px 2px hsl(240 11% 2% / 0.7),
+                  0 2px 6px hsl(240 11% 2% / 0.55),
                   inset 0 1px 0 hsl(0 0% 100% / 0.06);
-    --neu-raised-strong: 0 4px 10px -2px hsl(228 22% 4% / 0.75),
-                         0 8px 22px -4px hsl(228 22% 4% / 0.6),
+    --neu-raised-strong: 0 4px 10px -2px hsl(240 11% 2% / 0.75),
+                         0 8px 22px -4px hsl(240 11% 2% / 0.6),
                          inset 0 1px 0 hsl(0 0% 100% / 0.08);
-    --neu-depressed: inset 0 1px 2px hsl(228 22% 4% / 0.7),
+    --neu-depressed: inset 0 1px 2px hsl(240 11% 2% / 0.7),
                      inset 0 1px 0 hsl(0 0% 100% / 0.06);
-    --neu-flat-depressed: inset 0 1px 2px hsl(228 22% 4% / 0.6);
+    --neu-flat-depressed: inset 0 1px 2px hsl(240 11% 2% / 0.6);
 
     --radius-sm: 0.625rem;
     --radius-md: 0.75rem;
@@ -77,28 +83,28 @@
     --radius: var(--radius-md);
 
     /* ---------- Glass ---------- */
-    --glass-surface: 228 20% 12% / 0.55;
-    --glass-border: 228 18% 22% / 0.4;
-    --glass-strong: 228 19% 11% / 0.72;
+    --glass-surface: 240 9% 8% / 0.6;
+    --glass-border: 240 7% 18% / 0.45;
+    --glass-strong: 240 9% 7% / 0.78;
 
     /* ---------- Scripture ---------- */
-    --scripture-text: 225 12% 97%;
-    --scripture-reference: 12 84% 72%;
+    --scripture-text: 240 14% 97%;
+    --scripture-reference: var(--paprika-bright);
     --preview-border: var(--paprika);
     --committed-glow: var(--paprika);
 
-    /* ---------- Projection ---------- */
-    --projection-bg: 228 22% 3%;
+    /* ---------- Projection (congregation-facing window stays pure) ---------- */
+    --projection-bg: 0 0% 0%;
     --projection-text: 0 0% 100%;
 
     /* ---------- Sidebar legacy tokens (functional path preserved) ---------- */
-    --sidebar-background: 228 20% 9%;
-    --sidebar-foreground: 225 12% 86%;
+    --sidebar-background: 240 9% 6%;
+    --sidebar-foreground: 240 8% 86%;
     --sidebar-primary: var(--paprika);
     --sidebar-primary-foreground: var(--paprika-foreground);
-    --sidebar-accent: 228 16% 17%;
-    --sidebar-accent-foreground: 225 12% 86%;
-    --sidebar-border: 228 16% 20%;
+    --sidebar-accent: 240 7% 12%;
+    --sidebar-accent-foreground: 240 8% 86%;
+    --sidebar-border: 240 7% 16%;
     --sidebar-ring: var(--paprika);
   }
 }
@@ -115,7 +121,12 @@
   }
 
   body {
-    background: hsl(var(--background));
+    /* The atmosphere: one soft lift of light falling away into #08090a,
+       so the black ground reads as depth, not as a flat fill. */
+    background:
+      radial-gradient(140% 90% at 50% -20%, hsl(240 8% 8%) 0%, hsl(240 11% 3.5%) 58%, hsl(240 11% 3%) 100%)
+      hsl(var(--black));
+    background-attachment: fixed;
     color: hsl(var(--foreground));
     font-family: 'Inter', system-ui, sans-serif;
     margin: 0;
@@ -196,8 +207,8 @@
     transition: background-color 120ms ease, box-shadow 120ms ease, transform 80ms ease;
   }
   .result-item.selected {
-    background: hsl(var(--paprika) / 0.16);
-    box-shadow: var(--neu-flat-depressed);
+    background: hsl(var(--paprika) / 0.14);
+    box-shadow: inset 0 0 0 1px hsl(var(--paprika) / 0.4);
   }
   .result-item:hover:not(.selected) {
     background: hsl(var(--secondary) / 0.5);
@@ -255,13 +266,13 @@
   .chip-paprika {
     background: hsl(var(--paprika) / 0.14);
     border: 1px solid hsl(var(--paprika) / 0.35);
-    color: hsl(var(--paprika));
+    color: hsl(var(--paprika-bright));
   }
 
   .chip-hunter {
     background: hsl(var(--hunter) / 0.16);
     border: 1px solid hsl(var(--hunter) / 0.4);
-    color: hsl(134 32% 78%);
+    color: hsl(var(--hunter-bright));
   }
 
   .chip-yellow {
@@ -329,4 +340,31 @@
   to {
     opacity: 1;
     transform: scale(1);
- 
+  }
+}
+
+/* "On air" signal for the live slide — a breathing paprika edge and halo. */
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow:
+      0 10px 26px -4px hsl(240 11% 2% / 0.7),
+      0 0 0 1px hsl(var(--paprika) / 0.28),
+      0 0 18px hsl(var(--paprika) / 0.18);
+  }
+  50% {
+    box-shadow:
+      0 10px 26px -4px hsl(240 11% 2% / 0.7),
+      0 0 0 1px hsl(var(--paprika) / 0.45),
+      0 0 30px hsl(var(--paprika) / 0.3);
+  }
+}
+
+/* Transitional-state blink for status dots (connecting / live indicators). */
+@keyframes spark {
+  0%, 100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 1;
+  }
+}

@@ -33,7 +33,7 @@ export function PassageNavigation() {
       >
         <ChevronLeft className="h-4 w-4" />
       </Button>
-      <span className="px-2 text-sm font-medium text-foreground min-w-[140px] text-center">
+      <span className="px-2 text-sm font-medium tracking-tight text-snow-soft min-w-[140px] text-center">
         {committedPassage.displayReference}
       </span>
       <Button

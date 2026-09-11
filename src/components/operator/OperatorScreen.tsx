@@ -171,6 +171,7 @@ export function OperatorScreen() {
 
               {/* Projection control - primary action, prominent */}
               <ProjectionControl />
+              <span className="text-[10px] text-muted-foreground/60 select-none pointer-events-none">Beta</span>
             </div>
           </div>
         </div>
@@ -193,10 +194,10 @@ export function OperatorScreen() {
                     if (tab.id === 'plan') setPlanOpened(true);
                   }}
                   className={cn(
-                    'flex-1 px-3 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px',
+                    'flex-1 px-3 py-2.5 text-sm font-medium transition-all border-b-2 -mb-px',
                     isActive
-                      ? 'border-primary text-primary shadow-[0_1px_0_0_hsl(32_94%_58%_/_0.4)]'
-                      : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-accent/40'
+                      ? 'border-paprika text-paprika shadow-[0_1px_0_0_hsl(12_84%_56%_/_0.5)]'
+                      : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-secondary/60'
                   )}
                 >
                   {tab.label}
@@ -255,7 +256,7 @@ export function OperatorScreen() {
           <div className="border-t border-border shrink-0">
             <Popover onOpenChange={(open) => { if (open) setSettingsOpened(true); }}>
               <PopoverTrigger asChild>
-                <button className="w-full flex items-center gap-1.5 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-accent/10 transition-colors">
+                <button className="w-full flex items-center gap-1.5 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors">
                   <Settings2 className="h-3.5 w-3.5" />
                   <span className="font-medium">Display Settings</span>
                 </button>
@@ -274,7 +275,8 @@ export function OperatorScreen() {
           </div>
         </div>
 
-        {/* Right Column - Presenter Panel */}          <div className="flex-1 min-w-0 flex flex-col" data-tutorial="presenter">
+        {/* Right Column - Presenter Panel */}
+        <div className="flex-1 min-w-0 flex flex-col" data-tutorial="presenter">
           <ContextualHint id="keyboard_nav" message="Use ← → to move between passages" show={arrowUsed} className="mx-4 mt-2" />
           <PresenterPanel />
         </div>
@@ -283,10 +285,9 @@ export function OperatorScreen() {
       {/* Keyboard shortcut hint bar */}
       <footer className="glass shrink-0">
         <div className="px-4 py-1.5 flex items-center justify-between text-[11px] text-muted-foreground">
-          <div className="flex items-center gap-2">
-            <button
+          <div className="flex items-center gap-2">              <button
               onClick={resetOnboarding}
-              className="flex items-center gap-1 px-2 py-0.5 rounded hover:bg-accent hover:text-accent-foreground transition-colors"
+              className="flex items-center gap-1 px-2 py-0.5 rounded hover:bg-secondary/70 transition-colors text-muted-foreground hover:text-foreground"
               title="Replay full onboarding and reset all hints"
             >
               <HelpCircle className="h-3 w-3" />
@@ -308,7 +309,7 @@ export function OperatorScreen() {
             <Popover>
               <PopoverTrigger asChild>
                 <button
-                  className="flex items-center gap-1 px-1.5 py-0.5 rounded hover:bg-accent hover:text-accent-foreground transition-colors text-muted-foreground hover:text-foreground"
+                  className="flex items-center gap-1 px-1.5 py-0.5 rounded hover:bg-secondary/70 transition-colors text-muted-foreground hover:text-foreground"
                   title="Show all keyboard shortcuts"
                 >
                   <span className="text-[10px] font-mono">?</span>

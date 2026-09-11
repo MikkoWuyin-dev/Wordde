@@ -96,14 +96,12 @@ export function BibleNavigator() {
       : `${selectedBook} ${selectedChapter}`;
 
   const BookColumn = ({ title, books }: { title: string; books: string[] }) => (
-    <div className="flex-1 min-w-0">
-      <p className="text-[9px] font-semibold text-muted-foreground uppercase tracking-widest px-1 pb-1">{title}</p>
+    <div className="flex-1 min-w-0">          <p className="text-[9px] font-semibold uppercase tracking-widest px-1 pb-1 text-muted-foreground">{title}</p>
       <div className="space-y-px">
         {books.map((book) => (
           <button
             key={book}
-            onClick={() => handleBookClick(book)}
-            className="w-full flex items-center justify-between px-2 py-1 rounded text-xs text-left hover:bg-accent transition-colors group"
+            onClick={() => handleBookClick(book)}              className="w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-xs text-left transition-all group"
           >
             <span className="truncate text-foreground">{book}</span>
             <ChevronRight className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 shrink-0" />
@@ -140,7 +138,7 @@ export function BibleNavigator() {
             <button
               key={ch}
               onClick={() => handleChapterClick(ch)}
-              className="flex items-center justify-center h-8 rounded text-sm font-medium hover:bg-accent text-foreground transition-colors"
+              className="flex items-center justify-center h-8 rounded-lg text-sm font-medium transition-all hover:bg-secondary/70 text-foreground"
             >
               {ch}
             </button>
@@ -149,14 +147,13 @@ export function BibleNavigator() {
       )}
 
       {level === 'verses' && (
-        <div className="space-y-1.5">
-          <Button
+        <div className="space-y-1.5">            <Button
             onClick={handleProjectChapter}
             variant="secondary"
             size="sm"
-            className="w-full text-xs gap-1.5 h-7"
+            className="w-full text-xs gap-1.5 h-7 bg-hunter/10 text-hunter border-hunter/30 hover:bg-hunter/20"
           >
-            <Layers className="h-3 w-3" />
+            <Layers className="h-3 w-3 text-hunter-bright" />
             Load Full Chapter
           </Button>
           <div className="grid grid-cols-5 gap-0.5">
@@ -164,7 +161,7 @@ export function BibleNavigator() {
               <button
                 key={v.verse}
                 onClick={() => handleVerseClick(v.verse)}
-                className="flex items-center justify-center h-8 rounded text-sm font-medium hover:bg-accent text-foreground transition-colors"
+                className="flex items-center justify-center h-8 rounded-lg text-sm font-medium transition-all hover:bg-secondary/70 text-foreground"
               >
                 {v.verse}
               </button>

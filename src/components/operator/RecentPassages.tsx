@@ -91,19 +91,19 @@ export function RecentPassages() {
             return (
               <div
                 key={`${ref}-${idx}`}
-                className="w-full flex items-center justify-between gap-2 px-2 py-1.5 rounded-md bg-destructive/10 border border-destructive/30"
+                className="w-full flex items-center justify-between gap-2 px-2 py-1.5 rounded-lg bg-destructive/8 border border-destructive/30"
               >
                 <span className="text-xs text-foreground truncate">Remove?</span>
                 <div className="flex items-center gap-1 shrink-0">
                   <button
                     onClick={() => { removeFromRecent(ref); setConfirmDelete(null); }}
-                    className="text-[10px] text-destructive hover:text-destructive/80 font-medium px-1.5 py-0.5 rounded hover:bg-destructive/10"
+                    className="text-[10px] text-destructive hover:text-destructive/90 font-medium px-1.5 py-0.5 rounded hover:bg-destructive/10"
                   >
                     Delete
                   </button>
                   <button
                     onClick={() => setConfirmDelete(null)}
-                    className="text-muted-foreground hover:text-foreground p-0.5 rounded hover:bg-accent"
+                    className="text-muted-foreground hover:text-foreground p-0.5 rounded hover:bg-secondary/60"
                   >
                     <X className="h-3 w-3" />
                   </button>
@@ -116,10 +116,10 @@ export function RecentPassages() {
             <div
               key={`${ref}-${idx}`}
               className={cn(
-                'group w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-left transition-colors',
+                'group w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-left transition-all',
                 active
-                  ? 'bg-primary/10 border border-primary/30'
-                  : 'hover:bg-accent border border-transparent'
+                  ? 'bg-paprika/12 border border-paprika/30 shadow-sm'
+                  : 'border-transparent hover:bg-secondary/60'
               )}
             >
               <button
@@ -127,19 +127,18 @@ export function RecentPassages() {
                 className="flex items-center gap-2 flex-1 min-w-0"
               >
                 {active ? (
-                  <Play className="h-3 w-3 text-primary fill-primary shrink-0" />
+                  <Play className="h-3 w-3 text-paprika fill-paprika shrink-0" />
                 ) : (
                   <span className="text-[10px] text-muted-foreground font-mono w-3 text-center shrink-0">{idx + 1}</span>
                 )}
-                <span className={cn('text-xs truncate', active ? 'font-medium text-primary' : 'text-foreground')}>
+                <span className={cn('text-xs truncate', active ? 'font-medium text-paprika' : 'text-foreground')}>
                   {ref}
                 </span>
               </button>
               <button
                 onClick={(e) => { e.stopPropagation(); setConfirmDelete(ref); }}
                 className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all shrink-0 p-0.5 rounded hover:bg-destructive/10"
-              >
-                <Trash2 className="h-3 w-3" />
+              >                  <Trash2 className="h-3 w-3 text-muted-foreground hover:text-destructive" />
               </button>
             </div>
           );

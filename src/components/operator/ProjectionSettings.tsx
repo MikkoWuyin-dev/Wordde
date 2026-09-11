@@ -181,10 +181,9 @@ export function ProjectionSettings() {
       backgroundImages: 'Background Images',
     };
     return (
-      <div className="flex items-center gap-2 pb-2">
-        <button
+      <div className="flex items-center gap-2 pb-2">          <button
           onClick={() => setView('main')}
-          className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors -ml-1 px-1 py-0.5 rounded hover:bg-accent/20"
+          className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors -ml-1 px-1 py-0.5 rounded hover:bg-secondary/60"
           aria-label="Back to display settings"
         >
           <ChevronLeft className="h-3.5 w-3.5" />
@@ -278,15 +277,15 @@ function MainView({
                 key={opt.value}
                 onClick={() => update({ style: opt.value })}
                 className={cn(
-                  'w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md text-left transition-colors',
+                  'w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left transition-all',
                   active
-                    ? 'bg-primary/10 border border-primary/30'
-                    : 'hover:bg-accent/10 border border-transparent'
+                    ? 'bg-paprika/14 border border-paprika/35 shadow-sm'
+                    : 'border-transparent hover:bg-secondary/60'
                 )}
               >
-                <Icon className={cn('h-3.5 w-3.5 shrink-0', active ? 'text-primary' : 'text-muted-foreground')} />
+                <Icon className={cn('h-3.5 w-3.5 shrink-0', active ? 'text-paprika' : 'text-muted-foreground')} />
                 <div className="min-w-0">
-                  <p className={cn('text-xs font-medium', active ? 'text-primary' : 'text-foreground')}>{opt.label}</p>
+                  <p className={cn('text-xs font-medium', active ? 'text-paprika' : 'text-foreground')}>{opt.label}</p>
                   <p className="text-[10px] text-muted-foreground">{opt.desc}</p>
                 </div>
               </button>
@@ -345,7 +344,7 @@ function SubmenuRow({
   return (
     <button
       onClick={onClick}
-      className="w-full flex items-center justify-between gap-2 px-2.5 py-2 rounded-md border border-border hover:border-muted-foreground/40 hover:bg-accent/10 transition-colors text-left"
+      className="w-full flex items-center justify-between gap-2 px-2.5 py-2 rounded-lg border border-border hover:border-muted-foreground/50 hover:bg-secondary/60 transition-all text-left"
     >
       <div className="min-w-0">
         <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">{label}</p>
@@ -382,7 +381,7 @@ function SessionScreensView({
         size="sm"
         variant="outline"
         onClick={onAdd}
-        className="w-full h-8 text-xs gap-1.5"
+        className="w-full h-8 text-xs gap-1.5 border-hunter/40 text-hunter-bright hover:bg-hunter/10"
       >
         <Plus className="h-3.5 w-3.5" />
         Add Session Screen
@@ -404,7 +403,7 @@ function SessionScreensView({
               key={screen.id}
               className={cn(
                 'rounded-md border p-2 space-y-1.5 transition-colors',
-                isActive ? 'border-primary/40 bg-primary/5' : 'border-border'
+                isActive ? 'border-paprika/40 bg-paprika/10 shadow-sm' : 'border-border'
               )}
             >
               <div className="flex items-center gap-1.5">
@@ -416,7 +415,7 @@ function SessionScreensView({
                   <span
                     className={cn(
                       'text-xs font-medium truncate block',
-                      isActive ? 'text-primary' : 'text-foreground'
+                      isActive ? 'text-paprika' : 'text-foreground'
                     )}
                   >
                     {isActive ? '▶ ' : ''}
@@ -430,7 +429,7 @@ function SessionScreensView({
                 </button>
                 <button
                   onClick={() => setEditingId(isEditing ? null : screen.id)}
-                  className="p-1 rounded hover:bg-accent/30 text-muted-foreground hover:text-foreground"
+                  className="p-1 rounded hover:bg-secondary/70 text-muted-foreground hover:text-foreground"
                   aria-label="Edit"
                   title="Edit"
                 >
@@ -558,35 +557,34 @@ function BackgroundImagesView({
               key={bg.id}
               className={cn(
                 'relative rounded-md border overflow-hidden group transition-colors',
-                isActive ? 'border-primary ring-1 ring-primary' : 'border-border'
+                isActive ? 'border-paprika ring-1 ring-paprika/40' : 'border-border'
               )}
-            >
-              <button
-                onClick={() => onSelect(bg.id)}
-                className="block w-full"
-                title={isActive ? 'Active background' : 'Set as active'}
-              >
-                {url ? (
-                  <img src={url} alt={bg.name} className="w-full h-20 object-cover" />
-                ) : (
-                  <div className="w-full h-20 bg-muted/40 flex items-center justify-center">
-                    <ImageIcon className="h-5 w-5 text-muted-foreground/40" />
+            >                  <button
+                  onClick={() => onSelect(bg.id)}
+                  className="block w-full"
+                  title={isActive ? 'Active background' : 'Set as active'}
+                >
+                  {url ? (
+                    <img src={url} alt={bg.name} className="w-full h-20 object-cover" />
+                  ) : (
+                    <div className="w-full h-20 bg-secondary/50 flex items-center justify-center">
+                      <ImageIcon className="h-5 w-5 text-muted-foreground/40" />
+                    </div>
+                  )}
+                  <div className="px-1.5 py-1 bg-black text-left">
+                    <p className="text-[10px] text-snow truncate">{bg.name}</p>
                   </div>
-                )}
-                <div className="px-1.5 py-1 bg-background/80 text-left">
-                  <p className="text-[10px] text-foreground truncate">{bg.name}</p>
-                </div>
-              </button>
+                </button>
 
-              {isActive && (
-                <span className="absolute top-1 left-1 p-0.5 rounded bg-primary text-primary-foreground">
-                  <Check className="h-3 w-3" />
-                </span>
-              )}
+                {isActive && (
+                  <span className="absolute top-1 left-1 p-0.5 rounded bg-paprika text-paprika-foreground">
+                    <Check className="h-3 w-3" />
+                  </span>
+                )}
 
               <button
                 onClick={() => onDelete(bg.id)}
-                className="absolute top-1 right-1 p-1 rounded bg-background/80 hover:bg-destructive/20 transition-colors opacity-0 group-hover:opacity-100"
+                className="absolute top-1 right-1 p-1 rounded bg-black/70 hover:bg-destructive/20 transition-colors opacity-0 group-hover:opacity-100"
                 aria-label="Delete background"
                 title="Delete"
               >

@@ -165,13 +165,13 @@ export function ProjectionControl() {
           <span
             className={cn(
               'h-2 w-2 rounded-full transition-colors',
-              status === 'active' && 'bg-green-500',
-              status === 'connecting' && 'bg-yellow-500 animate-pulse',
+              status === 'active' && 'bg-paprika animate-spark',
+              status === 'connecting' && 'bg-yellow animate-spark',
               status === 'disconnected' && 'bg-destructive',
               status === 'idle' && 'bg-muted-foreground/40'
             )}
           />
-          <span className="hidden sm:inline">
+          <span className="hidden sm:inline whitespace-nowrap">
             {status === 'active' && 'Connected'}
             {status === 'connecting' && 'Connecting…'}
             {status === 'disconnected' && 'Disconnected'}
@@ -194,9 +194,8 @@ export function ProjectionControl() {
       {/* Setup Guide Dialog */}
       <Dialog open={showSetup} onOpenChange={setShowSetup}>
         <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Monitor className="h-5 w-5 text-primary" />
+          <DialogHeader>              <DialogTitle className="flex items-center gap-2">
+              <Monitor className="h-5 w-5 text-paprika-bright" />
               Set Up Projection
             </DialogTitle>
             <DialogDescription>
@@ -209,8 +208,8 @@ export function ProjectionControl() {
               const StepIcon = step.icon;
               return (
                 <li key={i} className="flex gap-3 items-start">
-                  <div className="shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                    <StepIcon className="h-4 w-4 text-primary" />
+                  <div className="shrink-0 w-8 h-8 rounded-full bg-paprika/15 flex items-center justify-center">
+                    <StepIcon className="h-4 w-4 text-paprika-bright" />
                   </div>
                   <div className="pt-0.5">
                     <p className="text-sm font-medium text-foreground">{step.title}</p>

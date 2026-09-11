@@ -21,8 +21,8 @@ function SlideCard({
 }) {
   const styles = {
     live: {
-      base: 'bg-card border border-primary/30 shadow-[0_8px_22px_-4px_hsl(240_20%_8%_/_0.55)]',
-      label: 'text-primary',
+      base: 'bg-card border border-paprika/30',
+      label: 'text-paprika-bright',
       refSize: 'text-xs',
       textSize: 'text-2xl',
       minH: 'min-h-[200px]',
@@ -30,8 +30,8 @@ function SlideCard({
       glow: 'animate-glow-pulse',
     },
     next: {
-      base: 'bg-card/70 border border-border/70',
-      label: 'text-accent',
+      base: 'bg-card/60 border border-border/70',
+      label: 'text-hunter-bright',
       refSize: 'text-xs',
       textSize: 'text-lg',
       minH: 'min-h-[140px]',
@@ -51,10 +51,7 @@ function SlideCard({
         variant === 'live' ? 'flex-[57]' : 'flex-[43]'
       )}
     >
-      <div className={cn(
-        'flex items-center gap-2 shrink-0',
-        styles.label
-      )}>
+      <div className="flex items-center gap-2 shrink-0">
         <Icon className={cn('h-4 w-4', styles.label)} />
         <span className={cn('text-xs font-semibold uppercase tracking-wider', styles.label)}>
           {label}
@@ -66,15 +63,22 @@ function SlideCard({
             <p className={cn('scripture-reference', styles.refSize)}>
               {slide.reference}
             </p>
-            <div className="overflow-y-auto flex-1 min-h-0">
-              <p
-                className={cn(
-                  'scripture-text leading-relaxed whitespace-normal break-words',
-                  styles.textSize
-                )}
-              >
-                {slide.text}
-              </p>
+            <div className="relative flex-1 min-h-0">
+              <div className="h-full overflow-y-auto">
+                <p
+                  className={cn(
+                    'scripture-text leading-relaxed whitespace-normal break-words text-snow-soft',
+                    styles.textSize
+                  )}
+                >
+                  {slide.text}
+                </p>
+              </div>
+              {/* Scroll boundary fades out instead of slicing a line mid-glyph */}
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-x-0 bottom-0 h-7 rounded-b-xl bg-gradient-to-t from-card to-transparent"
+              />
             </div>
           </>
         ) : (
@@ -151,8 +155,8 @@ export function PresenterPanel() {
         <div className="flex items-center justify-between px-4 py-2 border-b border-border shrink-0">
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
-              <div className="p-1 rounded bg-primary/20">
-                <Monitor className="h-3.5 w-3.5 text-primary" />
+              <div className="p-1 rounded bg-paprika/20">
+                <Monitor className="h-3.5 w-3.5 text-paprika-bright" />
               </div>
               <span className="text-xs font-medium text-muted-foreground">Presenter</span>
             </div>
@@ -162,7 +166,6 @@ export function PresenterPanel() {
         <div className="flex-1 p-4 flex flex-col gap-3 min-h-0 overflow-y-auto">
           <SlideCard slide={null} label="Live" icon={Monitor} variant="live" />
           <SlideCard slide={null} label="Next" icon={SkipForward} variant="next" />
-          
         </div>
       </div>
     );
@@ -174,8 +177,8 @@ export function PresenterPanel() {
       <div className="flex items-center justify-between px-4 py-2 border-b border-border shrink-0">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
-            <div className="p-1 rounded bg-primary/20">
-              <Monitor className="h-3.5 w-3.5 text-primary" />
+            <div className="p-1 rounded bg-paprika/20">
+              <Monitor className="h-3.5 w-3.5 text-paprika-bright" />
             </div>
             <span className="text-xs font-medium text-muted-foreground">Presenter</span>
           </div>
@@ -183,9 +186,9 @@ export function PresenterPanel() {
         </div>
         <div className="flex items-center gap-2">
           <Button
-            variant={projectionLocked ? 'destructive' : 'outline'}
+            variant="outline"
             size="sm"
-            className="h-6 px-2 text-xs gap-1"
+            className="h-6 px-2 text-xs gap-1 border-hunter/40 text-hunter-bright hover:bg-hunter/10"
             onClick={toggleProjectionLock}
             title={projectionLocked ? 'Unlock projection' : 'Lock projection'}
           >
@@ -213,7 +216,7 @@ export function PresenterPanel() {
               value={jumpValue}
               onChange={e => { setJumpValue(e.target.value.replace(/\D/g, '')); setJumpError(''); }}
               onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); handleJump(); } }}
-              className={cn('h-6 w-16 text-xs text-center', jumpError && 'border-destructive')}
+              className={cn('h-6 w-16 text-xs text-center bg-card border-border/70 text-snow-soft', jumpError && 'border-destructive')}
               title="Jump to passage"
             />
             {jumpError && <span className="text-[10px] text-destructive whitespace-nowrap">{jumpError}</span>}
@@ -227,9 +230,9 @@ export function PresenterPanel() {
       <div className="flex-1 p-5 flex flex-col gap-4 min-h-0 overflow-y-auto">
         <SlideCard slide={liveSlide} label="Live" icon={Monitor} variant="live" />
         {projectionLocked && previewSlide && previewSlide !== liveSlide && (
-          <div className="rounded-xl border border-border/70 bg-card/70 p-5 flex flex-col gap-2">
+          <div className="rounded-xl border border-border/70 bg-card/60 p-5 flex flex-col gap-2">
             <div className="flex items-center gap-2">
-              <Eye className="h-4 w-4 text-accent" />
+              <Eye className="h-4 w-4 text-muted-foreground" />
               <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Preview (not projected)</span>
             </div>
             <p className="scripture-reference">{previewSlide.reference}</p>
@@ -237,7 +240,6 @@ export function PresenterPanel() {
           </div>
         )}
         <SlideCard slide={displayNext} label="Next" icon={SkipForward} variant="next" />
-        
       </div>
     </div>
   );

@@ -14,11 +14,11 @@ function BlankOverlay({ settings, assetUrls }: { settings: BlankSettings; assetU
   switch (settings.style) {
     case 'logo':
       return (
-        <div className="min-h-screen flex items-center justify-center bg-projection p-16">
+        <div className="min-h-screen flex items-center justify-center bg-black p-16">
           {logoSrc ? (
-            <img src={logoSrc} alt="Church Logo" className="max-w-md max-h-[50vh] object-contain opacity-80" />
+            <img src={logoSrc} alt="Church Logo" className="max-w-md max-h-[50vh] object-contain opacity-85" />
           ) : (
-            <p className="text-projection-foreground/30 text-2xl font-sans">No logo configured</p>
+            <p className="text-snow/35 text-2xl font-sans tracking-wide">No logo configured</p>
           )}
         </div>
       );
@@ -29,28 +29,28 @@ function BlankOverlay({ settings, assetUrls }: { settings: BlankSettings; assetU
           style={{
             background: bgSrc
               ? `url(${bgSrc}) center/cover no-repeat`
-              : 'linear-gradient(135deg, hsl(222 47% 14%), hsl(215 25% 22%))',
+              : 'linear-gradient(135deg, hsl(228 22% 6%), hsl(228 18% 11%))',
           }}
         />
       );
     case 'session':
       return (
-        <div className="min-h-screen flex flex-col items-center justify-center bg-projection p-16 text-center gap-6">
+        <div className="min-h-screen flex flex-col items-center justify-center bg-black p-16 text-center gap-6">
           {logoSrc && (
-            <img src={logoSrc} alt="" className="max-w-[200px] max-h-[120px] object-contain opacity-60 mb-4" />
+            <img src={logoSrc} alt="" className="max-w-[200px] max-h-[120px] object-contain opacity-55 mb-4" />
           )}
-          <h2 className="text-projection-foreground text-5xl md:text-7xl font-serif font-medium tracking-wide">
+          <h2 className="text-snow text-5xl md:text-7xl font-serif font-medium tracking-wide">
             {session?.title || 'Service'}
           </h2>
           {session?.subtitle && (
-            <p className="text-projection-foreground/60 text-2xl md:text-3xl font-sans font-light tracking-wider">
+            <p className="text-snow/60 text-2xl md:text-3xl font-sans font-light tracking-wider">
               {session.subtitle}
             </p>
           )}
         </div>
       );
     default:
-      return <div className="min-h-screen bg-projection" />;
+      return <div className="min-h-screen bg-black" />;
   }
 }
 
@@ -88,11 +88,8 @@ function AutoFitVerse({ passage }: { passage: Passage }) {
     fit();
     window.addEventListener('resize', fit);
     return () => window.removeEventListener('resize', fit);
-  }, [verseContent, reference]);
-
-  return (
-    <div
-      className="h-screen w-screen flex flex-col"
+  }, [verseContent, reference]);  return (
+    <div className="h-screen w-screen flex flex-col"
       style={{ padding: '2rem' }}
     >
       {/* VerseContainer — flexes to fill available space.
@@ -106,11 +103,11 @@ function AutoFitVerse({ passage }: { passage: Passage }) {
           className="text-center"
           style={{ maxWidth: '70%' }}
         >
-          <blockquote className="font-serif leading-relaxed tracking-wide text-projection-foreground m-0">
+          <blockquote className="font-serif leading-relaxed tracking-wide text-snow m-0">
             {passage.verses.map((verse, index) => (
               <span key={verse.verse}>
                 {passage.verses.length > 1 && (
-                  <sup className="opacity-50 mr-1" style={{ fontSize: '0.35em' }}>{verse.verse}</sup>
+                  <sup className="opacity-45 mr-1" style={{ fontSize: '0.35em' }}>{verse.verse}</sup>
                 )}
                 {verse.text}
                 {index < passage.verses.length - 1 && ' '}
@@ -124,10 +121,10 @@ function AutoFitVerse({ passage }: { passage: Passage }) {
           Reserved space prevents overlap and ensures consistent spacing
           regardless of verse length. */}
       <div className="shrink-0 flex flex-col items-center gap-2 pt-6 pb-2">
-        <p className="font-sans font-medium tracking-widest uppercase text-projection-foreground/70 text-base md:text-lg m-0">
+        <p className="font-sans font-medium tracking-widest uppercase text-snow/75 text-base md:text-lg m-0">
           {reference}
         </p>
-        <p className="font-sans font-light tracking-wider uppercase text-projection-foreground/40 text-xs md:text-sm m-0">
+        <p className="font-sans font-light tracking-wider uppercase text-snow/45 text-xs md:text-sm m-0">
           {translationName}
         </p>
       </div>
@@ -229,20 +226,20 @@ const Projection = () => {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col bg-projection text-projection-foreground cursor-none select-none relative">
+    <div className="min-h-screen flex flex-col bg-black text-snow cursor-none select-none relative">
       {isBlanked ? (
         <BlankOverlay settings={blankSettings} assetUrls={assetUrls} />
       ) : passage ? (
         <AutoFitVerse passage={passage} />
       ) : (
         <div className="flex-1 flex items-center justify-center">
-          <div className="text-muted-foreground/30 text-2xl font-sans select-none">
+          <div className="text-snow/35 text-2xl font-sans tracking-wide select-none">
             Waiting for passage…
           </div>
         </div>
       )}
       {showHint && (
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 rounded-lg bg-foreground/10 backdrop-blur-sm text-projection-foreground/60 text-sm font-sans animate-pulse select-none pointer-events-none">
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 rounded-lg bg-snow/6 backdrop-blur-md text-snow/65 text-sm font-sans animate-spark select-none pointer-events-none">
           Press F11 for fullscreen projection
         </div>
       )}

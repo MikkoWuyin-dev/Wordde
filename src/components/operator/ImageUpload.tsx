@@ -52,7 +52,7 @@ export function ImageUpload({ label, currentUrl, onUpload, onRemove }: ImageUplo
           />
           <button
             onClick={onRemove}
-            className="absolute top-1 right-1 p-1 rounded-md bg-background/80 hover:bg-destructive/20 transition-colors"
+            className="absolute top-1 right-1 p-1 rounded-md bg-black/70 hover:bg-destructive/20 transition-colors"
             title="Remove image"
           >
             <X className="h-3 w-3 text-muted-foreground hover:text-destructive" />
@@ -60,7 +60,7 @@ export function ImageUpload({ label, currentUrl, onUpload, onRemove }: ImageUplo
         </div>
         <button
           onClick={() => inputRef.current?.click()}
-          className="text-[10px] text-primary hover:underline cursor-pointer"
+          className="text-[10px] text-paprika-bright hover:text-paprika underline-offset-2 hover:underline cursor-pointer"
         >
           Replace Image
         </button>
@@ -86,21 +86,20 @@ export function ImageUpload({ label, currentUrl, onUpload, onRemove }: ImageUplo
         onDrop={handleDrop}
         onClick={() => inputRef.current?.click()}
         className={cn(
-          'flex flex-col items-center justify-center gap-1.5 px-3 py-4 rounded-md border-2 border-dashed cursor-pointer transition-colors',
+          'flex flex-col items-center justify-center gap-1.5 px-3 py-4 rounded-lg border-2 border-dashed cursor-pointer transition-all',
           isDragOver
-            ? 'border-primary bg-primary/10'
+            ? 'border-paprika bg-paprika/10'
             : 'border-border hover:border-muted-foreground/40 hover:bg-muted/20'
         )}
       >
         {isDragOver ? (
-          <ImageIcon className="h-5 w-5 text-primary" />
+          <ImageIcon className="h-5 w-5 text-paprika" />
         ) : (
           <Upload className="h-5 w-5 text-muted-foreground/60" />
         )}
         <span className="text-[11px] text-muted-foreground text-center">
           {isDragOver ? 'Drop image here' : 'Drag image here or click to upload'}
-        </span>
-        <span className="text-[9px] text-muted-foreground/50">PNG, JPG, WEBP • Max 10 MB</span>
+        </span>          <span className="text-[9px] text-muted-foreground/60">PNG, JPG, WEBP • Max 10 MB</span>
       </div>
       {error && (
         <p className="text-[10px] text-destructive">{error}</p>
