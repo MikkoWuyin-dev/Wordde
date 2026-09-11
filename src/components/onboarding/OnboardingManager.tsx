@@ -58,7 +58,7 @@ export function OnboardingManager() {
             </button>
             <button
               onClick={() => setPhase('tutorial')}
-              className="px-5 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+              className="px-5 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-medium shadow-[0_4px_10px_-2px_hsl(32_94%_58%_/_0.5)] hover:bg-primary/95 active:scale-[0.98] transition-all"
             >
               Start Tutorial
             </button>

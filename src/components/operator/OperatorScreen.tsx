@@ -116,13 +116,13 @@ export function OperatorScreen() {
     <div className="h-screen bg-background flex flex-col overflow-hidden">
       <OnboardingManager />
       {/* Header */}
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm shrink-0">
+      <header className="glass shrink-0">
         <div className="px-4 py-2">
           <div className="flex items-center justify-between">
-            <h1 className="font-semibold text-sm text-foreground">Wordde</h1>
+            <h1 className="font-semibold text-sm tracking-tight">Wordde</h1>
 
             <div className="flex items-center gap-2">
-              {/* Translation selector - styled Select component */}
+              {/* Translation selector */}
               <Select
                 value={currentTranslation}
                 onValueChange={(value) => {
@@ -130,23 +130,23 @@ export function OperatorScreen() {
                 }}
               >
                 <SelectTrigger
-                  className="h-8 px-2 text-xs font-medium min-w-[80px]"
+                  className="h-8 px-2 text-xs font-medium min-w-[96px] bg-card border-border text-snow-soft"
                   title="Switch translation"
                 >
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-popover border-border">
                   {BibleRepository.getAvailableTranslations().map((t) => (
-                    <SelectItem key={t} value={t}>{t}</SelectItem>
+                    <SelectItem key={t} value={t} className="text-foreground">{t}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
 
-              {/* Undo button - tertiary, subtle */}
+              {/* Undo button - quiet, secondary */}
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-7 px-1.5 text-xs gap-1 opacity-80 hover:opacity-100"
+                className="h-7 px-1.5 text-xs gap-1 text-muted-foreground hover:text-foreground"
                 onClick={undoProjection}
                 disabled={historyStack.length === 0}
                 title="Undo last projection (Ctrl+Z)"
@@ -158,10 +158,10 @@ export function OperatorScreen() {
                 )}
               </Button>
 
-              {/* Live projection indicator - quiet, contextual */}
+              {/* Live projection indicator */}
               {committedPassage && (
-                <div className="h-7 flex items-center gap-1.5 px-2 rounded-md bg-primary/5 border border-primary/10">
-                  <Monitor className="h-3 w-3 text-primary/70" />
+                <div className="h-7 flex items-center gap-1.5 px-2 rounded-md chip-paprika">
+                  <Monitor className="h-3 w-3" />
                   <PassageNavigation />
                 </div>
               )}
@@ -179,9 +179,9 @@ export function OperatorScreen() {
       {/* Main dual-column layout */}
       <main className="flex-1 flex min-h-0">
         {/* Left Column - Tab-based workflow */}
-        <div className="w-[380px] shrink-0 border-r border-border flex flex-col bg-card/30">
+        <div className="w-[380px] shrink-0 border-r border-border flex flex-col">
           {/* Tab bar */}
-          <div className="flex border-b border-border shrink-0">
+          <div className="flex border-b border-border/60 shrink-0">
             {tabs.map((tab) => {
               const isActive = activeTab === tab.id;
               return (
@@ -195,8 +195,8 @@ export function OperatorScreen() {
                   className={cn(
                     'flex-1 px-3 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px',
                     isActive
-                      ? 'border-primary text-primary'
-                      : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-accent/50'
+                      ? 'border-primary text-primary shadow-[0_1px_0_0_hsl(32_94%_58%_/_0.4)]'
+                      : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-accent/40'
                   )}
                 >
                   {tab.label}
@@ -264,7 +264,7 @@ export function OperatorScreen() {
                 side="top"
                 align="start"
                 collisionPadding={12}
-                className="w-[360px] p-0 flex flex-col overflow-hidden"
+                className="w-[360px] p-0 flex flex-col overflow-hidden glass-strong"
                 style={{ height: 'min(80vh, 560px)' }}
               >
                 <ContextualHint id="display_settings" message="Customize what appears on screen" show={settingsOpened} className="m-3 mb-0 shrink-0" />
@@ -274,15 +274,14 @@ export function OperatorScreen() {
           </div>
         </div>
 
-        {/* Right Column - Presenter Panel */}
-        <div className="flex-1 min-w-0 flex flex-col" data-tutorial="presenter">
-          <ContextualHint id="keyboard_nav" message="Use ← → to move between passages" show={arrowUsed} className="mx-3 mt-2" />
+        {/* Right Column - Presenter Panel */}          <div className="flex-1 min-w-0 flex flex-col" data-tutorial="presenter">
+          <ContextualHint id="keyboard_nav" message="Use ← → to move between passages" show={arrowUsed} className="mx-4 mt-2" />
           <PresenterPanel />
         </div>
       </main>
 
       {/* Keyboard shortcut hint bar */}
-      <footer className="border-t border-border bg-card/50 shrink-0">
+      <footer className="glass shrink-0">
         <div className="px-4 py-1.5 flex items-center justify-between text-[11px] text-muted-foreground">
           <div className="flex items-center gap-2">
             <button

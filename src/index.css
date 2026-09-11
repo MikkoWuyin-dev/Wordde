@@ -3,119 +3,330 @@
 @tailwind utilities;
 
 /* Wordde Design System
-   Professional, distraction-free aesthetic for church environments
-   Dark operator interface, high contrast, keyboard-first focus
+   Premium operator interface for church service use
+   Black ground, paprika action voice, hunter green confirmation,
+   yellow spark only as a controlled signal, snow for clarity on dark surfaces
 */
 
 @import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap');
 
 @layer base {
   :root {
-    /* Core surfaces - Dark operator interface */
-    --background: 222 47% 11%;
-    --foreground: 210 40% 96%;
-    
-    /* Card/Panel surfaces */
-    --card: 222 47% 14%;
-    --card-foreground: 210 40% 96%;
-    
-    --popover: 222 47% 16%;
-    --popover-foreground: 210 40% 96%;
-    
-    /* Primary - Warm amber accent for focus/selection */
-    --primary: 38 92% 50%;
-    --primary-foreground: 222 47% 11%;
-    
-    /* Secondary - Slate blue for subtle accents */
-    --secondary: 215 25% 22%;
-    --secondary-foreground: 210 40% 90%;
-    
-    /* Muted - For inactive/background elements */
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 55%;
-    
-    /* Accent - Teal for success/confirmation */
-    --accent: 173 58% 39%;
-    --accent-foreground: 210 40% 98%;
-    
-    /* Destructive */
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
-    
-    /* Borders and inputs */
-    --border: 217 33% 25%;
-    --input: 217 33% 20%;
-    --ring: 38 92% 50%;
-    
-    --radius: 0.5rem;
-    
-    /* Scripture-specific colors */
-    --scripture-text: 210 40% 98%;
-    --scripture-reference: 38 92% 60%;
-    --preview-border: 173 58% 39%;
-    --committed-glow: 38 92% 50%;
-    
-    /* Projection screen - Maximum contrast */
-    --projection-bg: 0 0% 0%;
+    /* ---------- Climate ---------- */
+    --background: 228 23% 7%;
+    --background-elevated: 228 21% 10%;
+    --foreground: 225 12% 96%;
+
+    --card: 228 20% 11%;
+    --card-foreground: 225 12% 95%;
+
+    --popover: 228 19% 13%;
+    --popover-foreground: 225 12% 95%;
+
+    --secondary: 228 16% 17%;
+    --secondary-foreground: 225 12% 86%;
+
+    --muted: 228 14% 19%;
+    --muted-foreground: 225 10% 58%;
+
+    /* ---------- Core palette ---------- */
+    --paprika: 12 84% 56%;
+    --paprika-foreground: 228 20% 9%;
+
+    --hunter: 134 32% 32%;
+    --hunter-foreground: 228 20% 95%;
+
+    --snow: 0 0% 99%;
+    --snow-foreground: 228 23% 7%;
+
+    --yellow: 60 100% 50%;
+    --yellow-foreground: 228 28% 12%;
+
+    --black: 228 22% 4%;
+
+    /* ---------- Semantic reuse ---------- */
+    --primary: var(--paprika);
+    --primary-foreground: var(--paprika-foreground);
+
+    --accent: var(--hunter);
+    --accent-foreground: var(--hunter-foreground);
+
+    --destructive: 0 78% 56%;
+    --destructive-foreground: 225 12% 96%;
+
+    --border: 228 16% 20%;
+    --input: 228 16% 16%;
+    --ring: var(--paprika);
+
+    /* ---------- Neumorphic depth (tuned for black ground) ---------- */
+    --neu-raised: 0 1px 2px hsl(228 22% 4% / 0.7),
+                  0 2px 6px hsl(228 22% 4% / 0.55),
+                  inset 0 1px 0 hsl(0 0% 100% / 0.06);
+    --neu-raised-strong: 0 4px 10px -2px hsl(228 22% 4% / 0.75),
+                         0 8px 22px -4px hsl(228 22% 4% / 0.6),
+                         inset 0 1px 0 hsl(0 0% 100% / 0.08);
+    --neu-depressed: inset 0 1px 2px hsl(228 22% 4% / 0.7),
+                     inset 0 1px 0 hsl(0 0% 100% / 0.06);
+    --neu-flat-depressed: inset 0 1px 2px hsl(228 22% 4% / 0.6);
+
+    --radius-sm: 0.625rem;
+    --radius-md: 0.75rem;
+    --radius-lg: 1rem;
+    --radius-xl: 1.25rem;
+
+    --radius: var(--radius-md);
+
+    /* ---------- Glass ---------- */
+    --glass-surface: 228 20% 12% / 0.55;
+    --glass-border: 228 18% 22% / 0.4;
+    --glass-strong: 228 19% 11% / 0.72;
+
+    /* ---------- Scripture ---------- */
+    --scripture-text: 225 12% 97%;
+    --scripture-reference: 12 84% 72%;
+    --preview-border: var(--paprika);
+    --committed-glow: var(--paprika);
+
+    /* ---------- Projection ---------- */
+    --projection-bg: 228 22% 3%;
     --projection-text: 0 0% 100%;
-    
-    /* Sidebar */
-    --sidebar-background: 222 47% 9%;
-    --sidebar-foreground: 210 40% 90%;
-    --sidebar-primary: 38 92% 50%;
-    --sidebar-primary-foreground: 222 47% 11%;
-    --sidebar-accent: 217 33% 17%;
-    --sidebar-accent-foreground: 210 40% 90%;
-    --sidebar-border: 217 33% 20%;
-    --sidebar-ring: 38 92% 50%;
+
+    /* ---------- Sidebar legacy tokens (functional path preserved) ---------- */
+    --sidebar-background: 228 20% 9%;
+    --sidebar-foreground: 225 12% 86%;
+    --sidebar-primary: var(--paprika);
+    --sidebar-primary-foreground: var(--paprika-foreground);
+    --sidebar-accent: 228 16% 17%;
+    --sidebar-accent-foreground: 225 12% 86%;
+    --sidebar-border: 228 16% 20%;
+    --sidebar-ring: var(--paprika);
   }
 }
 
 @layer base {
   * {
-    @apply border-border;
+    border-color: hsl(var(--border));
   }
-  
+
+  html {
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
   body {
-    @apply bg-background text-foreground font-sans antialiased;
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
     font-family: 'Inter', system-ui, sans-serif;
+    margin: 0;
+    min-height: 100vh;
   }
-  
-  /* Scripture text styling */
-  .scripture-text {
-    font-family: 'Crimson Pro', Georgia, serif;
-    @apply text-scripture leading-relaxed tracking-wide;
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
   }
-  
-  .scripture-reference {
-    @apply text-reference font-sans font-medium tracking-wider uppercase text-sm;
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--background) / 0.6);
+    border-radius: 999px;
   }
-  
-  /* Focus states for keyboard navigation */
-  .keyboard-focus:focus {
-    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted));
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: content-box;
   }
-  
-  /* Result item states */
-  .result-item {
-    @apply transition-all duration-150 ease-out;
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.5);
+    background-clip: content-box;
   }
-  
-  .result-item.selected {
-    @apply bg-secondary border-l-4 border-l-primary;
+
+  ::selection {
+    background: hsl(var(--paprika) / 0.32);
+    color: hsl(var(--snow));
   }
-  
-  .result-item:hover:not(.selected) {
-    @apply bg-muted/50;
+
+  :focus-visible {
+    outline: none;
   }
-  
-  /* Preview panel styling */
-  .preview-panel {
-    @apply border-2 border-preview rounded-lg bg-card/50;
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Inter', system-ui, sans-serif;
+    letter-spacing: -0.02em;
+    font-weight: 600;
+    color: hsl(var(--foreground));
   }
-  
-  /* Committed passage glow effect */
-  .committed-glow {
-    box-shadow: 0 0 30px hsl(var(--committed-glow) / 0.3);
+
+  p {
+    line-height: 1.55;
+  }
+
+  code, kbd, pre, samp {
+    font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  }
+
+  kbd {
+    background: hsl(var(--secondary));
+    border: 1px solid hsl(var(--border));
+    border-radius: 0.375rem;
+    padding: 0.1rem 0.35rem;
+    font-size: 0.7rem;
+    color: hsl(var(--muted-foreground));
   }
 }
+
+@layer base {
+  .scripture-text {
+    font-family: 'Crimson Pro', Georgia, serif;
+    color: hsl(var(--scripture-text));
+    letter-spacing: 0.01em;
+    line-height: 1.5;
+  }
+
+  .scripture-reference {
+    font-family: 'Inter', system-ui, sans-serif;
+    color: hsl(var(--scripture-reference));
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    font-weight: 500;
+  }
+
+  .result-item {
+    transition: background-color 120ms ease, box-shadow 120ms ease, transform 80ms ease;
+  }
+  .result-item.selected {
+    background: hsl(var(--paprika) / 0.16);
+    box-shadow: var(--neu-flat-depressed);
+  }
+  .result-item:hover:not(.selected) {
+    background: hsl(var(--secondary) / 0.5);
+  }
+
+  .preview-panel {
+    background: hsl(var(--card) / 0.72);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border: 1px solid hsl(var(--preview-border) / 0.55);
+    border-radius: var(--radius-md);
+  }
+
+  .committed-glow {
+    box-shadow: 0 0 22px hsl(var(--committed-glow) / 0.32);
+  }
+}
+
+@layer components {
+  .panel-soft {
+    background: hsl(var(--card));
+    box-shadow: var(--neu-raised);
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--radius-md);
+  }
+
+  .panel-soft-strong {
+    background: hsl(var(--card));
+    box-shadow: var(--neu-raised-strong);
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--radius-lg);
+  }
+
+  .glass {
+    background: hsl(var(--glass-surface));
+    backdrop-filter: blur(8px) saturate(1.1);
+    -webkit-backdrop-filter: blur(8px) saturate(1.1);
+    border: 1px solid hsl(var(--glass-border));
+    border-radius: var(--radius-md);
+  }
+
+  .glass-strong {
+    background: hsl(var(--glass-strong));
+    backdrop-filter: blur(12px) saturate(1.2);
+    -webkit-backdrop-filter: blur(12px) saturate(1.2);
+    border: 1px solid hsl(var(--glass-border));
+    border-radius: var(--radius-lg);
+  }
+
+  .glass-divider {
+    height: 1px;
+    background: linear-gradient(to right, transparent, hsl(var(--glass-border)), transparent);
+  }
+
+  .chip-paprika {
+    background: hsl(var(--paprika) / 0.14);
+    border: 1px solid hsl(var(--paprika) / 0.35);
+    color: hsl(var(--paprika));
+  }
+
+  .chip-hunter {
+    background: hsl(var(--hunter) / 0.16);
+    border: 1px solid hsl(var(--hunter) / 0.4);
+    color: hsl(134 32% 78%);
+  }
+
+  .chip-yellow {
+    background: hsl(var(--yellow) / 0.16);
+    border: 1px solid hsl(var(--yellow) / 0.45);
+    color: hsl(var(--yellow));
+  }
+
+  .chip-ghost {
+    background: hsl(var(--secondary) / 0.4);
+    border: 1px solid hsl(var(--border));
+    color: hsl(var(--muted-foreground));
+  }
+}
+
+@layer utilities {
+  .animate-fade-in {
+    animation: fade-in 320ms cubic-bezier(0.2, 0, 0, 1) forwards;
+  }
+
+  .animate-slide-up {
+    animation: slide-up 360ms cubic-bezier(0.2, 0, 0, 1) forwards;
+  }
+
+  .animate-scale-in {
+    animation: scale-in 280ms cubic-bezier(0.2, 0, 0, 1) forwards;
+  }
+
+  .animate-glow-pulse {
+    animation: glow-pulse 2.4s ease-in-out infinite;
+  }
+
+  .animate-spark {
+    animation: spark 1.8s ease-in-out infinite;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+ 

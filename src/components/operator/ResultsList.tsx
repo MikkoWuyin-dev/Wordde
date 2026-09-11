@@ -42,17 +42,17 @@ export function ResultsList({ results, selectedIndex, onSelect }: ResultsListPro
               key={`${result.passage.displayReference}-${index}`}
               onClick={() => onSelect(index)}
               className={cn(
-                "w-full text-left p-3 rounded-md transition-all duration-150",
+                "w-full text-left p-3 rounded-md border transition-all duration-150",
                 "result-item",
                 isSelected 
-                  ? "bg-secondary border-l-4 border-l-primary" 
-                  : "hover:bg-muted/50 border-l-4 border-l-transparent"
+                  ? "bg-secondary/70 border-l-4 border-l-primary" 
+                  : "bg-card/40 border-transparent hover:bg-secondary/40"
               )}
             >
               <div className="flex items-start gap-3">
                 <div className={cn(
-                  "p-1.5 rounded",
-                  isSelected ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"
+                  "p-1.5 rounded-md",
+                  isSelected ? "bg-primary/20 text-primary shadow-sm" : "bg-muted/60 text-muted-foreground"
                 )}>
                   <Icon className="h-4 w-4" />
                 </div>

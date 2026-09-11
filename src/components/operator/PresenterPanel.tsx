@@ -21,21 +21,21 @@ function SlideCard({
 }) {
   const styles = {
     live: {
-      border: 'border-primary/60 bg-primary/5',
+      base: 'bg-card border border-primary/30 shadow-[0_8px_22px_-4px_hsl(240_20%_8%_/_0.55)]',
       label: 'text-primary',
-      refSize: 'text-base',
+      refSize: 'text-xs',
       textSize: 'text-2xl',
-      minH: 'min-h-[180px]',
+      minH: 'min-h-[200px]',
       padding: 'p-6',
-      glow: 'shadow-[0_0_30px_hsl(var(--primary)/0.15)]',
+      glow: 'animate-glow-pulse',
     },
     next: {
-      border: 'border-accent/40 bg-accent/5',
+      base: 'bg-card/70 border border-border/70',
       label: 'text-accent',
-      refSize: 'text-sm',
+      refSize: 'text-xs',
       textSize: 'text-lg',
-      minH: 'min-h-[120px]',
-      padding: 'p-4',
+      minH: 'min-h-[140px]',
+      padding: 'p-5',
       glow: '',
     },
   }[variant];
@@ -43,15 +43,18 @@ function SlideCard({
   return (
     <div
       className={cn(
-        'rounded-lg border-2 flex flex-col gap-2 transition-all duration-200',
-        styles.border,
+        'rounded-xl border flex flex-col gap-3 transition-all duration-200',
+        styles.base,
         styles.minH,
         styles.padding,
         styles.glow,
-        variant === 'live' ? 'flex-[55]' : 'flex-[45]'
+        variant === 'live' ? 'flex-[57]' : 'flex-[43]'
       )}
     >
-      <div className="flex items-center gap-2 shrink-0">
+      <div className={cn(
+        'flex items-center gap-2 shrink-0',
+        styles.label
+      )}>
         <Icon className={cn('h-4 w-4', styles.label)} />
         <span className={cn('text-xs font-semibold uppercase tracking-wider', styles.label)}>
           {label}
@@ -60,14 +63,14 @@ function SlideCard({
       <div className="flex-1 flex flex-col justify-center min-w-0 overflow-hidden">
         {slide ? (
           <>
-            <p className={cn('scripture-reference text-reference mb-1 shrink-0', styles.refSize)}>
+            <p className={cn('scripture-reference', styles.refSize)}>
               {slide.reference}
             </p>
             <div className="overflow-y-auto flex-1 min-h-0">
               <p
                 className={cn(
-                  'scripture-text leading-relaxed text-scripture whitespace-normal break-words',
-                  styles.textSize,
+                  'scripture-text leading-relaxed whitespace-normal break-words',
+                  styles.textSize
                 )}
               >
                 {slide.text}
@@ -75,7 +78,7 @@ function SlideCard({
             </div>
           </>
         ) : (
-          <p className="text-muted-foreground/40 text-sm italic">
+          <p className="text-muted-foreground/60 text-sm italic">
             {variant === 'live' ? 'No slide projected' : 'No slide selected'}
           </p>
         )}
@@ -221,16 +224,16 @@ export function PresenterPanel() {
         </div>
       </div>
 
-      <div className="flex-1 p-4 flex flex-col gap-3 min-h-0 overflow-y-auto">
+      <div className="flex-1 p-5 flex flex-col gap-4 min-h-0 overflow-y-auto">
         <SlideCard slide={liveSlide} label="Live" icon={Monitor} variant="live" />
         {projectionLocked && previewSlide && previewSlide !== liveSlide && (
-          <div className="rounded-lg border-2 border-dashed border-primary/40 bg-primary/5 p-4 flex flex-col gap-2">
+          <div className="rounded-xl border border-border/70 bg-card/70 p-5 flex flex-col gap-2">
             <div className="flex items-center gap-2">
-              <Eye className="h-4 w-4 text-primary" />
-              <span className="text-xs font-semibold uppercase tracking-wider text-primary">Preview (not projected)</span>
+              <Eye className="h-4 w-4 text-accent" />
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Preview (not projected)</span>
             </div>
-            <p className="scripture-reference text-reference text-sm mb-1">{previewSlide.reference}</p>
-            <p className="scripture-text leading-relaxed text-scripture text-lg">{previewSlide.text}</p>
+            <p className="scripture-reference">{previewSlide.reference}</p>
+            <p className="scripture-text leading-relaxed text-scripture">{previewSlide.text}</p>
           </div>
         )}
         <SlideCard slide={displayNext} label="Next" icon={SkipForward} variant="next" />

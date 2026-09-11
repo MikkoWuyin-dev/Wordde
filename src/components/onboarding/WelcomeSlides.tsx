@@ -49,13 +49,13 @@ export function WelcomeSlides({ onComplete }: WelcomeSlidesProps) {
     <div className="fixed inset-0 z-[100] bg-background flex items-center justify-center">
       <div className="max-w-md w-full mx-4 text-center space-y-8">
         {/* Icon */}
-        <div className="mx-auto w-16 h-16 rounded-2xl bg-primary/15 flex items-center justify-center">
+        <div className="mx-auto w-16 h-16 rounded-2xl bg-card border border-border shadow-[0_6px_18px_-4px_hsl(240_20%_8%_/_0.5)] flex items-center justify-center">
           <Icon className="h-8 w-8 text-primary" />
         </div>
 
         {/* Content */}
         <div className="space-y-3">
-          <h2 className="text-2xl font-semibold text-foreground">{slide.title}</h2>
+          <h2 className="text-2xl font-semibold tracking-tight">{slide.title}</h2>
           <p className="text-sm text-muted-foreground leading-relaxed">{slide.description}</p>
         </div>
 
@@ -67,7 +67,7 @@ export function WelcomeSlides({ onComplete }: WelcomeSlidesProps) {
               onClick={() => setCurrent(i)}
               className={cn(
                 'h-2 rounded-full transition-all duration-300',
-                i === current ? 'w-6 bg-primary' : 'w-2 bg-muted-foreground/30'
+                i === current ? 'w-6 bg-primary shadow-[0_1px_0_0_hsl(32_94%_58%_/_0.6)]' : 'w-2 bg-muted-foreground/30'
               )}
             />
           ))}
@@ -85,7 +85,7 @@ export function WelcomeSlides({ onComplete }: WelcomeSlidesProps) {
           )}
           <button
             onClick={() => (isLast ? onComplete() : setCurrent(current + 1))}
-            className="px-6 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+            className="px-6 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium shadow-[0_4px_10px_-2px_hsl(32_94%_58%_/_0.5)] hover:bg-primary/95 active:scale-[0.98] transition-all"
           >
             {isLast ? 'Start Using App' : 'Next'}
           </button>

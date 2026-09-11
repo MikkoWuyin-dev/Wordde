@@ -288,7 +288,7 @@ export function TutorialOverlay({ onComplete }: TutorialOverlayProps) {
 
       {/* Tooltip — fixed, viewport-clamped */}
       <div
-        className="fixed max-w-xs bg-card border border-border rounded-xl p-4 shadow-xl"
+        className="fixed max-w-xs bg-card border border-border rounded-xl p-4 shadow-[0_8px_22px_-4px_hsl(240_20%_8%_/_0.55)]"
         style={{ top: tooltipPos.top, left: tooltipPos.left, pointerEvents: 'auto' }}
       >
         <div className="flex items-start justify-between gap-2 mb-2">
