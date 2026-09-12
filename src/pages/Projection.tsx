@@ -149,6 +149,33 @@ const Projection = () => {
     activeBackgroundId: '',
   });
   const [assetUrls, setAssetUrls] = useState<Record<string, string>>({});
+  const [cursorIdle, setCursorIdle] = useState(false);
+
+  // Hide the cursor only after it has been idle for a moment. A static
+  // `cursor-none` swallowed the cursor during scrolling and made the screen
+  // unusable with a mouse; this keeps it visible while in use.
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const wake = () => {
+      setCursorIdle(false);
+      clearTimeout(timer);
+      timer = setTimeout(() => setCursorIdle(true), 2000);
+    };
+    wake();
+    window.addEventListener('mousemove', wake, { passive: true });
+    window.addEventListener('mousedown', wake, { passive: true });
+    window.addEventListener('wheel', wake, { passive: true });
+    window.addEventListener('keydown', wake);
+    window.addEventListener('touchstart', wake, { passive: true });
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('mousemove', wake);
+      window.removeEventListener('mousedown', wake);
+      window.removeEventListener('wheel', wake);
+      window.removeEventListener('keydown', wake);
+      window.removeEventListener('touchstart', wake);
+    };
+  }, []);
 
   // Load persisted state immediately on mount (refresh-safe)
   useEffect(() => {
@@ -229,7 +256,11 @@ const Projection = () => {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col bg-black text-snow cursor-none select-none relative">
+    <div
+      className={`min-h-screen flex flex-col bg-black text-snow select-none relative ${
+        cursorIdle ? 'cursor-none' : ''
+      }`}
+    >
       {isBlanked ? (
         <BlankOverlay settings={blankSettings} assetUrls={assetUrls} />
       ) : passage ? (
