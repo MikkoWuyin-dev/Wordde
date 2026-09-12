@@ -49,7 +49,7 @@ function reset() {
 async function simulateLoadPassage(
   reference: string,
   translation: string,
-  buildQueueFromPassage: (passage: any) => void,
+  buildQueueFromPassage: (passage: Passage) => void,
   buildQueueFromChapter: (book: string, chapter: string) => void,
 ): Promise<LoadResult> {
   const rangePattern = /^(.+?)\s*(\d+)\s*:\s*(\d+)(?:\s*-\s*(\d+))?$/i;
