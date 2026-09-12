@@ -19,8 +19,12 @@ Vite + React + TypeScript + Tailwind/shadcn SPA (`vite_react_shadcn_ts`). Deskto
 npm run dev
 ```
 
-- Vite serves on the project's default **port 8080** (pinned in `vite.config.ts` with `host: "::"`). Use `-- --port <free-port>` if 8080 is taken; no other config needs to change.
-- Boot takes ~3 s; the app then shows a full-screen spinner while preloading 5 Bible translations (~1–3 s more). Console logs `[BibleRepository] ✅ All translations loaded` when ready.
+- Vite serves on the project's default **port 8080** (pinned in `vite.config.ts` with `host: "::"`). Use `-- --port <free-port>` if 8080 is taken; no other config needs to change.  - Boot takes ~3 s; Vite prints one non-blocking advisory line on every boot
+    ("Browserslist: browsers data (caniuse-lite) is 15 months old — run
+    `npx update-browserslist-db@latest` to refresh"). That advisory does not
+    block startup or the app and is safe to ignore during preview work; refresh
+    it any time with the one-liner above (it touches only dev tooling metadata,
+    never app source).
 - Routes: `/` = operator screen (needs ≥ 768 px viewport, e.g. a widened Preview pane or external browser), `/projection` = audience screen (black, "Waiting for passage..." until a passage is committed).
 
 ## Windows detached start (Freebuff preview recipe)
@@ -30,3 +34,5 @@ powershell -NoProfile -Command "(Start-Process -FilePath 'npm.cmd' -ArgumentList
 ```
 
 stdout and stderr must go to different files (PowerShell fails otherwise). `Start-Process` may return before the child is fully up — poll `netstat -ano | grep :8080` / curl `http://localhost:8080/` instead of trusting the pid alone. The tool's 30 s timeout on this start command is not a failure signal; check the log.
+
+While the server runs, the log file is held open by the process — reading tools may report it as `[BLOCKED]`. Read `.log.err` (usually empty) or use `Get-Content -Tail` instead; this is harmless, not a boot failure.

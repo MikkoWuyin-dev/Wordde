@@ -13,13 +13,13 @@ export function RecentPassages() {
     clearAllRecent,
     currentTranslation,
     liveSlideIndex,
-    liveProjectionQueue,
+    projectionQueue,
   } = useStateManager();
 
-  // RecentPassages runs before the rest of the app has fully wired these two
+  // RecentPassages runs before the rest of the app has fully wired these
   // slice states. If it receives undefined at mount / hot reload, fall back
   // to safe local defaults so the Recent tab can render without throwing.
-  const safeQueue = Array.isArray(liveProjectionQueue) ? liveProjectionQueue : [];
+  const safeQueue = Array.isArray(projectionQueue) ? projectionQueue : [];
   const safeLiveIndex = typeof liveSlideIndex === 'number' ? liveSlideIndex : null;
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [confirmClearAll, setConfirmClearAll] = useState(false);
