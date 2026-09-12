@@ -22,7 +22,7 @@ This application solves: **project any verse, in any of five translations, on a 
 3. Operator prepares a Service Plan before the service and steps through it with `N`.
 4. Operator blanks the screen (`B`) between segments, optionally showing a logo, soft background, or a session screen ("Prayer Time", "Offering").
 5. Operator switches translation mid-service; the live verse re-renders in the new translation instantly.
-6. Operator recovers from a mistake with Undo, or from a projector-window crash by reopening the window (state restores automatically).
+6. Operator recovers from a mistake with Undo (`Ctrl/⌘+Z`), from a projector-window crash by reopening the window, or from an operator-window reload via the automatic recovery snapshot — arrows, undo stack, and blank state all restore.
 
 ### Constraints that shaped the design
 | Constraint | Consequence |
@@ -95,11 +95,11 @@ UI components  ──►  inputController  ──►  stateManager (Zustand)
 - `src/core/bibleRepository.ts` (512 LOC) — read-only, translation-aware data access. Singleton class instance. Never mutates app state.
 - `src/core/searchEngine.ts` (169 LOC) — pure ranking. Read-only against the repository. Singleton.
 - `src/core/autocomplete.ts` — Levenshtein-based reference suggestions, read-only.
-- `src/core/stateManager.ts` (634 LOC) — Zustand store. The **only** writer of projection state.
+- `src/core/stateManager.ts` (~770 LOC) — Zustand store. The **only** writer of projection state.
 - `src/core/broadcastSync.ts` (168 LOC) — message schema, channel singleton, blank-settings persistence, projection-state persistence.
 - `src/core/assetStorage.ts` (137 LOC) — IndexedDB wrapper for image blobs.
 - `src/core/translationMetadata.ts` — code → display-name map with code fallback.
-- `src/core/inputController.ts` (267 LOC) — two hooks: `useInputController` (search-scoped) and `useGlobalKeyboard` (window-scoped shortcuts).
+- `src/core/inputController.ts` (~310 LOC) — two hooks: `useInputController` (search-scoped) and `useGlobalKeyboard` (window-scoped shortcuts; modifier-guarded letters, empty-input pass-through, Escape/`?` handling — see §5.11).
 
 **Rendering flow:** React function components subscribing to Zustand slices. No memoized selectors — the store is small and updates are user-paced (a few per second at most), so full-store subscription is acceptable.
 
@@ -177,18 +177,16 @@ There is none. Deliberately. There is no service layer, no API, no database, no 
 ### Persisted vs derived
 
 **Persisted (survives reload):**
-- `currentProjection` — last projected `Passage` (written on every projection).
+- `currentProjection` — last projected `Passage` (written on every projection *and* on undo, so the projection window's refresh loader can never resurrect an undone verse).
 - `projectionState` — `{passage, isBlanked, blankSettings?, timestamp}`.
 - `blankSettings` — style, session screens, background refs, active IDs.
 - `recentPassages` — array of reference strings, max 15.
+- `projectionRecoveryState` — bounded snapshot of the active projection session (`queue` capped 200, `historyStack` capped 10, `currentSlideIndex`, `liveSlideIndex`, `committedPassage`, `isScreenBlanked`, `currentTranslation`, `projectionLocked`), written by `persistRecoveryState()` after every state-changing action and restored on operator boot via `restoreProjectionSession()` (48 h freshness window, quarantined on parse/shape failure). This is what makes queue navigation survive an operator reload.
 - `servicePlanV2`, onboarding flags, `hint:*` flags.
 - IndexedDB image blobs.
 
 **In-memory only (lost on reload):**
-- `projectionQueue`, `currentSlideIndex`, `liveSlideIndex`
-- `historyStack` (max 10)
 - `searchQuery`, `searchResults`, `selectedResultIndex`, `previewPassage`
-- `projectionLocked`
 - All Bible text and translation metadata
 
 **Derived, never stored:**
@@ -297,7 +295,7 @@ Ordered, editable list persisted at `servicePlanV2` (auto-migrated from legacy `
 `addToRecent` is called from every projection. It removes any existing identical reference before unshifting, so the list is duplicate-free and ordered by last use, capped at 15. Individual and bulk deletion are supported and do not touch what is live.
 
 ### 5.5 Slide navigation
-`slideNext`/`slidePrevious` walk `projectionQueue`. At either boundary they extend the queue by fetching the true next/previous verse via `BibleRepository.getNextVerse`/`getPreviousVerse`, which roll over chapter *and* book boundaries using canonical order. `→`/`←` navigate **and** commit in one action.
+`slideNext`/`slidePrevious` walk `projectionQueue`. At either boundary they extend the queue by fetching the true next/previous verse via `BibleRepository.getNextVerse`/`getPreviousVerse`, which roll over chapter *and* book boundaries using canonical order. `→`/`←` navigate **and** commit in one action. `Escape` clears the preview (search query, results, preview passage) — it never advances the projection. When a passage is live, `clearPreview` preserves the queue and snaps `currentSlideIndex` back to `liveSlideIndex`, so `←`/`→`/`P` keep working after dismissing a preview; with nothing live, the preview-only queue is dropped.
 
 `isSameReferenceGroup` means verse-to-verse movement inside one chapter does **not** pollute the undo stack — undo is passage-level, which matches how operators think.
 
@@ -321,6 +319,23 @@ Because metadata is outside the measured bounds, long verses can never compress 
 
 ### 5.10 Onboarding
 `OnboardingManager` runs a `welcome → prompt → tutorial → done` phase machine gated on `bible-projection-onboarded`. `TutorialOverlay` measures the target rect, calls `scrollIntoView({behavior:'smooth', block:'nearest'})` when the target is offscreen, clamps the tooltip to a 12 px viewport inset (correct under browser zoom and resize), and always renders a fixed Exit button so the user can never be trapped. `ContextualHint` shows a one-time inline hint per feature, keyed `hint:<id>`. "Replay Tutorial" clears the onboarding flag and every hint flag, then reloads.
+
+### 5.11 Keyboard shortcut pipeline
+Five listeners coexist and must not be confused:
+1. **`useGlobalKeyboard`** (window `keydown`, mounted once by `OperatorScreen`, handlers read through a ref so the listener is registered exactly once): `→`/`←` = slideNext/Previous + commit, `B` = blank toggle, `P` = projectNow, `C` = chapter-as-queue, `PageUp`/`PageDown` = chapter jump, `N`/`Shift+Enter` = next Service Plan passage (via `nextServicePlanPassage` CustomEvent), `Ctrl/⌘+Z` = undo, `Escape` = clearPreview, `?` = toggle the footer shortcut-help popover (dispatches `wordde:toggle-shortcut-help`, which `OperatorScreen` uses to control the Radix popover).
+2. **Search field path** — `SearchInput` handles suggestions (arrows/Enter/Tab/Escape with `stopPropagation`) then forwards to `useInputController.handleKeyDown` (arrows move the selected result, Enter commits, Escape clears). Forwarding happens exactly once — the wrapping `div` in `OperatorScreen` deliberately has NO `onKeyDown`; a second registration here previously double-fired every arrow (skipping two results at a time).
+3. **`OperatorScreen` arrow tracker** — passive usage tracker for the keyboard hint chip.
+4. **`TutorialOverlay`** — onboarding step listeners, unaffected by the global hook.
+5. **`ServicePlan`** — consumes `nextServicePlanPassage`; the DOM CustomEvent is deliberate so the global hook stays decoupled from plan internals.
+
+Load-bearing invariants (each was a shipped defect once — do not "simplify" them back):
+- **No fall-through.** The global `switch` gives `Escape` its own `return`; `case 'Escape':` directly followed by `case 'ArrowRight':` once projected instead of clearing (unconditional `preventDefault`+`slideNext`).
+- **Modifier-guarded letters.** `b`/`c`/`p`/`n` fire only without Ctrl/⌘/Alt, so OS combos (copy/print/new-window) are never hijacked. `Ctrl/⌘+Z` is the one intentional combo.
+- **Empty-input pass-through.** The INPUT/TEXTAREA/contentEditable guard returns early for typing targets — but the search input auto-focuses on boot, so a blanket guard made EVERY shortcut dead until the first click. While the field is focused but EMPTY, non-printing navigation keys (`←`/`→`/`↑`/`↓`/`PageUp`/`PageDown`/`Escape`/`?`) pass through; once the field has text, everything is blocked so typing never double-fires shortcuts.
+- **Live queue survives Escape.** `clearPreview` keeps `projectionQueue` and snaps `currentSlideIndex` to `liveSlideIndex` when a passage is live (previously it emptied the queue, making `←`/`→`/`P` silent no-ops until the next passage load); a preview-only queue is still dropped.
+- **Undo syncs both persistence keys.** `undoProjection` writes `currentProjection` (broadcast + refresh loader) AND the recovery snapshot; skipping `currentProjection` once made a projection-window refresh after undo resurrect the undone verse.
+
+Behavioral coverage lives in `src/test/keyboardShortcut.test.tsx` (17 tests, real KeyboardEvents through the mounted hook). Synthetic-event caveat: Radix dismissable layers only respond to trusted Escape, so popover Esc-close is verified manually, not in jsdom.
 
 ---
 
@@ -390,7 +405,7 @@ Zero cost, zero ops, guaranteed offline. Downside: no multi-device control, no s
 | Projection window never opens | Popup blocker | Status stays `connecting`; setup dialog never appears | No explicit "popup blocked" message |
 | Projection window closed mid-service | Operator error | Polled `window.closed` → status `idle`; reopening restores from localStorage | Screen is dark until reopened |
 | Broadcast message dropped | Tab throttling, backgrounded window | 3 s `SYNC` re-assert | Up to 3 s of stale content |
-| Operator window reloads | Crash, accidental refresh | Projection keeps rendering last passage; `recentPassages` and plan persist | `projectionQueue`, `historyStack`, `liveSlideIndex` are **lost** — arrows stop working until a new passage is selected |
+| Operator window reloads | Crash, accidental refresh | Projection keeps rendering last passage; on boot `restoreProjectionSession()` restores queue, indexes, history, blank state, and translation from the `projectionRecoveryState` snapshot (48 h window) | Recovery snapshot only persists when the queue is non-empty; a reload while idle starts clean |
 | Translation fails to load at boot | Corrupt/missing ZIP | `preloadAllTranslations` rejects → error state with retry | One bad ZIP fails the entire `Promise.all`, blocking boot for all translations |
 | Translation loaded but book missing | Incomplete source data | `getBooksMap` returns empty; `getPassage` returns null; warning logged | Operator sees "nothing happened" with no on-screen explanation |
 | IndexedDB blocked | Private browsing, quota | `loadAllAssets` catches and returns a stable empty shape | Backgrounds silently absent |
@@ -438,7 +453,7 @@ Zero cost, zero ops, guaranteed offline. Downside: no multi-device control, no s
 1. **Decode in a Web Worker and cache parsed data in IndexedDB.** Boot would drop from seconds to near-instant on the second run, and the main thread would stay responsive.
 2. **Build an inverted index at load time.** Removes the only algorithmically bad path in the app.
 3. **Introduce a transport interface** (`ProjectionTransport` with `send`/`subscribe`) over `BroadcastChannel`, so a LAN WebSocket implementation could enable a phone or tablet as a remote without touching the store.
-4. **Persist the projection queue and live index.** An operator-window reload currently drops navigation state — the most user-visible gap in the recovery story.
+4. ~~Persist the projection queue and live index~~ **Done** — `projectionRecoveryState` now snapshots the queue, both indexes, history, blank state, and translation after every state change, and `restoreProjectionSession()` rebuilds them on boot.
 5. **Per-translation load isolation.** `Promise.allSettled` instead of `Promise.all`, so one corrupt ZIP degrades one translation instead of blocking boot.
 6. **Verse-key-based navigation.** Replace `verseNum < verses.length` arithmetic with index lookup in the actual verse array, removing the contiguous-integer assumption.
 7. **Guard all localStorage writes.** A `safeSet` wrapper with try/catch and a quota warning.
@@ -454,7 +469,7 @@ Zero cost, zero ops, guaranteed offline. Downside: no multi-device control, no s
 - The `RELOAD_ASSETS` handler closes over a stale `assetUrls` (its effect has an empty dependency array), so object-URL revocation can miss URLs.
 - `blankSettings.logoUrl` / `softBgUrl` remain in the type as unused legacy fields.
 - Console logging in hot paths (`projectSlide` logs every projection).
-- Only one test file exists (`src/test/example.test.ts`); the normalizer, repository loader, and `projectSlide` history rules are the highest-value untested logic in the system.
+- Only 6 test files exist (recovery, keyboard shortcuts, service plan, verse navigation, search reference, example); the normalizer, repository loader, and `projectSlide` history rules remain the highest-value untested logic in the system.
 
 ### "Good enough" vs "correct"
 - **Good enough:** polling `window.closed` every 1.5 s; a 3 s blanket re-sync instead of acked delivery; full-store subscriptions; linear keyword search; first-occurrence-wins duplicate handling.
