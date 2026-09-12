@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import type { Passage } from '@/core/types';
 import { BibleRepository } from '@/core/bibleRepository';
 import { useStateManager } from '@/core/stateManager';
 import type { BibleBook } from '@/core/types';
@@ -50,7 +51,7 @@ async function simulateLoadPassage(
   translation: string,
   buildQueueFromPassage: (passage: any) => void,
   buildQueueFromChapter: (book: string, chapter: string) => void,
-) {
+): Promise<LoadResult> {
   const rangePattern = /^(.+?)\s*(\d+)\s*:\s*(\d+)(?:\s*-\s*(\d+))?$/i;
   const chapterPattern = /^(.+?)\s*(\d+)$/i;
 
@@ -81,6 +82,25 @@ async function simulateLoadPassage(
   return null;
 }
 
+type ChapterResult = { type: 'chapter'; book: string; chapter: string };
+type LoadResult = Passage | ChapterResult | null;
+
+/** Narrow to a verse passage (or fail the test with a clear message). */
+function expectPassage(result: LoadResult): Passage {
+  if (!result || !('reference' in result)) {
+    throw new Error(`Expected a verse passage, got: ${JSON.stringify(result)}`);
+  }
+  return result;
+}
+
+/** Narrow to a chapter-load result (or fail the test with a clear message). */
+function expectChapter(result: LoadResult): ChapterResult {
+  if (!result || !('type' in result)) {
+    throw new Error(`Expected a chapter result, got: ${JSON.stringify(result)}`);
+  }
+  return result;
+}
+
 describe('ServicePlan passage loading', () => {
   beforeEach(() => {
     reset();
@@ -100,17 +120,16 @@ describe('ServicePlan passage loading', () => {
       projectionLocked: false,
     });
 
-    const result = await simulateLoadPassage(
+    const result = expectPassage(await simulateLoadPassage(
       'John 3:16',
       'TEST',
       store.getState().buildQueueFromPassage,
       store.getState().buildQueueFromChapter,
-    );
+    ));
 
-    expect(result).not.toBeNull();
-    expect(result!.reference.book).toBe('John');
-    expect(result!.reference.chapter).toBe('3');
-    expect(result!.reference.verseStart).toBe('16');
+    expect(result.reference.book).toBe('John');
+    expect(result.reference.chapter).toBe('3');
+    expect(result.reference.verseStart).toBe('16');
 
     const state = store.getState();
     expect(state.projectionQueue.length).toBeGreaterThan(0);
@@ -128,17 +147,16 @@ describe('ServicePlan passage loading', () => {
       projectionLocked: false,
     });
 
-    const result = await simulateLoadPassage(
+    const result = expectChapter(await simulateLoadPassage(
       'Romans 8',
       'TEST',
       store.getState().buildQueueFromPassage,
       store.getState().buildQueueFromChapter,
-    );
+    ));
 
-    expect(result).not.toBeNull();
-    expect(result!.type).toBe('chapter');
-    expect(result!.book).toBe('Romans');
-    expect(result!.chapter).toBe('8');
+    expect(result.type).toBe('chapter');
+    expect(result.book).toBe('Romans');
+    expect(result.chapter).toBe('8');
 
     const state = store.getState();
     expect(state.projectionQueue.length).toBeGreaterThan(0);
@@ -177,18 +195,17 @@ describe('ServicePlan passage loading', () => {
       projectionLocked: false,
     });
 
-    const result = await simulateLoadPassage(
+    const result = expectPassage(await simulateLoadPassage(
       'Romans 8:28-31',
       'TEST',
       store.getState().buildQueueFromPassage,
       store.getState().buildQueueFromChapter,
-    );
+    ));
 
-    expect(result).not.toBeNull();
-    expect(result!.reference.book).toBe('Romans');
-    expect(result!.reference.chapter).toBe('8');
-    expect(result!.reference.verseStart).toBe('28');
-    expect(result!.reference.verseEnd).toBe('31');
+    expect(result.reference.book).toBe('Romans');
+    expect(result.reference.chapter).toBe('8');
+    expect(result.reference.verseStart).toBe('28');
+    expect(result.reference.verseEnd).toBe('31');
   });
 
   it('fails silently (returns null) when resolveBookName returns empty array', async () => {
