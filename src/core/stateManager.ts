@@ -281,14 +281,24 @@ export const useStateManager = create<StateManager>((set, get) => ({
   },
 
   clearPreview: () => {
+    const { liveSlideIndex, projectionQueue } = get();
     set({
       searchQuery: '',
       searchResults: [],
       previewPassage: null,
       selectedResultIndex: -1,
-      projectionQueue: [],
-      currentSlideIndex: 0,
     });
+    const liveIntact = liveSlideIndex !== null && !!projectionQueue[liveSlideIndex];
+    if (liveIntact) {
+      // A passage is live: its queue must stay navigable. Only snap the
+      // operator cursor back to the live slide — wiping the queue here made
+      // ←/→/P silently dead after dismissing a preview (liveSlideIndex kept
+      // pointing into an empty queue).
+      set({ currentSlideIndex: liveSlideIndex });
+    } else {
+      // Nothing live — the queue was preview-only, so drop it.
+      set({ projectionQueue: [], currentSlideIndex: 0 });
+    }
   },
 
   setTranslation: async (translation) => {
@@ -462,6 +472,10 @@ export const useStateManager = create<StateManager>((set, get) => ({
       set({ liveSlideIndex: 0, committedPassage: p, isScreenBlanked: false });
       broadcastCommit(p);
       try {
+        // Keep 'currentProjection' in sync (the projection window's
+        // refresh-time loader reads it) — undo previously skipped this, so a
+        // projection-window refresh after undo resurrected the undone passage.
+        localStorage.setItem('currentProjection', JSON.stringify(p));
         persistProjectionState({ passage: p, isBlanked: false, timestamp: Date.now() });
       } catch (error) {
         console.warn('[undoProjection] Failed to persist projection state:', error);

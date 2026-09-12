@@ -45,6 +45,16 @@ export function OperatorScreen() {
   const [settingsOpened, setSettingsOpened] = useState(false);
   const [arrowUsed, setArrowUsed] = useState(false);
 
+  // "?" keyboard shortcut toggles the footer shortcuts help popover.
+  // The global handler (useGlobalKeyboard) dispatches this event so the
+  // advertised "? — Show this help" shortcut actually works.
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  useEffect(() => {
+    const handler = () => setShortcutsOpen(open => !open);
+    window.addEventListener('wordde:toggle-shortcut-help', handler);
+    return () => window.removeEventListener('wordde:toggle-shortcut-help', handler);
+  }, []);
+
   // Track arrow key usage for keyboard hint
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -199,7 +209,7 @@ export function OperatorScreen() {
           {/* Tab content */}
           <ScrollArea className="flex-1 min-h-0">
             {activeTab === 'search' && (
-              <div className="p-3 space-y-2" data-tutorial="search" onKeyDown={handleKeyDown}>
+              <div className="p-3 space-y-2" data-tutorial="search">
                 <SearchInput
                   value={searchQuery}
                   onChange={handleInputChange}
@@ -297,7 +307,7 @@ export function OperatorScreen() {
                 <kbd className="px-1 py-0.5 rounded bg-muted text-[10px] font-mono">↑↓</kbd> Results
               </span>
             </div>
-            <Popover>
+            <Popover open={shortcutsOpen} onOpenChange={setShortcutsOpen}>
               <PopoverTrigger asChild>
                 <button
                   className="focus-console flex items-center gap-1 px-1.5 py-0.5 rounded hover:bg-secondary/70 transition-colors text-muted-foreground hover:text-foreground"

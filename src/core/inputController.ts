@@ -183,28 +183,51 @@ export function useGlobalKeyboard() {
     const handleGlobalKeyDown = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement;
 
-      // Skip shortcuts when user is typing in an input field
+      // Skip shortcuts when the user is typing in an input field.
+      // Nuance: the search input auto-focuses on boot, so a blanket skip made
+      // every shortcut dead until the operator clicked elsewhere. While the
+      // field is focused but EMPTY nothing is being typed, so non-printing
+      // navigation keys (arrows, paging, Escape, ?) are safe to pass through.
+      // Letters stay blocked in fields: they would both type AND trigger.
       if (
         target.tagName === 'INPUT' ||
         target.tagName === 'TEXTAREA' ||
         target.isContentEditable
       ) {
-        return;
+        const emptyInput = target.tagName === 'INPUT' && !(target as HTMLInputElement).value;
+        const navigationKeys = [
+          'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown',
+          'PageUp', 'PageDown', 'Escape', '?',
+        ];
+        if (!(emptyInput && navigationKeys.includes(event.key))) {
+          return;
+        }
       }
 
       const h = handlersRef.current;
 
       switch (event.key) {
+        case '?':
+          // Advertised in the footer help: "? — Show this help".
+          event.preventDefault();
+          window.dispatchEvent(new CustomEvent('wordde:toggle-shortcut-help'));
+          return;
+
         case 'z':
         case 'Z':
           if (event.ctrlKey || event.metaKey) {
             event.preventDefault();
             h.undoProjection();
-            return;
           }
           return;
 
         case 'Escape':
+          // Advertised as "Esc — Clear preview". Only reached outside input
+          // fields (the guard above returns for INPUT/TEXTAREA), where the
+          // search field's own handler has already cleared it.
+          event.preventDefault();
+          h.clearPreview();
+          return;
 
         case 'ArrowRight':
           event.preventDefault();
@@ -220,12 +243,15 @@ export function useGlobalKeyboard() {
 
         case 'c':
         case 'C':
+          // Letters must not hijack OS/browser combos (Ctrl+C copy, etc.).
+          if (event.ctrlKey || event.metaKey || event.altKey) return;
           event.preventDefault();
           h.loadChapterAsQueue();
           return;
 
         case 'b':
         case 'B':
+          if (event.ctrlKey || event.metaKey || event.altKey) return;
           event.preventDefault();
           h.blankScreen();
           return;
@@ -242,12 +268,14 @@ export function useGlobalKeyboard() {
 
         case 'p':
         case 'P':
+          if (event.ctrlKey || event.metaKey || event.altKey) return;
           event.preventDefault();
           h.projectNow();
           return;
 
         case 'n':
         case 'N':
+          if (event.ctrlKey || event.metaKey || event.altKey) return;
           event.preventDefault();
           window.dispatchEvent(new CustomEvent('nextServicePlanPassage'));
           return;
