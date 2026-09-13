@@ -71,9 +71,9 @@ This application solves: **project any verse, in any of five translations, on a 
            │                                       │
      ┌─────┴───────────────────────────────────────┴─────┐
      │  Shared browser origin storage                    │
-     │   localStorage: currentProjection, projectionState│
-     │                 blankSettings, recentPassages,    │
-     │                 servicePlanV2, onboarding flags   │
+│   localStorage: currentProjection, projectionState│
+│                 blankSettings, recentPassages,    │
+│                 services, onboarding flags        │
      │   IndexedDB   : logo, softBackground, bg:<uuid>   │
      └───────────────────────────────────────────────────┘
 ```
@@ -186,7 +186,7 @@ There is none. Deliberately. There is no service layer, no API, no database, no 
 - `blankSettings` — style, session screens, background refs, active IDs.
 - `recentPassages` — array of reference strings, max 15.
 - `projectionRecoveryState` — bounded snapshot of the active projection session (`queue` capped 200, `historyStack` capped 10, `currentSlideIndex`, `liveSlideIndex`, `committedPassage`, `isScreenBlanked`, `currentTranslation`, `projectionLocked`), written by `persistRecoveryState()` after every state-changing action and restored on operator boot via `restoreProjectionSession()` (48 h freshness window, quarantined on parse/shape failure). This is what makes queue navigation survive an operator reload.
-- `servicePlanV2`, onboarding flags, `hint:*` flags.
+- `services` (auto-migrated from legacy `servicePlan` on read), onboarding flags, `hint_seen_<id>` flags.
 - IndexedDB image blobs.
 
 **In-memory only (lost on reload):**
@@ -293,7 +293,7 @@ Because all format knowledge is confined to this file, search, browse, and proje
 Two-column Old/New Testament book list → chapter grid → verse grid. Selecting a verse builds a queue from the passage under `currentTranslation` and projects it through the standard pipeline.
 
 ### 5.3 Service Plan
-Ordered, editable list persisted at `servicePlanV2` (auto-migrated from legacy `servicePlan`). Supports inline edit, reorder, safe delete, and active-item tracking. `N` or `Shift+Enter` dispatches a `nextServicePlanPassage` window event that the component consumes — the one place a DOM CustomEvent is used instead of the store, to avoid coupling the global keyboard hook to plan internals.
+Ordered, editable list persisted at `services` (auto-migrated from legacy `servicePlan` on read). Supports inline edit, reorder, safe delete, and active-item tracking. `N` or `Shift+Enter` dispatches a `nextServicePlanPassage` window event that the component consumes — the one place a DOM CustomEvent is used instead of the store, to avoid coupling the global keyboard hook to plan internals.
 
 ### 5.4 Recent Passages
 `addToRecent` is called from every projection. It removes any existing identical reference before unshifting, so the list is duplicate-free and ordered by last use, capped at 15. Individual and bulk deletion are supported and do not touch what is live.
@@ -322,7 +322,7 @@ Because metadata is outside the measured bounds, long verses can never compress 
 `ProjectionControl` opens `window.open('/projection', 'projectionWindow', 'width=1280,height=720')`, sets status `connecting`, and on `PROJECTOR_READY` shows a three-step guided dialog: drag to the TV → press F11 → confirm only the verse is visible. Status badge shows idle / connecting / active / disconnected. No screen-detection or window-moving APIs are used — they are unreliable and permission-gated.
 
 ### 5.10 Onboarding
-`OnboardingManager` runs a `welcome → prompt → tutorial → done` phase machine gated on `bible-projection-onboarded`. `TutorialOverlay` measures the target rect, calls `scrollIntoView({behavior:'smooth', block:'nearest'})` when the target is offscreen, clamps the tooltip to a 12 px viewport inset (correct under browser zoom and resize), and always renders a fixed Exit button so the user can never be trapped. `ContextualHint` shows a one-time inline hint per feature, keyed `hint:<id>`. "Replay Tutorial" clears the onboarding flag and every hint flag, then reloads.
+`OnboardingManager` runs a `welcome → prompt → tutorial → done` phase machine gated on `bible-projection-onboarded`. `TutorialOverlay` measures the target rect, calls `scrollIntoView({behavior:'smooth', block:'nearest'})` when the target is offscreen, clamps the tooltip to a 12 px viewport inset (correct under browser zoom and resize), and always renders a fixed Exit button so the user can never be trapped. `ContextualHint` shows a one-time inline hint per feature, keyed `hint_seen_<id>`. "Replay Tutorial" clears the onboarding flag and every hint flag, then reloads.
 
 ### 5.11 Keyboard shortcut pipeline
 Five listeners coexist and must not be confused:

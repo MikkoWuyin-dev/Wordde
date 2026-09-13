@@ -12,7 +12,7 @@ You may not propose or make a code change until you have read, in this order:
 2. `docs/RELIABILITY & INVARIANT SPECIFICATION.md` — invariants RI-001…RI-061 you must never break.
 3. `docs/CONSTRAINTS.md` — the inviolable NEVER / ALWAYS rules.
 4. `docs/VERIFICATION-RULES.md` — the checks your change must pass (VF / VP / VT / VB / VC).
-5. `System Teardown.md` — the current implementation reality.
+5. `docs/System Teardown.md` — the current implementation reality.
 6. `docs/ARCHITECTURE.md` — deep design; required when the change touches state, data, sync, or recovery.
 
 If the task conflicts with anything in these documents, **STOP and surface the conflict** instead of proceeding.
@@ -44,7 +44,7 @@ Plan → Prompt → Verify → Review → Test → Commit. Make the **smallest c
 - `public/data/*.zip` — curated Bible source data. Never modify.
 - `src/core/bibleNormalizer.ts`, `src/core/broadcastSync.ts`, `src/core/types.ts` — protected (VF-100). Change only with explicit justification and review in the task.
 - `docs/MCD.md`, `docs/RELIABILITY & INVARIANT SPECIFICATION.md` — canonical and slow-moving. Change only when an invariant or decision is formally added/changed/retired, never casually.
-- **`System Teardown.md` is the one doc you are expected to keep current** — update it whenever your change alters implementation reality (RI-053).
+- **`docs/System Teardown.md` is the one doc you are expected to keep current** — update it whenever your change alters implementation reality (RI-053).
 
 ## 5. Every task ends with a completion report (MCD §26, Phase H)
 
