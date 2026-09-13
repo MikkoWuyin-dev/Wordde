@@ -2,6 +2,7 @@
 // Syncs committedPassage from Operator → Projection tab on same machine
 
 import type { Passage } from './types';
+import { safeLocalSet } from './safeStorage';
 
 const CHANNEL_NAME = 'bible-projection-sync';
 
@@ -66,7 +67,11 @@ export function loadBlankSettings(): BlankSettings {
 }
 
 export function saveBlankSettings(settings: BlankSettings): void {
-  localStorage.setItem('blankSettings', JSON.stringify(settings));
+  // Guarded internally (RI-022/RI-043): a storage failure must not break the
+  // operator regardless of caller. Deliberate, justified edit to this
+  // protected file — limited to this function; no message shapes or protocol
+  // changes.
+  safeLocalSet('blankSettings', JSON.stringify(settings));
 }
 
 export type BroadcastMessage =
@@ -146,7 +151,10 @@ export interface PersistedProjectionState {
 }
 
 export function persistProjectionState(state: PersistedProjectionState): void {
-  localStorage.setItem(PROJECTION_STATE_KEY, JSON.stringify(state));
+  // Guarded internally (RI-022/RI-043): never throws regardless of caller.
+  // Deliberate, justified edit to this protected file — limited to this
+  // function; no message shapes or protocol changes.
+  safeLocalSet(PROJECTION_STATE_KEY, JSON.stringify(state));
 }
 
 export function loadPersistedProjectionState(): PersistedProjectionState | null {

@@ -98,7 +98,8 @@ UI components  ──►  inputController  ──►  stateManager (Zustand)
 - `src/core/searchEngine.ts` (174 LOC) — pure ranking. Read-only against the repository. Singleton.
 - `src/core/autocomplete.ts` — Levenshtein-based reference suggestions, read-only.
 - `src/core/stateManager.ts` (~770 LOC) — Zustand store. The **only** writer of projection state.
-- `src/core/broadcastSync.ts` (168 LOC) — message schema, channel singleton, blank-settings persistence, projection-state persistence.
+- `src/core/broadcastSync.ts` (~180 LOC) — message schema, channel singleton, blank-settings persistence, projection-state persistence. `saveBlankSettings` and `persistProjectionState` are internally guarded and never throw regardless of caller.
+- `src/core/safeStorage.ts` — `safeLocalSet` / `safeLocalRemove`: never-throwing localStorage writes. On failure they `console.warn` with the key and return `false`; in-memory (authoritative) state is always updated independently. Every localStorage write in the app routes through them (or, for `saveRecoverySnapshot`, through an equivalent function-level guard).
 - `src/core/assetStorage.ts` (137 LOC) — IndexedDB wrapper for image blobs.
 - `src/core/translationMetadata.ts` — code → display-name map with code fallback.
 - `src/core/projectionRecovery.ts` (228 LOC) — builds, validates (48 h freshness, quarantine on malformed input), and restores the bounded `projectionRecoveryState` snapshot; its localStorage write is guarded.
@@ -174,8 +175,8 @@ There is none. Deliberately. There is no service layer, no API, no database, no 
 | Verse text | `BibleRepository` in-memory maps | Immutable after load. |
 | Blank/session/background settings | `localStorage['blankSettings']` via `loadBlankSettings()` / `saveBlankSettings()` | Read on demand, not held in Zustand — the only intentional exception, because both windows need it and it changes rarely. |
 | Image binaries | IndexedDB (`bible_projection_assets`) | Never in Zustand, never in localStorage. |
-| Service plan | `localStorage['servicePlanV2']`, component state in `ServicePlan.tsx` | Migrated from legacy key `servicePlan` on read. |
-| Onboarding/hint completion | `localStorage` (`bible-projection-onboarded`, `hint:<id>`) | Boolean flags only. |
+| Service plan | `localStorage['services']`, component state in `ServicePlan.tsx` | Migrated from legacy key `servicePlan` on read (migration writes sit inside `loadServices`' try/catch). `saveServices` writes via `safeLocalSet`. |
+| Onboarding/hint completion | `localStorage` (`bible-projection-onboarded`, `hint_seen_<id>`) | Boolean flags only; written via `safeLocalSet`. |
 
 ### Persisted vs derived
 
@@ -412,7 +413,7 @@ Zero cost, zero ops, guaranteed offline. Downside: no multi-device control, no s
 | Translation fails to load at boot | Corrupt/missing ZIP | `preloadAllTranslations` rejects → error state with retry | One bad ZIP fails the entire `Promise.all`, blocking boot for all translations |
 | Translation loaded but book missing | Incomplete source data | `getBooksMap` returns empty; `getPassage` returns null; warning logged | Operator sees "nothing happened" with no on-screen explanation |
 | IndexedDB blocked | Private browsing, quota | `loadAllAssets` catches and returns a stable empty shape | Backgrounds silently absent |
-| localStorage full/disabled | Quota, hardened privacy settings | All reads try/catch'd; all hot-path writes guarded (`projectSlide`, `undoProjection`, `blankScreen`, `loadChapterAsQueue` persist via the guarded `persistProjectionState`; `saveRecoverySnapshot` guarded) | Remaining unguarded writes are low-stakes: `recentPassages` in `stateManager` and `saveBlankSettings` — a quota error there throws after the projection has already broadcast, degrading recents/settings, never the live verse (RI-022) |
+| localStorage full/disabled | Quota, hardened privacy settings | Every write goes through `safeLocalSet`/`safeLocalRemove` (`src/core/safeStorage.ts`) or an equivalent function-level guard (`saveRecoverySnapshot`); all reads are try/catch'd. A failed write logs a warning and returns `false` — it never throws into the caller | Persistence degrades silently (RI-022/RI-043): last-known-good values remain on disk and in-memory authoritative state is unaffected (RI-045/RI-059), so projection, recents, service plan, and settings all keep working |
 | Two operator windows open | User opens `/` twice | None | Both write the same keys and both broadcast; last writer wins, undo stacks diverge |
 | Clock skew / `timestamp` | — | Unused for ordering | None today, but `persistProjectionState.timestamp` is written and never read |
 
@@ -459,7 +460,7 @@ Zero cost, zero ops, guaranteed offline. Downside: no multi-device control, no s
 4. ~~Persist the projection queue and live index~~ **Done** — `projectionRecoveryState` now snapshots the queue, both indexes, history, blank state, and translation after every state change, and `restoreProjectionSession()` rebuilds them on boot.
 5. **Per-translation load isolation.** `Promise.allSettled` instead of `Promise.all`, so one corrupt ZIP degrades one translation instead of blocking boot.
 6. ~~Verse-key-based navigation~~ **Done** — `getNextVerse`/`getPreviousVerse` now resolve position in the actual normalized arrays and fail safe on missing keys (RI-009–RI-012, tested in `verseNavigation.test.ts`). Remaining numeric extrapolation lives only in non-authoritative suggestion/ranking paths.
-7. ~~Guard all localStorage writes~~ **Mostly done** — every hot-path write is try/catch-guarded (`projectSlide`, `undoProjection`, `blankScreen`, `loadChapterAsQueue`, `persistProjectionState`, `saveRecoverySnapshot`), satisfying RI-022 for live operation. Remaining unguarded: `recentPassages` writes in `stateManager` and `saveBlankSettings`; a shared `safeSet` wrapper would finish this.
+7. ~~Guard all localStorage writes~~ **Done** — `src/core/safeStorage.ts` provides `safeLocalSet`/`safeLocalRemove` (never throw; warn with the key; return success). All write sites route through them: stateManager (`currentProjection`, `recentPassages`), `saveBlankSettings`/`persistProjectionState` (guarded inside `broadcastSync.ts`), `saveServices` (ServicePlan), onboarding/hint flags; `saveRecoverySnapshot` keeps its equivalent inline guard. Covered by `persistenceGuards.test.ts` and the `saveServices` failure test in `servicePlan.test.ts`. **Rule going forward: any new localStorage write must go through `safeLocalSet`/`safeLocalRemove`.**
 8. **Operator-window singleton lock.** A `BroadcastChannel` claim on startup that warns when a second operator window opens.
 9. **Move `blankSettings` into Zustand** with an explicit persistence middleware, closing the one hole in the single-source-of-truth rule.
 
@@ -471,7 +472,7 @@ Zero cost, zero ops, guaranteed offline. Downside: no multi-device control, no s
 - `Projection.tsx` sets both `channel.onmessage` (a logger) and an `addEventListener` subscription — two mechanisms on one channel.
 - The `RELOAD_ASSETS` handler closes over a stale `assetUrls` (its effect has an empty dependency array), so object-URL revocation can miss URLs.
 - `blankSettings.logoUrl` / `softBgUrl` remain in the type as unused legacy fields.
-- Only 6 test files exist (recovery, keyboard shortcuts, service plan, verse navigation, search reference, example); the normalizer, repository loader, and `projectSlide` history rules remain the highest-value untested logic in the system.
+- 10 test files exist (verse navigation, projection recovery, keyboard shortcuts, service plan, search reference, persistence guards, plus lock-down suites `bibleNormalizer`/`lockedProjection`/`translationIsolation` and `example`) — 98 passing + 1 todo. The repository loader and `projectSlide` history rules remain the highest-value untested logic in the system.
 
 ### "Good enough" vs "correct"
 - **Good enough:** polling `window.closed` every 1.5 s; a 3 s blanket re-sync instead of acked delivery; full-store subscriptions; linear keyword search; first-occurrence-wins duplicate handling.

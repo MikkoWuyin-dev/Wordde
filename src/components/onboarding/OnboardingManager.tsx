@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { safeLocalSet, safeLocalRemove } from '@/core/safeStorage';
 import { WelcomeSlides } from './WelcomeSlides';
 import { TutorialOverlay } from './TutorialOverlay';
 import { clearAllHints } from './ContextualHint';
@@ -31,7 +32,7 @@ export function OnboardingManager() {
   }, []);
 
   const finishOnboarding = useCallback(() => {
-    localStorage.setItem(STORAGE_KEY, 'true');
+    safeLocalSet(STORAGE_KEY, 'true');
     setPhase('done');
   }, []);
 
@@ -82,7 +83,7 @@ export function restartTutorial() {
 
 /** Call this to reset all onboarding and hints */
 export function resetOnboarding() {
-  localStorage.removeItem(STORAGE_KEY);
+  safeLocalRemove(STORAGE_KEY);
   clearAllHints();
   window.location.reload();
 }

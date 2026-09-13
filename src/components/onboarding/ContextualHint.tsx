@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { safeLocalSet, safeLocalRemove } from '@/core/safeStorage';
 import { cn } from '@/lib/utils';
 
 const HINT_PREFIX = 'hint_seen_';
@@ -18,12 +19,12 @@ function hasSeenHint(id: HintId): boolean {
 }
 
 function markHintSeen(id: HintId) {
-  localStorage.setItem(HINT_PREFIX + id, 'true');
+  safeLocalSet(HINT_PREFIX + id, 'true');
 }
 
 export function clearAllHints() {
   const ids: HintId[] = ['search', 'keyboard_nav', 'service_plan', 'browse', 'display_settings'];
-  ids.forEach(id => localStorage.removeItem(HINT_PREFIX + id));
+  ids.forEach(id => safeLocalRemove(HINT_PREFIX + id));
 }
 
 export function ContextualHint({ id, message, show, className }: ContextualHintProps) {

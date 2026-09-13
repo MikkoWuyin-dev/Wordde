@@ -7,6 +7,7 @@ import type { AppState, Passage, Slide, SearchResult } from './types';
 import { BibleRepository } from './bibleRepository';
 import { broadcastCommit, broadcastBlank, broadcastUnblank, loadBlankSettings, persistProjectionState } from './broadcastSync';
 import { buildRecoverySnapshot, saveRecoverySnapshot, loadRecoverySnapshot } from './projectionRecovery';
+import { safeLocalSet } from './safeStorage';
 
 
 /**
@@ -155,12 +156,10 @@ function projectSlide(
   });
   // Persistence must never break a live projection: broadcast first, then persist.
   broadcastCommit(passage);
-  try {
-    localStorage.setItem('currentProjection', JSON.stringify(passage));
-    persistProjectionState({ passage, isBlanked: false, timestamp: Date.now() });
-  } catch (error) {
-    console.warn('[projectSlide] Failed to persist projection state:', error);
-  }
+  // Both writes are internally guarded (safeLocalSet / persistProjectionState),
+  // so persistence failure degrades to a warn and never breaks the projection.
+  safeLocalSet('currentProjection', JSON.stringify(passage));
+  persistProjectionState({ passage, isBlanked: false, timestamp: Date.now() });
 
   get().addToRecent(slide.reference);
 
@@ -230,16 +229,18 @@ export const useStateManager = create<StateManager>((set, get) => ({
     const current = get().recentPassages.filter(r => r !== reference);
     const updated = [reference, ...current].slice(0, MAX);
     set({ recentPassages: updated });
-    localStorage.setItem('recentPassages', JSON.stringify(updated));
+    // In-memory state above is authoritative (RI-045/RI-059): the disk write
+    // is best-effort and must never throw into the operator action (RI-022).
+    safeLocalSet('recentPassages', JSON.stringify(updated));
   },
   removeFromRecent: (reference: string) => {
     const updated = get().recentPassages.filter(r => r !== reference);
     set({ recentPassages: updated });
-    localStorage.setItem('recentPassages', JSON.stringify(updated));
+    safeLocalSet('recentPassages', JSON.stringify(updated));
   },
   clearAllRecent: () => {
     set({ recentPassages: [] });
-    localStorage.setItem('recentPassages', JSON.stringify([]));
+    safeLocalSet('recentPassages', JSON.stringify([]));
   },
 
   setSearchQuery: (query) => set({ searchQuery: query }),
@@ -471,15 +472,12 @@ export const useStateManager = create<StateManager>((set, get) => ({
       const p = slideToPassage(slide, currentTranslation);
       set({ liveSlideIndex: 0, committedPassage: p, isScreenBlanked: false });
       broadcastCommit(p);
-      try {
-        // Keep 'currentProjection' in sync (the projection window's
-        // refresh-time loader reads it) — undo previously skipped this, so a
-        // projection-window refresh after undo resurrected the undone passage.
-        localStorage.setItem('currentProjection', JSON.stringify(p));
-        persistProjectionState({ passage: p, isBlanked: false, timestamp: Date.now() });
-      } catch (error) {
-        console.warn('[undoProjection] Failed to persist projection state:', error);
-      }
+      // Keep 'currentProjection' in sync (the projection window's
+      // refresh-time loader reads it) — undo previously skipped this, so a
+      // projection-window refresh after undo resurrected the undone passage.
+      // Both writes are internally guarded; failure degrades to a warn.
+      safeLocalSet('currentProjection', JSON.stringify(p));
+      persistProjectionState({ passage: p, isBlanked: false, timestamp: Date.now() });
       get().addToRecent(slide.reference);
       get().persistRecoveryState();
     }

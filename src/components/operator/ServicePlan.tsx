@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useStateManager } from '@/core/stateManager';
+import { safeLocalSet } from '@/core/safeStorage';
 import { BibleRepository } from '@/core/bibleRepository';
 import { cn } from '@/lib/utils';
 import {
@@ -53,8 +54,11 @@ function loadServices(): Service[] {
   }
 }
 
-function saveServices(s: Service[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
+// Exported for unit testing (failing-persistence coverage).
+export function saveServices(s: Service[]) {
+  // In-memory state is authoritative; the disk write is best-effort and must
+  // never throw into a click handler (RI-022/RI-045/RI-059).
+  safeLocalSet(STORAGE_KEY, JSON.stringify(s));
 }
 
 export function ServicePlan() {

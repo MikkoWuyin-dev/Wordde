@@ -1,7 +1,9 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import type { Passage } from '@/core/types';
 import { BibleRepository } from '@/core/bibleRepository';
 import { useStateManager } from '@/core/stateManager';
+import { saveServices } from '@/components/operator/ServicePlan';
+import { safeLocalSet } from '@/core/safeStorage';
 import type { BibleBook } from '@/core/types';
 
 const book = (name: string, chapters: Record<string, string[]>): BibleBook => ({
@@ -258,5 +260,29 @@ describe('ServicePlan passage loading', () => {
     expect(state.projectionQueue.length).toBeGreaterThan(0);
     expect(state.projectionQueue[0].reference).toBe('John 3:16');
     expect(state.currentSlideIndex).toBe(0);
+  });
+});
+
+describe('ServicePlan saveServices — RI-045/RI-059 (failing persistence never crashes the UI)', () => {
+  let spy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    spy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('QuotaExceededError');
+    });
+  });
+
+  afterEach(() => {
+    spy.mockRestore();
+  });
+
+  it('does not throw when setItem fails, and safeLocalSet reports failure instead of throwing', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      expect(() => saveServices([{ id: '1', name: 'Sunday', passages: [] }])).not.toThrow();
+      expect(safeLocalSet('deliberately-failing-key', 'x')).toBe(false);
+    } finally {
+      warn.mockRestore();
+    }
   });
 });
