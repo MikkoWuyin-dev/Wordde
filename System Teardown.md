@@ -2,6 +2,8 @@
 
 Version of record: current `main` working tree. Every claim below maps to code in `src/`.
 
+Role in the documentation hierarchy: `docs/MCD.md` holds the slow-changing product/architectural philosophy, `docs/RELIABILITY & INVARIANT SPECIFICATION.md` holds the numbered behavioral invariants (`RI-xxx`, referenced throughout this file), and this document is the current-state technical record of how the system actually works today.
+
 ---
 
 ## 1. System Overview
@@ -92,14 +94,15 @@ UI components  ──►  inputController  ──►  stateManager (Zustand)
 
 - `src/core/types.ts` — canonical domain types (`Verse`, `Chapter`, `BibleBook`, `PassageReference`, `Passage`, `Slide`, `SearchResult`, `SemanticEntry`).
 - `src/core/bibleNormalizer.ts` (149 LOC) — the only place that knows about input file formats.
-- `src/core/bibleRepository.ts` (512 LOC) — read-only, translation-aware data access. Singleton class instance. Never mutates app state.
-- `src/core/searchEngine.ts` (169 LOC) — pure ranking. Read-only against the repository. Singleton.
+- `src/core/bibleRepository.ts` (666 LOC) — read-only, translation-aware data access. Singleton class instance. Never mutates app state. Its `getNextVerse`/`getPreviousVerse` are position-based and fail safe (null + warning on a missing key) — verse keys are never derived arithmetically (RI-009–RI-012).
+- `src/core/searchEngine.ts` (174 LOC) — pure ranking. Read-only against the repository. Singleton.
 - `src/core/autocomplete.ts` — Levenshtein-based reference suggestions, read-only.
 - `src/core/stateManager.ts` (~770 LOC) — Zustand store. The **only** writer of projection state.
 - `src/core/broadcastSync.ts` (168 LOC) — message schema, channel singleton, blank-settings persistence, projection-state persistence.
 - `src/core/assetStorage.ts` (137 LOC) — IndexedDB wrapper for image blobs.
 - `src/core/translationMetadata.ts` — code → display-name map with code fallback.
-- `src/core/inputController.ts` (~310 LOC) — two hooks: `useInputController` (search-scoped) and `useGlobalKeyboard` (window-scoped shortcuts; modifier-guarded letters, empty-input pass-through, Escape/`?` handling — see §5.11).
+- `src/core/projectionRecovery.ts` (228 LOC) — builds, validates (48 h freshness, quarantine on malformed input), and restores the bounded `projectionRecoveryState` snapshot; its localStorage write is guarded.
+- `src/core/inputController.ts` (~295 LOC) — two hooks: `useInputController` (search-scoped) and `useGlobalKeyboard` (window-scoped shortcuts; modifier-guarded letters, empty-input pass-through, Escape/`?` handling — see §5.11).
 
 **Rendering flow:** React function components subscribing to Zustand slices. No memoized selectors — the store is small and updates are user-paced (a few per second at most), so full-store subscription is acceptable.
 
@@ -328,7 +331,7 @@ Five listeners coexist and must not be confused:
 4. **`TutorialOverlay`** — onboarding step listeners, unaffected by the global hook.
 5. **`ServicePlan`** — consumes `nextServicePlanPassage`; the DOM CustomEvent is deliberate so the global hook stays decoupled from plan internals.
 
-Load-bearing invariants (each was a shipped defect once — do not "simplify" them back):
+Load-bearing invariants (each was a shipped defect once — do not "simplify" them back; RI-036/RI-037 in the Reliability & Invariant Specification formalize the context-respect and removed-stays-removed rules):
 - **No fall-through.** The global `switch` gives `Escape` its own `return`; `case 'Escape':` directly followed by `case 'ArrowRight':` once projected instead of clearing (unconditional `preventDefault`+`slideNext`).
 - **Modifier-guarded letters.** `b`/`c`/`p`/`n` fire only without Ctrl/⌘/Alt, so OS combos (copy/print/new-window) are never hijacked. `Ctrl/⌘+Z` is the one intentional combo.
 - **Empty-input pass-through.** The INPUT/TEXTAREA/contentEditable guard returns early for typing targets — but the search input auto-focuses on boot, so a blanket guard made EVERY shortcut dead until the first click. While the field is focused but EMPTY, non-printing navigation keys (`←`/`→`/`↑`/`↓`/`PageUp`/`PageDown`/`Escape`/`?`) pass through; once the field has text, everything is blocked so typing never double-fires shortcuts.
@@ -409,14 +412,14 @@ Zero cost, zero ops, guaranteed offline. Downside: no multi-device control, no s
 | Translation fails to load at boot | Corrupt/missing ZIP | `preloadAllTranslations` rejects → error state with retry | One bad ZIP fails the entire `Promise.all`, blocking boot for all translations |
 | Translation loaded but book missing | Incomplete source data | `getBooksMap` returns empty; `getPassage` returns null; warning logged | Operator sees "nothing happened" with no on-screen explanation |
 | IndexedDB blocked | Private browsing, quota | `loadAllAssets` catches and returns a stable empty shape | Backgrounds silently absent |
-| localStorage full/disabled | Quota, hardened privacy settings | Reads are try/catch'd | **Writes are not guarded** — a quota error in `projectSlide` would throw mid-projection |
+| localStorage full/disabled | Quota, hardened privacy settings | All reads try/catch'd; all hot-path writes guarded (`projectSlide`, `undoProjection`, `blankScreen`, `loadChapterAsQueue` persist via the guarded `persistProjectionState`; `saveRecoverySnapshot` guarded) | Remaining unguarded writes are low-stakes: `recentPassages` in `stateManager` and `saveBlankSettings` — a quota error there throws after the projection has already broadcast, degrading recents/settings, never the live verse (RI-022) |
 | Two operator windows open | User opens `/` twice | None | Both write the same keys and both broadcast; last writer wins, undo stacks diverge |
 | Clock skew / `timestamp` | — | Unused for ordering | None today, but `persistProjectionState.timestamp` is written and never read |
 
 ### Assumptions that could break
 - Exactly one operator window and one projection window per origin.
 - All translations share the same 66-book canon and identical verse numbering (used by `setTranslation`'s re-projection and by canonical book ordering built from the *first* translation loaded).
-- Verse numbers are 1..N contiguous integers — `getNextVerse` compares `verseNum < verses.length` rather than looking up the actual next key, which is wrong for any translation with gaps or lettered verses.
+- ~~Verse numbers are 1..N contiguous integers~~ **Removed** — `BibleRepository.getNextVerse`/`getPreviousVerse` are position-based (`findIndex` in the actual verse/chapter arrays, book rollover via canonical order, null on a missing key), per RI-009–RI-012, with regression tests in `src/test/verseNavigation.test.ts`. Residual numeric extrapolation remains only in non-authoritative suggestion/ranking paths (`searchEngine.getNearbyPassages`, autocomplete range suggestions), each verified against the real verse data before being offered, and the PresenterPanel's user-typed numeric verse-jump input.
 - `BroadcastChannel` is available (all modern browsers; absent in older Safari).
 
 ### Tight coupling
@@ -455,8 +458,8 @@ Zero cost, zero ops, guaranteed offline. Downside: no multi-device control, no s
 3. **Introduce a transport interface** (`ProjectionTransport` with `send`/`subscribe`) over `BroadcastChannel`, so a LAN WebSocket implementation could enable a phone or tablet as a remote without touching the store.
 4. ~~Persist the projection queue and live index~~ **Done** — `projectionRecoveryState` now snapshots the queue, both indexes, history, blank state, and translation after every state change, and `restoreProjectionSession()` rebuilds them on boot.
 5. **Per-translation load isolation.** `Promise.allSettled` instead of `Promise.all`, so one corrupt ZIP degrades one translation instead of blocking boot.
-6. **Verse-key-based navigation.** Replace `verseNum < verses.length` arithmetic with index lookup in the actual verse array, removing the contiguous-integer assumption.
-7. **Guard all localStorage writes.** A `safeSet` wrapper with try/catch and a quota warning.
+6. ~~Verse-key-based navigation~~ **Done** — `getNextVerse`/`getPreviousVerse` now resolve position in the actual normalized arrays and fail safe on missing keys (RI-009–RI-012, tested in `verseNavigation.test.ts`). Remaining numeric extrapolation lives only in non-authoritative suggestion/ranking paths.
+7. ~~Guard all localStorage writes~~ **Mostly done** — every hot-path write is try/catch-guarded (`projectSlide`, `undoProjection`, `blankScreen`, `loadChapterAsQueue`, `persistProjectionState`, `saveRecoverySnapshot`), satisfying RI-022 for live operation. Remaining unguarded: `recentPassages` writes in `stateManager` and `saveBlankSettings`; a shared `safeSet` wrapper would finish this.
 8. **Operator-window singleton lock.** A `BroadcastChannel` claim on startup that warns when a second operator window opens.
 9. **Move `blankSettings` into Zustand** with an explicit persistence middleware, closing the one hole in the single-source-of-truth rule.
 
@@ -468,7 +471,6 @@ Zero cost, zero ops, guaranteed offline. Downside: no multi-device control, no s
 - `Projection.tsx` sets both `channel.onmessage` (a logger) and an `addEventListener` subscription — two mechanisms on one channel.
 - The `RELOAD_ASSETS` handler closes over a stale `assetUrls` (its effect has an empty dependency array), so object-URL revocation can miss URLs.
 - `blankSettings.logoUrl` / `softBgUrl` remain in the type as unused legacy fields.
-- Console logging in hot paths (`projectSlide` logs every projection).
 - Only 6 test files exist (recovery, keyboard shortcuts, service plan, verse navigation, search reference, example); the normalizer, repository loader, and `projectSlide` history rules remain the highest-value untested logic in the system.
 
 ### "Good enough" vs "correct"
