@@ -1,5 +1,10 @@
 # Wordde — Codebase Reconciliation Report
 
+> **Status (updated 2026-09-14):** This is the original baseline audit — the "missing" / "AT RISK"
+> statuses below are historical. Since then: R1 (persistence guards), R2 (translation boot isolation),
+> R3 (operator lease), R4 (protocol versioning) have all landed and been verified, and the normalizer
+> lettered-ordering gap is fixed. See `docs/System Teardown.md` for the current state.
+
 **Method:** Full clone of `MikkoWuyin-dev/Wordde` @ `a9d17ae` ("Add Master Context Document and Reliability & Invariant Specification"). Static reading of all `src/core/` modules, the operator/projection pages, the input layer, and the test suite; `npm ci` + `npx vitest run` executed to capture the live baseline. Every claim below cites `file:line` from that commit. Code is treated as ground truth for "what is"; documents are treated as intent.
 
 ---

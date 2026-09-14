@@ -217,8 +217,8 @@ Projection Window (replica rendering)
 │   • projectionRecoveryState (queue + indexes + translation) ← P0 #1  │
 │   • blankSettings (style, session screens, background refs)          │
 │   • recentPassages (last 15, ordered by use)                         │
-│   • servicePlanV2 (ordered list of passages)                         │
-│   • onboarding flags (bible-projection-onboarded, hint:<id>)         │
+│   • services (ordered list of passages)                         │
+│   • onboarding flags (bible-projection-onboarded, hint_seen_<id>)         │
 │                                                                       │
 │ IndexedDB (bible_projection_assets):                                 │
 │   • logo (single blob)                                                │
@@ -313,7 +313,7 @@ interface ProjectionRecoveryState {
 - `projectionState` — Includes blank state
 - `blankSettings` — Visual settings (both windows read this)
 - `recentPassages` — Last 15 references (array of strings)
-- `servicePlanV2` — Ordered passages for service
+- `services` — Ordered passages for service
 
 **Rationale for separate recovery state:**
 - More complete than `currentProjection`
@@ -1068,7 +1068,7 @@ idle
 - `projectionRecoveryState` — Queue + indexes (~5-10 KB)
 - `blankSettings` — Visual settings (~2-5 KB)
 - `recentPassages` — Array of 15 strings (~1 KB)
-- `servicePlanV2` — Ordered passages (~2-10 KB)
+- `services` — Ordered passages (~2-10 KB)
 - `onboarding` flags (~1 KB)
 
 **Total localStorage:** ~15-30 KB (well under 5 MB quota)
@@ -1326,7 +1326,7 @@ if (Date.now() - recovery.timestamp > MAX_RECOVERY_AGE) {
 
 - **Blank settings:** Read from separate `blankSettings` key (both windows need it)
 - **Recent passages:** Read from separate `recentPassages` key
-- **Service plan:** Read from separate `servicePlanV2` key
+- **Service plan:** Read from separate `services` key
 
 **Rationale for separate keys:** These have independent lifecycles and are useful outside recovery context.
 
