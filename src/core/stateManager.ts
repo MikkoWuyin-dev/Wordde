@@ -200,6 +200,9 @@ function projectSlide(
 }
 
 
+/** Cap of the Recent Passages history — bounded per MCD §15 ("capped history"). */
+export const MAX_RECENT_PASSAGES = 20;
+
 export const useStateManager = create<StateManager>((set, get) => ({
   // App state
   searchQuery: '',
@@ -225,9 +228,8 @@ export const useStateManager = create<StateManager>((set, get) => ({
     try { return JSON.parse(localStorage.getItem('recentPassages') || '[]'); } catch { return []; }
   })(),
   addToRecent: (reference: string) => {
-    const MAX = 15;
     const current = get().recentPassages.filter(r => r !== reference);
-    const updated = [reference, ...current].slice(0, MAX);
+    const updated = [reference, ...current].slice(0, MAX_RECENT_PASSAGES);
     set({ recentPassages: updated });
     // In-memory state above is authoritative (RI-045/RI-059): the disk write
     // is best-effort and must never throw into the operator action (RI-022).

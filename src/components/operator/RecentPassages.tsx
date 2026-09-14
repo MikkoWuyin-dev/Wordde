@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { useStateManager } from '@/core/stateManager';
+import { useStateManager, MAX_RECENT_PASSAGES } from '@/core/stateManager';
 import { BibleRepository } from '@/core/bibleRepository';
 import { cn } from '@/lib/utils';
 import { Clock, Play, Trash2, X } from 'lucide-react';
@@ -105,7 +105,7 @@ export function RecentPassages() {
         )}
       </div>
       <div className="space-y-0.5">
-        {recentPassages.slice(0, 8).map((ref, idx) => {
+        {recentPassages.slice(0, MAX_RECENT_PASSAGES).map((ref, idx) => {
           const active = isActive(ref);
           const isConfirming = confirmDelete === ref;
 

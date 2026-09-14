@@ -138,7 +138,7 @@ There is none. Deliberately. There is no service layer, no API, no database, no 
       ├ localStorage['currentProjection'] = passage
       ├ broadcastCommit(passage)                → BroadcastChannel
       ├ persistProjectionState({passage,isBlanked,timestamp})
-      ├ addToRecent(slide.reference)            → localStorage, cap 15
+      ├ addToRecent(slide.reference)            → localStorage, cap 20
       └ pre-load the next verse into the queue tail
 11. Projection window's onBroadcastMessage receives COMMIT_PASSAGE
 12. setPassage(payload); setIsBlanked(false)
@@ -188,7 +188,7 @@ There is none. Deliberately. There is no service layer, no API, no database, no 
 - `currentProjection` — last projected `Passage` (written on every projection *and* on undo, so the projection window's refresh loader can never resurrect an undone verse).
 - `projectionState` — `{passage, isBlanked, blankSettings?, timestamp}`.
 - `blankSettings` — style, session screens, background refs, active IDs.
-- `recentPassages` — array of reference strings, max 15.
+- `recentPassages` — array of reference strings, max 20.
 - `projectionRecoveryState` — bounded snapshot of the active projection session (`queue` capped 200, `historyStack` capped 10, `currentSlideIndex`, `liveSlideIndex`, `committedPassage`, `isScreenBlanked`, `currentTranslation`, `projectionLocked`), written by `persistRecoveryState()` after every state-changing action and restored on operator boot via `restoreProjectionSession()` (48 h freshness window, quarantined on parse/shape failure). This is what makes queue navigation survive an operator reload.
 - `services` (auto-migrated from legacy `servicePlan` on read), onboarding flags, `hint_seen_<id>` flags.
 - IndexedDB image blobs.
@@ -302,7 +302,7 @@ Two-column Old/New Testament book list → chapter grid → verse grid. Selectin
 Ordered, editable list persisted at `services` (auto-migrated from legacy `servicePlan` on read). Supports inline edit, reorder, safe delete, and active-item tracking. `N` or `Shift+Enter` dispatches a `nextServicePlanPassage` window event that the component consumes — the one place a DOM CustomEvent is used instead of the store, to avoid coupling the global keyboard hook to plan internals.
 
 ### 5.4 Recent Passages
-`addToRecent` is called from every projection. It removes any existing identical reference before unshifting, so the list is duplicate-free and ordered by last use, capped at 15. Individual and bulk deletion are supported and do not touch what is live.
+`addToRecent` is called from every projection. It removes any existing identical reference before unshifting, so the list is duplicate-free and ordered by last use, capped at 20. The cap lives in the exported `MAX_RECENT_PASSAGES` constant, shared by the store and the Recent tab — the tab renders the full list inside the operator's ScrollArea, so it must never truncate independently. Individual and bulk deletion are supported and do not touch what is live.
 
 ### 5.5 Slide navigation
 `slideNext`/`slidePrevious` walk `projectionQueue`. At either boundary they extend the queue by fetching the true next/previous verse via `BibleRepository.getNextVerse`/`getPreviousVerse`, which roll over chapter *and* book boundaries using canonical order. `→`/`←` navigate **and** commit in one action. `Escape` clears the preview (search query, results, preview passage) — it never advances the projection. When a passage is live, `clearPreview` preserves the queue and snaps `currentSlideIndex` back to `liveSlideIndex`, so `←`/`→`/`P` keep working after dismissing a preview; with nothing live, the preview-only queue is dropped.

@@ -58,3 +58,20 @@ describe('RI-022 / RI-043 — localStorage writes survive a failing setItem', ()
     ).not.toThrow();
   });
 });
+
+describe('Recent Passages cap (MCD §15 — bounded history)', () => {
+  it('caps the history at 20, newest-first, and re-projects move an entry to the front without duplicating it', () => {
+    useStateManager.setState({ recentPassages: [] });
+    for (let i = 1; i <= 25; i++) {
+      useStateManager.getState().addToRecent(`Ref ${i}`);
+    }
+    const recents = useStateManager.getState().recentPassages;
+    expect(recents).toHaveLength(20);
+    expect(recents[0]).toBe('Ref 25');
+    expect(recents[19]).toBe('Ref 6'); // oldest survivor
+    useStateManager.getState().addToRecent('Ref 10');
+    const after = useStateManager.getState().recentPassages;
+    expect(after[0]).toBe('Ref 10');
+    expect(after.filter(r => r === 'Ref 10')).toHaveLength(1);
+  });
+});
