@@ -256,7 +256,7 @@ Only **references** (`{id, name, createdAt}`) live in `blankSettings`; the binar
 3. Nested-object format — `{Info: {...}, "John": {"1": {"1": "In the beginning…"}}}`.
 
 Rules enforced there and nowhere else:
-- Chapter and verse keys sorted with `numericKeyCompare` — numeric when both sides parse, lexical fallback. This is what makes `"10"` sort after `"9"`.
+- Chapter and verse keys sorted with `numericKeyCompare`, a natural-order comparison: numeric-prefixed keys (`"3a"` → number 3 + suffix "a") sort by their number and then by any suffix, so lettered verses interleave in reading order (`3, 3a, 3b, 4`) per RI-008; numeric-prefixed keys sort before purely alphabetic ones, and pure-numeric keys sort numerically (`"10"` after `"9"`). Do not revert this to a `Number()`-based comparison — any non-numeric key would become `NaN` and be pushed after every numeric key.
 - Verse text preserved **verbatim** — no trimming, no whitespace collapsing, no newline stripping. Scripture text must be byte-faithful.
 - `Info` / `info` / `metadata` keys extracted into a separate metadata object, never merged into books.
 
@@ -479,7 +479,7 @@ Zero cost, zero ops, guaranteed offline. Downside: no multi-device control, no s
 - `Projection.tsx` sets both `channel.onmessage` (a logger) and an `addEventListener` subscription — two mechanisms on one channel.
 - The `RELOAD_ASSETS` handler closes over a stale `assetUrls` (its effect has an empty dependency array), so object-URL revocation can miss URLs.
 - `blankSettings.logoUrl` / `softBgUrl` remain in the type as unused legacy fields.
-- 10 test files exist (verse navigation, projection recovery, keyboard shortcuts, service plan, search reference, persistence guards, plus lock-down suites `bibleNormalizer`/`lockedProjection`/`translationIsolation` and `example`) — 98 passing + 1 todo. The repository loader and `projectSlide` history rules remain the highest-value untested logic in the system.
+- 14 test files exist (verse navigation, projection recovery, keyboard shortcuts, service plan, search reference, persistence guards, boot isolation, operator lease, broadcast protocol, plus lock-down suites `bibleNormalizer`/`lockedProjection`/`translationIsolation` and `example`) — 123 passing, 0 todo. The repository loader and `projectSlide` history rules remain the highest-value untested logic in the system.
 
 ### "Good enough" vs "correct"
 - **Good enough:** polling `window.closed` every 1.5 s; a 3 s blanket re-sync instead of acked delivery; full-store subscriptions; linear keyword search; first-occurrence-wins duplicate handling.

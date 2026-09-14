@@ -149,12 +149,14 @@ describe('bibleNormalizer — shape detection & safety', () => {
   });
 });
 
-describe('RI-008 — lettered verse ordering in the nested-object format (KNOWN GAP)', () => {
-  // Latent bug: numericKeyCompare sorts every non-numeric key AFTER all numeric
-  // keys, so nested-format input ["3","3a","3b","4"] normalises to
-  // ["3","4","3a","3b"] instead of reading order. Not triggered by current data
-  // (KJV/NIV/NKJV are canonical; NLT/AMP have no lettered keys), but it breaks the
-  // app's stated lettered-verse support if such a translation is ever added in
-  // this format. Flip this todo into a real assertion when the sort is fixed.
-  it.todo('places lettered verses in reading order: 3, 3a, 3b, 4 (nested format)');
+describe('RI-008 — lettered verse ordering in the nested-object format', () => {
+  it('places lettered verses in reading order: 3, 3a, 3b, 4 (nested format)', () => {
+    const { books } = normalizeBibleJson({ B: { '3': { '4': 'd', '3': 'c', '3a': 'ca', '3b': 'cb' } } });
+    expect(books[0].chapters[0].verses.map((v) => v.verse)).toEqual(['3', '3a', '3b', '4']);
+  });
+
+  it('sorts numeric-prefixed keys before purely alphabetic ones', () => {
+    const { books } = normalizeBibleJson({ B: { '1': { intro: 'x', '1': 'a', '2': 'b' } } });
+    expect(books[0].chapters[0].verses.map((v) => v.verse)).toEqual(['1', '2', 'intro']);
+  });
 });

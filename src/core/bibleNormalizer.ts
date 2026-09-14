@@ -37,18 +37,28 @@ export interface NormalizedBibleFile {
 }
 
 /**
- * Numeric comparator for keys that should be numeric (chapter / verse).
- * Falls back to lexical comparison if either side is non-numeric (e.g. "3a").
- * This is what guarantees "10" sorts after "9", not after "1".
+ * Split a key into a leading integer and a suffix, e.g. "3a" -> { num: 3, rest: "a" }.
+ * Keys with no leading digit -> { num: null, rest: key }.
+ */
+function parseKey(key: string): { num: number | null; rest: string } {
+  const m = /^(\d+)(.*)$/.exec(key);
+  return m ? { num: parseInt(m[1], 10), rest: m[2] } : { num: null, rest: key };
+}
+
+/**
+ * Natural-order comparison for verse/chapter keys. Numeric-prefixed keys sort
+ * by their number and then by any suffix, so lettered verses interleave in
+ * reading order (3, 3a, 3b, 4) instead of being pushed after every numeric key.
+ * Numeric-prefixed keys sort before pure-alphabetic ones (RI-008 / RI-041).
  */
 function numericKeyCompare(a: string, b: string): number {
-  const na = Number(a);
-  const nb = Number(b);
-  const aNum = Number.isFinite(na);
-  const bNum = Number.isFinite(nb);
-  if (aNum && bNum) return na - nb;
-  if (aNum) return -1;
-  if (bNum) return 1;
+  const pa = parseKey(a);
+  const pb = parseKey(b);
+  if (pa.num !== null && pb.num !== null) {
+    return pa.num !== pb.num ? pa.num - pb.num : pa.rest.localeCompare(pb.rest);
+  }
+  if (pa.num !== null) return -1;
+  if (pb.num !== null) return 1;
   return a.localeCompare(b);
 }
 
