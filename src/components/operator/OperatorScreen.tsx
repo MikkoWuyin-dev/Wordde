@@ -4,6 +4,7 @@ import { OnboardingManager, resetOnboarding } from '@/components/onboarding/Onbo
 import { ContextualHint } from '@/components/onboarding/ContextualHint';
 import { useInputController, useGlobalKeyboard } from '@/core/inputController';
 import { useStateManager } from '@/core/stateManager';
+import { useOperatorLease } from '@/hooks/useOperatorLease';
 import { BibleRepository } from '@/core/bibleRepository';
 import { SearchEngine } from '@/core/searchEngine';
 import { SearchInput } from './SearchInput';
@@ -89,8 +90,13 @@ export function OperatorScreen() {
 
   useGlobalKeyboard();
 
+  // RI-001 — single authoritative operator. Another window holding a fresh
+  // lease blocks this one before any boot work (Bible preload) starts; only an
+  // explicit takeOver() can make this window the operator.
+  const { status: leaseStatus, takeOver } = useOperatorLease();
+
   useEffect(() => {
-    if (!isBibleLoaded) {
+    if (!isBibleLoaded && leaseStatus === 'active') {
       setLoading(true);
       Promise.all([
         BibleRepository.preloadAllTranslations(),
@@ -108,8 +114,29 @@ export function OperatorScreen() {
           setLoading(false);
         });
     }
-  }, [isBibleLoaded, setBibleLoaded, setLoading]);
+  }, [isBibleLoaded, leaseStatus, setBibleLoaded, setLoading]);
 
+
+  // Blocked: another window is the operator. Show the gate instead of the
+  // operator UI so there is never a second competing writer.
+  if (leaseStatus === 'blocked') {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-4 max-w-md px-6">
+          <Monitor className="h-12 w-12 text-muted-foreground mx-auto" />
+          <h2 className="text-xl font-semibold text-foreground">
+            Wordde is already the operator in another window or tab
+          </h2>
+          <p className="text-muted-foreground">
+            Only one window can control the projection. Close the other window,
+            or take over here — the other window will then stop controlling the
+            projection.
+          </p>
+          <Button onClick={takeOver}>Take over here</Button>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (

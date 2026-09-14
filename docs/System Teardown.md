@@ -73,10 +73,13 @@ This application solves: **project any verse, in any of five translations, on a 
      │  Shared browser origin storage                    │
 │   localStorage: currentProjection, projectionState│
 │                 blankSettings, recentPassages,    │
-│                 services, onboarding flags        │
+│                 services, onboarding flags,       │
+│                 wordde-operator-lease             │
      │   IndexedDB   : logo, softBackground, bg:<uuid>   │
      └───────────────────────────────────────────────────┘
 ```
+
+**Operator singleton lease (RI-001).** The Operator window claims a heartbeated `localStorage` lease (`wordde-operator-lease`, `src/core/operatorLease.ts`, driven by `useOperatorLease` in `src/hooks/useOperatorLease.ts`) at boot. A second Operator window that finds a fresh lease (≤ `LEASE_TTL_MS` = 5 s old) refuses to become a second writer: it shows an "already running" gate with an explicit **Take over here** button (no automatic take-over). The heartbeat runs every `HEARTBEAT_MS` = 2 s — comfortably below the TTL; a crashed operator's lease goes stale and is claimable. Take-over makes the previous holder step down on its next heartbeat; release happens on unmount and `beforeunload`, and only ever clears our own lease. The lease is an Operator-screen concern only: the projection window is a replica (RI-017/RI-018, VF-004) and never takes one. This lease is unrelated to the operator→projector readiness `broadcastHeartbeat` in `broadcastSync.ts`.
 
 ### Frontend structure
 
@@ -210,7 +213,7 @@ Callers reach it through exactly three entry points:
 The **Projection Lock** short-circuits both commit paths: when `projectionLocked` is true, the queue is still extended (next-verse pre-load runs) but no broadcast happens. That is the whole "preview-then-project" mode.
 
 ### Consistency mechanisms
-1. **Single-writer invariant.** Only the operator window writes projection state. The projection window is strictly a subscriber; it has no store and cannot originate a change.
+1. **Single-writer invariant.** Only the operator window writes projection state. The projection window is strictly a subscriber; it has no store and cannot originate a change. The operator **singleton lease** (`wordde-operator-lease`, heartbeated, stale-after-5 s) enforces the one-operator side of this: a second operator window boots blocked behind a "Take over here" gate instead of becoming a competing writer.
 2. **Idempotent re-assertion.** The 3-second `SYNC` overwrites the projection window's passage, blank flag, and blank settings unconditionally. Any dropped message self-heals within 3 s.
 3. **Cold-start reconciliation.** On mount the projection window reads `currentProjection`, then `projectionState` (which wins, since it also carries blank state), then sends `REQUEST_STATE`; the operator answers with `STATE_RESPONSE`.
 4. **Liveness.** `PROJECTOR_READY` on mount plus a 2 s heartbeat; the operator flips to `disconnected` after 5 s and to `idle` when the polled `window.closed` becomes true (checked every 1.5 s).
@@ -416,11 +419,11 @@ Zero cost, zero ops, guaranteed offline. Downside: no multi-device control, no s
 | Translation loaded but book missing | Incomplete source data | `getBooksMap` returns empty; `getPassage` returns null; warning logged | Operator sees "nothing happened" with no on-screen explanation |
 | IndexedDB blocked | Private browsing, quota | `loadAllAssets` catches and returns a stable empty shape | Backgrounds silently absent |
 | localStorage full/disabled | Quota, hardened privacy settings | Every write goes through `safeLocalSet`/`safeLocalRemove` (`src/core/safeStorage.ts`) or an equivalent function-level guard (`saveRecoverySnapshot`); all reads are try/catch'd. A failed write logs a warning and returns `false` — it never throws into the caller | Persistence degrades silently (RI-022/RI-043): last-known-good values remain on disk and in-memory authoritative state is unaffected (RI-045/RI-059), so projection, recents, service plan, and settings all keep working |
-| Two operator windows open | User opens `/` twice | None | Both write the same keys and both broadcast; last writer wins, undo stacks diverge |
+| Two operator windows open | User opens `/` twice | Second window detects the fresh operator lease and boots into a blocked "already running" gate with a **Take over here** button; taking over force-claims the lease and the previous operator steps down on its next heartbeat (≤ 2 s). A crashed operator's lease goes stale after 5 s and needs no take-over | Two operators can still briefly interleave right after an explicit take-over (the previous window steps down at its next heartbeat, not instantly); the lease is localStorage-based, so it is same-origin, same-browser-profile only |
 | Clock skew / `timestamp` | — | Unused for ordering | None today, but `persistProjectionState.timestamp` is written and never read |
 
 ### Assumptions that could break
-- Exactly one operator window and one projection window per origin.
+- ~~Exactly one operator window~~ per origin — **now enforced** by the operator singleton lease (blocked gate + explicit take-over; RI-001, R3). The single-projection-window assumption remains unenforced but harmless: extra projection windows are read-only replicas.
 - All translations share the same 66-book canon and identical verse numbering (used by `setTranslation`'s re-projection and by canonical book ordering built from the *first* translation loaded).
 - ~~Verse numbers are 1..N contiguous integers~~ **Removed** — `BibleRepository.getNextVerse`/`getPreviousVerse` are position-based (`findIndex` in the actual verse/chapter arrays, book rollover via canonical order, null on a missing key), per RI-009–RI-012, with regression tests in `src/test/verseNavigation.test.ts`. Residual numeric extrapolation remains only in non-authoritative suggestion/ranking paths (`searchEngine.getNearbyPassages`, autocomplete range suggestions), each verified against the real verse data before being offered, and the PresenterPanel's user-typed numeric verse-jump input.
 - `BroadcastChannel` is available (all modern browsers; absent in older Safari).
@@ -463,7 +466,7 @@ Zero cost, zero ops, guaranteed offline. Downside: no multi-device control, no s
 5. ~~Per-translation load isolation~~ **Done** — `preloadAllTranslations` uses `Promise.allSettled` over `loadTranslation`, so one corrupt ZIP degrades one translation instead of blocking boot; resolves on partial success, throws only on total failure (RI-043/RI-014/RI-044, tested in `translationBootIsolation.test.ts`). Follow-up (product decision): surface "translation X unavailable" in the operator UI and allow picking a loaded translation when the current one failed.
 6. ~~Verse-key-based navigation~~ **Done** — `getNextVerse`/`getPreviousVerse` now resolve position in the actual normalized arrays and fail safe on missing keys (RI-009–RI-012, tested in `verseNavigation.test.ts`). Remaining numeric extrapolation lives only in non-authoritative suggestion/ranking paths.
 7. ~~Guard all localStorage writes~~ **Done** — `src/core/safeStorage.ts` provides `safeLocalSet`/`safeLocalRemove` (never throw; warn with the key; return success). All write sites route through them: stateManager (`currentProjection`, `recentPassages`), `saveBlankSettings`/`persistProjectionState` (guarded inside `broadcastSync.ts`), `saveServices` (ServicePlan), onboarding/hint flags; `saveRecoverySnapshot` keeps its equivalent inline guard. Covered by `persistenceGuards.test.ts` and the `saveServices` failure test in `servicePlan.test.ts`. **Rule going forward: any new localStorage write must go through `safeLocalSet`/`safeLocalRemove`.**
-8. **Operator-window singleton lock.** A `BroadcastChannel` claim on startup that warns when a second operator window opens.
+8. ~~Operator-window singleton lock~~ **Done** — a heartbeated `localStorage` lease (`src/core/operatorLease.ts` + `useOperatorLease`) claims the operator role at boot; a second operator window boots into an "already running" gate with an explicit **Take over here** button; stale leases (crashed operator, TTL 5 s vs 2 s heartbeat) are claimable without take-over. Tested in `operatorLease.test.ts` + `operatorLeaseHook.test.ts`.
 9. **Move `blankSettings` into Zustand** with an explicit persistence middleware, closing the one hole in the single-source-of-truth rule.
 
 ### Existing technical debt
