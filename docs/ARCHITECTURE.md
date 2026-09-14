@@ -3,7 +3,7 @@
 # Bible Projection System — Architecture Documentation
 
 **Version:** 1.0  
-**Last Updated:** 2024  
+**Last Updated:** 2026-09-14 — recentPassages cap raised 15 → 20 (MAX_RECENT_PASSAGES, stateManager.ts)  
 **Codebase Reference:** All claims map to code in `src/`
 
 ---
@@ -216,7 +216,7 @@ Projection Window (replica rendering)
 │   • projectionState (passage + blank state + timestamp)              │
 │   • projectionRecoveryState (queue + indexes + translation) ← P0 #1  │
 │   • blankSettings (style, session screens, background refs)          │
-│   • recentPassages (last 15, ordered by use)                         │
+│   • recentPassages (last 20, ordered by use)                         │
 │   • services (ordered list of passages)                         │
 │   • onboarding flags (bible-projection-onboarded, hint_seen_<id>)         │
 │                                                                       │
@@ -312,7 +312,7 @@ interface ProjectionRecoveryState {
 - `currentProjection` — Lightweight fallback (passage only)
 - `projectionState` — Includes blank state
 - `blankSettings` — Visual settings (both windows read this)
-- `recentPassages` — Last 15 references (array of strings)
+- `recentPassages` — Last 20 references (array of strings)
 - `services` — Ordered passages for service
 
 **Rationale for separate recovery state:**
@@ -1067,7 +1067,7 @@ idle
 - `projectionState` — Passage + blank state (~2-3 KB)
 - `projectionRecoveryState` — Queue + indexes (~5-10 KB)
 - `blankSettings` — Visual settings (~2-5 KB)
-- `recentPassages` — Array of 15 strings (~1 KB)
+- `recentPassages` — Array of 20 strings (~1 KB)
 - `services` — Ordered passages (~2-10 KB)
 - `onboarding` flags (~1 KB)
 
