@@ -101,7 +101,7 @@ UI components  ──►  inputController  ──►  stateManager (Zustand)
 - `src/core/searchEngine.ts` (174 LOC) — pure ranking. Read-only against the repository. Singleton.
 - `src/core/autocomplete.ts` — Levenshtein-based reference suggestions, read-only.
 - `src/core/stateManager.ts` (~770 LOC) — Zustand store. The **only** writer of projection state.
-- `src/core/broadcastSync.ts` (~180 LOC) — message schema, channel singleton, blank-settings persistence, projection-state persistence. `saveBlankSettings` and `persistProjectionState` are internally guarded and never throw regardless of caller.
+- `src/core/broadcastSync.ts` (~200 LOC) — message schema, channel singleton, protocol versioning (`PROTOCOL_VERSION` stamped by an internal `post()` wrapper on every send; `onBroadcastMessage` warns and drops mismatched versions — §20/RI-020), blank-settings persistence, projection-state persistence. `saveBlankSettings` and `persistProjectionState` are internally guarded and never throw regardless of caller.
 - `src/core/safeStorage.ts` — `safeLocalSet` / `safeLocalRemove`: never-throwing localStorage writes. On failure they `console.warn` with the key and return `false`; in-memory (authoritative) state is always updated independently. Every localStorage write in the app routes through them (or, for `saveRecoverySnapshot`, through an equivalent function-level guard).
 - `src/core/assetStorage.ts` (137 LOC) — IndexedDB wrapper for image blobs.
 - `src/core/translationMetadata.ts` — code → display-name map with code fallback.
@@ -151,6 +151,7 @@ There is none. Deliberately. There is no service layer, no API, no database, no 
   1. `SYNC` broadcast every 3 s from `ProjectionControl` (full state re-assert).
   2. `HEARTBEAT` every 2 s from the projection window; operator marks `disconnected` after 5 s of silence.
   3. `localStorage` persistence read on projection-window mount (`currentProjection` then `projectionState`), so a refresh or crash restores instantly with no operator action.
+- **Protocol versioning (§20 / MCD §24.5):** every outgoing message is stamped with `PROTOCOL_VERSION` (= 1) by the internal `post()` wrapper; no send helper posts directly. `onBroadcastMessage` — the single receive seam for both state-mutating listeners (`ProjectionControl.tsx`, `Projection.tsx`) — warns and drops any message whose `version` is missing or mismatched (RI-020: an incompatible message must never mutate state). During an upgrade, mixed old/new windows simply do not cross-talk — deliberate policy, no translation of old messages. The passive `channel.onmessage` logger in `Projection.tsx` is log-only and is intentionally unguarded.
 - **Asynchronous, awaited:** ZIP fetch + JSZip decode + normalization at boot; IndexedDB reads for images.
 
 ### Why this architecture over alternatives
@@ -421,6 +422,7 @@ Zero cost, zero ops, guaranteed offline. Downside: no multi-device control, no s
 | localStorage full/disabled | Quota, hardened privacy settings | Every write goes through `safeLocalSet`/`safeLocalRemove` (`src/core/safeStorage.ts`) or an equivalent function-level guard (`saveRecoverySnapshot`); all reads are try/catch'd. A failed write logs a warning and returns `false` — it never throws into the caller | Persistence degrades silently (RI-022/RI-043): last-known-good values remain on disk and in-memory authoritative state is unaffected (RI-045/RI-059), so projection, recents, service plan, and settings all keep working |
 | Two operator windows open | User opens `/` twice | Second window detects the fresh operator lease and boots into a blocked "already running" gate with a **Take over here** button; taking over force-claims the lease and the previous operator steps down on its next heartbeat (≤ 2 s). A crashed operator's lease goes stale after 5 s and needs no take-over | Two operators can still briefly interleave right after an explicit take-over (the previous window steps down at its next heartbeat, not instantly); the lease is localStorage-based, so it is same-origin, same-browser-profile only |
 | Clock skew / `timestamp` | — | Unused for ordering | None today, but `persistProjectionState.timestamp` is written and never read |
+| Mixed old/new windows after a protocol change | Operator upgrades one window but not the other mid-service | Mismatched messages are stamped differently and dropped with a console warning at the `onBroadcastMessage` seam; authoritative state is never mutated by an incompatible message (§20/RI-020) | The two windows do not cross-talk until both run the same `PROTOCOL_VERSION`; the passive `onmessage` logger in `Projection.tsx` still logs dropped messages (harmless) |
 
 ### Assumptions that could break
 - ~~Exactly one operator window~~ per origin — **now enforced** by the operator singleton lease (blocked gate + explicit take-over; RI-001, R3). The single-projection-window assumption remains unenforced but harmless: extra projection windows are read-only replicas.
