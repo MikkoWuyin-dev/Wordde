@@ -149,6 +149,47 @@ describe('bibleNormalizer — shape detection & safety', () => {
   });
 });
 
+describe('canonical book names across source formats', () => {
+  it('canonicalizes the nested-format "Psalm" key to "Psalms" (NKJV/NLT/AMP shape)', () => {
+    // Real shipped divergence: NKJV/NLT/AMP key the book "Psalm"; the
+    // canonical spellings (KJV/NIV `book` fields, Browse's list, the
+    // repository's canonical order) say "Psalms". Left alone, this made
+    // the book vanish from Browse whenever a nested-format translation
+    // seeded the canonical order first.
+    const { books } = normalizeBibleJson({
+      Info: { Copyright: 'x' },
+      Psalm: { '23': { '1': 'The LORD is my shepherd' } },
+    });
+    expect(books).toHaveLength(1);
+    expect(books[0].book).toBe('Psalms');
+    expect(books[0].chapters[0].chapter).toBe('23');
+    expect(books[0].chapters[0].verses[0]).toEqual({ verse: '1', text: 'The LORD is my shepherd' });
+  });
+
+  it('canonicalizes the book field of canonical-shaped files too, preserving identity when already canonical', () => {
+    const renamed = normalizeBibleJson({ book: 'Psalm', chapters: [{ chapter: '1', verses: [{ verse: '1', text: 'x' }] }] });
+    expect(renamed.books[0].book).toBe('Psalms');
+
+    // Already-canonical KJV/NIV data passes through untouched (same object).
+    const canonical = { book: 'Psalms', chapters: [{ chapter: '1', verses: [{ verse: '1', text: 'x' }] }] };
+    const { books } = normalizeBibleJson(canonical);
+    expect(books[0]).toBe(canonical); // identity preserved: no rebuild
+  });
+
+  it('canonicalizes names in an array of canonical books', () => {
+    const { books } = normalizeBibleJson([
+      { book: 'Psalm', chapters: [] },
+      { book: 'John', chapters: [] },
+    ]);
+    expect(books.map((b) => b.book)).toEqual(['Psalms', 'John']);
+  });
+
+  it('leaves every non-divergent name untouched — no case-mangling of scripture metadata', () => {
+    const { books } = normalizeBibleJson({ JAMES: { '1': { '1': 'x' } } });
+    expect(books[0].book).toBe('JAMES'); // source spelling wins unless it is a known divergence
+  });
+});
+
 describe('RI-008 — lettered verse ordering in the nested-object format', () => {
   it('places lettered verses in reading order: 3, 3a, 3b, 4 (nested format)', () => {
     const { books } = normalizeBibleJson({ B: { '3': { '4': 'd', '3': 'c', '3a': 'ca', '3b': 'cb' } } });

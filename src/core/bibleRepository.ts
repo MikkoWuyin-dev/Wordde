@@ -24,6 +24,32 @@ const TRANSLATION_ZIPS: Record<string, string> = {
   AMP:  '/data/AMP.zip',
 };
 
+/**
+ * The canonical 66-book spellings, in biblical order. This is the single
+ * source for `bookNames` (Browse, aliases, cross-book navigation) and is also
+ * the sort key for `sortBooksInOrder`. Names here are canonical: any dataset
+ * that spells a book differently is corrected at the normalizer boundary, and
+ * seeding below re-emits these spellings so a divergence can never leak in
+ * regardless of which translation wins the parallel load race.
+ */
+const CANONICAL_BOOK_ORDER: readonly string[] = [
+  'Genesis', 'Exodus', 'Leviticus', 'Numbers', 'Deuteronomy',
+  'Joshua', 'Judges', 'Ruth', '1 Samuel', '2 Samuel',
+  '1 Kings', '2 Kings', '1 Chronicles', '2 Chronicles',
+  'Ezra', 'Nehemiah', 'Esther', 'Job', 'Psalms', 'Proverbs',
+  'Ecclesiastes', 'Song of Solomon', 'Isaiah', 'Jeremiah',
+  'Lamentations', 'Ezekiel', 'Daniel', 'Hosea', 'Joel', 'Amos',
+  'Obadiah', 'Jonah', 'Micah', 'Nahum', 'Habakkuk', 'Zephaniah',
+  'Haggai', 'Zechariah', 'Malachi',
+  'Matthew', 'Mark', 'Luke', 'John', 'Acts',
+  'Romans', '1 Corinthians', '2 Corinthians', 'Galatians',
+  'Ephesians', 'Philippians', 'Colossians',
+  '1 Thessalonians', '2 Thessalonians', '1 Timothy', '2 Timothy',
+  'Titus', 'Philemon', 'Hebrews', 'James',
+  '1 Peter', '2 Peter', '1 John', '2 John', '3 John',
+  'Jude', 'Revelation',
+];
+
 class BibleRepositoryClass {
   /** Per-translation book data */
   private translations: Map<string, Map<string, BibleBook>> = new Map();
@@ -144,11 +170,18 @@ class BibleRepositoryClass {
       this.loadedTranslations.add(translation);
 
       // Build canonical book order from the first translation loaded
-      // (all translations share the 66-book canon).
+      // (all translations share the 66-book canon). Seeded FROM the canonical
+      // spelling list (not the dataset's raw spelling) so a divergent source
+      // name can never leak into `bookNames` no matter which translation
+      // finishes first in the parallel preload; extra books beyond the canon
+      // are appended so non-standard datasets still appear.
       if (this.bookNames.length === 0) {
+        const canonSet = new Set(CANONICAL_BOOK_ORDER.map((n) => n.toLowerCase()));
         const names: string[] = [];
-        for (const book of booksMap.values()) names.push(book.book);
-        this.bookNames = this.sortBooksInOrder(names);
+        for (const book of booksMap.values()) {
+          if (!canonSet.has(book.book.toLowerCase())) names.push(book.book);
+        }
+        this.bookNames = [...CANONICAL_BOOK_ORDER, ...this.sortBooksInOrder(names)];
       }
 
       console.log(
@@ -342,23 +375,7 @@ class BibleRepositoryClass {
   }
 
   private sortBooksInOrder(books: string[]): string[] {
-    const biblicalOrder = [
-      'Genesis', 'Exodus', 'Leviticus', 'Numbers', 'Deuteronomy',
-      'Joshua', 'Judges', 'Ruth', '1 Samuel', '2 Samuel',
-      '1 Kings', '2 Kings', '1 Chronicles', '2 Chronicles',
-      'Ezra', 'Nehemiah', 'Esther', 'Job', 'Psalms', 'Proverbs',
-      'Ecclesiastes', 'Song of Solomon', 'Isaiah', 'Jeremiah',
-      'Lamentations', 'Ezekiel', 'Daniel', 'Hosea', 'Joel', 'Amos',
-      'Obadiah', 'Jonah', 'Micah', 'Nahum', 'Habakkuk', 'Zephaniah',
-      'Haggai', 'Zechariah', 'Malachi',
-      'Matthew', 'Mark', 'Luke', 'John', 'Acts',
-      'Romans', '1 Corinthians', '2 Corinthians', 'Galatians',
-      'Ephesians', 'Philippians', 'Colossians',
-      '1 Thessalonians', '2 Thessalonians', '1 Timothy', '2 Timothy',
-      'Titus', 'Philemon', 'Hebrews', 'James',
-      '1 Peter', '2 Peter', '1 John', '2 John', '3 John',
-      'Jude', 'Revelation'
-    ];
+    const biblicalOrder = CANONICAL_BOOK_ORDER;
 
     return books.sort((a, b) => {
       const indexA = biblicalOrder.findIndex(name => name.toLowerCase() === a.toLowerCase());

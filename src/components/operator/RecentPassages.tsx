@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useStateManager, MAX_RECENT_PASSAGES } from '@/core/stateManager';
 import { BibleRepository } from '@/core/bibleRepository';
 import { cn } from '@/lib/utils';
@@ -23,33 +23,70 @@ export function RecentPassages() {
   const safeLiveIndex = typeof liveSlideIndex === 'number' ? liveSlideIndex : null;
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [confirmClearAll, setConfirmClearAll] = useState(false);
+  // Visible failure state for a recent that cannot be re-opened. Auto-clears;
+  // the entry itself is never removed implicitly — deletion stays explicit.
+  const [loadError, setLoadError] = useState<{ ref: string; message: string } | null>(null);
+
+  useEffect(() => {
+    if (!loadError) return;
+    const timer = setTimeout(() => setLoadError(null), 3000);
+    return () => clearTimeout(timer);
+  }, [loadError]);
 
   const loadRecent = useCallback((reference: string) => {
-    const rangePattern = /^(.+?)\s+(\d+):(\d+)(?:\s*[-–]\s*(\d+))?$/i;
-    const chapterPattern = /^(.+?)\s+(\d+)$/i;
+    // Reference grammar mirrors what the core stores on every slide:
+    // "<book> <chapter>:<verse key>", where the verse key is the VERBATIM
+    // source token — numeric ("16") or lettered ("3a"). Verse keys are
+    // matched by key in the repository, never re-derived here (VF-003:
+    // no verse arithmetic, no integer-only assumptions).
+    const REF_PATTERN = /^(.+?)\s+(\d+):(\S+?)(?:\s*[-–]\s*(\S+))?$/i;
+    const CHAPTER_PATTERN = /^(.+?)\s+(\d+)$/i;
 
-    const rangeMatch = reference.match(rangePattern);
+    const fail = (message: string) => setLoadError({ ref: reference, message });
+
+    const rangeMatch = reference.match(REF_PATTERN);
     if (rangeMatch) {
       const [, bookPart, chapter, verseStart, verseEnd] = rangeMatch;
       const bookNames = BibleRepository.resolveBookName(bookPart.trim());
-      if (bookNames.length === 0) return;
+      if (bookNames.length === 0) {
+        fail(`"${bookPart.trim()}" is not a recognized book`);
+        return;
+      }
       const passage = BibleRepository.getPassage({ book: bookNames[0], chapter, verseStart, verseEnd, translation: currentTranslation });
-      if (passage) buildQueueFromPassage(passage);
+      if (!passage) {
+        // Fail visibly, per UX constraints — most often the entry was
+        // captured under a different translation whose verse keys differ.
+        fail(`not found in ${currentTranslation} — try switching translation`);
+        return;
+      }
+      setLoadError(null);
+      buildQueueFromPassage(passage);
       return;
     }
 
-    const chapterMatch = reference.match(chapterPattern);
+    const chapterMatch = reference.match(CHAPTER_PATTERN);
     if (chapterMatch) {
       const [, bookPart, chapter] = chapterMatch;
       const bookNames = BibleRepository.resolveBookName(bookPart.trim());
-      if (bookNames.length === 0) return;
+      if (bookNames.length === 0) {
+        fail(`"${bookPart.trim()}" is not a recognized book`);
+        return;
+      }
+      setLoadError(null);
       buildQueueFromChapter(bookNames[0], chapter);
+      return;
     }
+
+    fail('unrecognized reference format');
   }, [buildQueueFromPassage, buildQueueFromChapter, currentTranslation]);
 
   const getCurrentReference = useCallback((): string | null => {
+    // Highlight ONLY the slide that is actually on air. When nothing is
+    // committed (liveSlideIndex null or out of range) nothing is lit — a
+    // preview or mid-edit queue must never read as LIVE, or the operator
+    // is silently misled about what the congregation sees.
     if (safeLiveIndex == null || safeLiveIndex < 0 || safeLiveIndex >= safeQueue.length) {
-      return safeQueue.length > 0 ? safeQueue[0].reference : null;
+      return null;
     }
     return safeQueue[safeLiveIndex].reference;
   }, [safeLiveIndex, safeQueue]);
@@ -104,6 +141,13 @@ export function RecentPassages() {
           </button>
         )}
       </div>
+      {loadError && (
+        <div className="mx-1 mb-1 px-2 py-1.5 rounded-lg bg-destructive/10 border border-destructive/30" role="status">
+          <p className="text-[10px] text-destructive leading-snug">
+            Couldn't open {loadError.ref}: {loadError.message}
+          </p>
+        </div>
+      )}
       <div className="space-y-0.5">
         {recentPassages.slice(0, MAX_RECENT_PASSAGES).map((ref, idx) => {
           const active = isActive(ref);

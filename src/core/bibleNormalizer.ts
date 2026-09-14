@@ -21,7 +21,10 @@
 //        }
 //
 // Downstream code (search, projection, browse) MUST only ever see canonical data.
-// All format detection lives here and nowhere else.
+// All format detection lives here and nowhere else. Canonical data includes the
+// canonical BOOK NAME list (the 66-book spellings used by Browse, search, recents,
+// and ServicePlan): source datasets that name a book differently are canonicalized
+// here, once, at load time.
 
 import type { BibleBook, Chapter, Verse } from './types';
 
@@ -69,6 +72,32 @@ function isCanonicalBook(value: unknown): value is BibleBook {
   return typeof v.book === 'string' && Array.isArray(v.chapters);
 }
 
+/**
+ * Canonical book-name mapping for source datasets that name a book differently
+ * from the app's canonical 66-book spellings. Known divergence in the shipped
+ * data: the nested-object translations (NKJV/NLT/AMP) key the Book of Psalms
+ * "Psalm" while the canonical shape (KJV/NIV) says "Psalms". Everything
+ * downstream keys books by this name (bookNames, aliases, Browse's filter), and
+ * the canonical order is seeded by whichever translation loads first — so an
+ * un-canonicalized "Psalm" makes the book vanish from Browse depending on a
+ * load race, and resolves to null for reference lookups in the other
+ * translations. Case-insensitive; every other name passes through untouched.
+ */
+function canonicalizeBookName(rawName: string): string {
+  return rawName.trim().toLowerCase() === 'psalm' ? 'Psalms' : rawName;
+}
+
+/**
+ * Canonicalize the `book` field of an already-canonical-shaped book. Returns
+ * the SAME object when the name is already canonical (passthrough identity is
+ * preserved); otherwise a shallow copy with only the name corrected —
+ * chapters, verses, and verse text are never touched (VF-001).
+ */
+function canonicalizeCanonicalBook(book: BibleBook): BibleBook {
+  const canonical = canonicalizeBookName(book.book);
+  return canonical === book.book ? book : { ...book, book: canonical };
+}
+
 /** Convert one nested-object book into the canonical BibleBook shape. */
 function normalizeNestedBook(
   bookName: string,
@@ -114,12 +143,12 @@ function normalizeNestedBook(
 export function normalizeBibleJson(raw: unknown): NormalizedBibleFile {
   // Case A: already canonical (single book file, current KJV/NIV shape)
   if (isCanonicalBook(raw)) {
-    return { books: [raw], metadata: {} };
+    return { books: [canonicalizeCanonicalBook(raw)], metadata: {} };
   }
 
   // Case B: array of canonical books
   if (Array.isArray(raw)) {
-    const books = raw.filter(isCanonicalBook);
+    const books = raw.filter(isCanonicalBook).map(canonicalizeCanonicalBook);
     return { books, metadata: {} };
   }
 
@@ -145,13 +174,15 @@ export function normalizeBibleJson(raw: unknown): NormalizedBibleFile {
 
     // A canonical book embedded under a wrapper key
     if (isCanonicalBook(value)) {
-      books.push(value);
+      books.push(canonicalizeCanonicalBook(value));
       continue;
     }
 
-    // Nested-object book: key is book name, value is { chapter: { verse: text } }
+    // Nested-object book: key is book name, value is { chapter: { verse: text } }.
+    // The key IS the book name in this shape, so it must pass through
+    // name canonicalization — there is no `book` field to correct later.
     if (value && typeof value === 'object' && !Array.isArray(value)) {
-      books.push(normalizeNestedBook(key, value as Record<string, unknown>));
+      books.push(normalizeNestedBook(canonicalizeBookName(key), value as Record<string, unknown>));
     }
   }
 
