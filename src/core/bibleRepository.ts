@@ -172,18 +172,64 @@ class BibleRepositoryClass {
   /**
    * Preload all configured translations in parallel.
    * Called once on app boot to eliminate translation-switch lag during a live service.
+   *
+   * Per-translation failure isolation (RI-043 / MCD §24.3): each translation
+   * loads independently via Promise.allSettled, so one broken zip (missing
+   * file, HTTP error, corrupt data) cannot reject the whole preload. A failed
+   * translation simply stays unavailable — reads for it return empty via
+   * getBooksMap; never fall back to another translation's data (RI-014/VF-002).
+   *
+   * Resolves normally on partial success (>= 1 translation loaded). Throws
+   * ONLY if zero translations loaded (total failure = unusable app; the boot
+   * .catch in OperatorScreen handles that). All failures are logged with names
+   * and errors — failures must be visible, not swallowed (RI-044).
+   *
+   * Do NOT reintroduce Promise.all here and do NOT add a fallback/substitute
+   * translation on failure.
    */
   async preloadAllTranslations(): Promise<void> {
     const translations = Object.keys(TRANSLATION_ZIPS);
     console.log(`[BibleRepository] Preloading ${translations.length} translations:`, translations);
     const startTime = performance.now();
-    try {
-      await Promise.all(translations.map((t) => this.loadTranslation(t)));
-      const elapsed = Math.round(performance.now() - startTime);
+
+    const results = await Promise.allSettled(
+      translations.map((t) => this.loadTranslation(t)),
+    );
+
+    const failures: { translation: string; error: unknown }[] = [];
+    results.forEach((result, i) => {
+      if (result.status === 'rejected') {
+        failures.push({ translation: translations[i], error: result.reason });
+      }
+    });
+    const loadedCount = translations.length - failures.length;
+    const elapsed = Math.round(performance.now() - startTime);
+
+    if (failures.length > 0) {
+      console.error(
+        `[BibleRepository] ⚠️ Translation preload finished in ${elapsed}ms: ` +
+          `${loadedCount}/${translations.length} loaded, ${failures.length} failed. ` +
+          `Failed translations remain unavailable (no fallback).`,
+      );
+      for (const { translation, error } of failures) {
+        console.error(
+          `[BibleRepository] Translation "${translation}" failed to load:`,
+          error,
+        );
+      }
+    } else {
       console.log(`[BibleRepository] ✅ All translations loaded in ${elapsed}ms`);
-    } catch (error) {
-      console.error('[BibleRepository] Failed to preload translations:', error);
-      throw error;
+    }
+
+    if (loadedCount === 0) {
+      // Total failure: no translation is usable, so boot must fail (the boot
+      // .catch handles it). Surface every cause for diagnosability.
+      throw new Error(
+        `[BibleRepository] No translations could be loaded. Causes: ` +
+          failures
+            .map((f) => `${f.translation}: ${f.error instanceof Error ? f.error.message : String(f.error)}`)
+            .join('; '),
+      );
     }
   }
 
