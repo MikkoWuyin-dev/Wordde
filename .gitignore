@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Agent session logs (Freebuff/Codebuff)
+.freebuff/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
