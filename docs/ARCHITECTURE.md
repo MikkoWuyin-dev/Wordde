@@ -283,7 +283,7 @@ interface StateManager {
   projectSlide: (slide: Slide, index: number) => void;
   slideNext: () => void;
   slidePrevious: () => void;
-  setPreview: (passage: Passage) => void;
+  previewAndProject: (passage: Passage) => void;
   commitCurrentSlide: () => void;
   toggleBlank: () => void;
   // ... more actions

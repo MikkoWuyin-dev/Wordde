@@ -449,7 +449,7 @@
 2. **Auto-project a preview**
    ```typescript
    // ❌ FORBIDDEN
-   setPreview(passage) {
+   previewAndProject(passage) {
      projectSlide(passage.slides[0]); // NO - requires explicit commit
    }
    ```
@@ -484,7 +484,7 @@
 2. **Require explicit commit (Enter, click, or P)**
    ```typescript
    // ✅ CORRECT
-   setPreview(passage) {
+   previewAndProject(passage) {
      set({ previewPassage: passage }); // Not projected yet
    }
    
