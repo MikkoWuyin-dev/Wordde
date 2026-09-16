@@ -66,6 +66,17 @@ export function SearchInput({
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
 
+  /**
+   * Committing from this field must hand focus back to the operator surface.
+   * While the input keeps focus with text in it, the global keyboard guard
+   * correctly blocks letters (typing must never double-fire shortcuts), so
+   * "P — project current slide" stayed dead after every projection until the
+   * operator clicked away. Enter/click commits blur the field instead.
+   */
+  const releaseFocusAfterCommit = useCallback(() => {
+    inputRef.current?.blur();
+  }, []);
+
   const selectSuggestion = useCallback((suggestion: Suggestion) => {
     setShowSuggestions(false);
     setSelectedSuggestion(-1);
@@ -74,7 +85,8 @@ export function SearchInput({
     } else {
       onChange(suggestion.reference);
     }
-  }, [onChange, onSelectSuggestion]);
+    releaseFocusAfterCommit();
+  }, [onChange, onSelectSuggestion, releaseFocusAfterCommit]);
 
   const handleKeyDown = useCallback((event: React.KeyboardEvent) => {
     if (showSuggestions && suggestions.length > 0) {
@@ -102,14 +114,21 @@ export function SearchInput({
             selectSuggestion(suggestions[selectedSuggestion]);
             return;
           }
-          break;
+          // Plain Enter: forward to the parent (which commits the selected
+          // result), then release focus so P/B/C/N work immediately after.
+          onKeyDown(event);
+          releaseFocusAfterCommit();
+          return;
 
         case 'Escape':
           event.preventDefault();
-          event.stopPropagation();
+          // Close the dropdown if it is open, but ALWAYS forward the event:
+          // swallowing Escape here made "Esc — clear preview" dead whenever
+          // suggestions were showing (e.g. right after committing — the
+          // field still holds text, so the dropdown reopens immediately).
           setShowSuggestions(false);
           setSelectedSuggestion(-1);
-          return;
+          break;
 
         case 'Tab':
           if (selectedSuggestion >= 0) {
@@ -123,6 +142,16 @@ export function SearchInput({
           }
           break;
       }
+    }
+
+    // Dropdown closed (or key not handled above): forward to the parent.
+    // Enter commits and Escape clears the preview — both end the typing
+    // session, so release focus afterward and the global letter shortcuts
+    // (P/B/C/N) work immediately, matching the dropdown-open Enter path.
+    if (event.key === 'Enter' || event.key === 'Escape') {
+      onKeyDown(event);
+      releaseFocusAfterCommit();
+      return;
     }
 
     // Pass through to parent handler
@@ -141,6 +170,14 @@ export function SearchInput({
         onFocus={() => {
           if (suggestions.length > 0) setShowSuggestions(true);
           onFocusProp?.();
+        }}
+        onBlur={() => {
+          // The dropdown is a focused-field affordance. Hiding it on blur
+          // means committing from the field can never leave a stale dropdown
+          // around to swallow the next Escape or arrow key. Close-on-outside-
+          // click already covers clicks elsewhere.
+          setShowSuggestions(false);
+          setSelectedSuggestion(-1);
         }}
         placeholder={placeholder}
         className={cn(
