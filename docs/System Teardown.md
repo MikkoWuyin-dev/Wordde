@@ -128,9 +128,11 @@ There is none. Deliberately. There is no service layer, no API, no database, no 
 6. setSearchResults(results)                    → selectedResultIndex = 0,
                                                   previewPassage = results[0]
    *** NOTHING IS PROJECTED YET ***
-7. Operator presses Enter → setPreview(passage)
-8. setPreview captures oldLiveSlide, calls passageToSlides(), replaces
-   projectionQueue, currentSlideIndex = 0, then _commitWithOldSlide(oldLiveSlide)
+7. Operator presses Enter → previewAndProject(passage)
+8. previewAndProject captures oldLiveSlide, calls passageToSlides(), replaces
+   projectionQueue, currentSlideIndex = 0, then _commitWithOldSlide(oldLiveSlide).
+   (Formerly `setPreview` — renamed because the old name hid a broadcast behind
+   a preview-only-looking setter.)
 9. _commitWithOldSlide → (if not locked) projectSlide()
 10. projectSlide:
       ├ push oldLiveSlide onto historyStack IF book/chapter differs (cap 10)

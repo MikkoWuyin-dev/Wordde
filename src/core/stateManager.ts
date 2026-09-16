@@ -23,7 +23,8 @@ interface StateManager extends AppState {
   // State mutation methods
   setSearchQuery: (query: string) => void;
   setSearchResults: (results: SearchResult[]) => void;
-  setPreview: (passage: Passage | null) => void;
+  /** Stage + project a passage (see implementation docblock); null clears the preview. */
+  previewAndProject: (passage: Passage | null) => void;
   setSelectedIndex: (index: number) => void;
   commitPassage: () => void;
   clearPreview: () => void;
@@ -257,7 +258,20 @@ export const useStateManager = create<StateManager>((set, get) => ({
     });
   },
 
-  setPreview: (passage) => {
+  /**
+   * Stage a searched passage AND project it: sets `previewPassage`, builds the
+   * projection queue from the passage, and commits slide 0 through the single
+   * commit funnel (`_commitWithOldSlide`, broadcast + persist). With
+   * projectionLocked engaged, the commit half stages only — the same lock
+   * veto every other commit path obeys. Passing null just clears the preview.
+   *
+   * Naming note: the previous name `setPreview` implied the preview-only
+   * contract of `setSelectedIndex`/`setSearchResults` and hid a broadcast
+   * behind an innocent-looking setter — a shipped trap. Genuine preview-only
+   * updates live in `setSearchResults`/`setSelectedIndex`/`selectNext`/
+   * `selectPrevious`.
+   */
+  previewAndProject: (passage) => {
     set({ previewPassage: passage });
     if (passage) {
       const { projectionQueue, liveSlideIndex } = get();

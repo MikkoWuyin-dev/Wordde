@@ -19,7 +19,7 @@ export function useInputController() {
     currentTranslation,
     setSearchQuery,
     setSearchResults,
-    setPreview,
+    previewAndProject,
     selectNext,
     selectPrevious,
     commitPassage,
@@ -42,7 +42,7 @@ export function useInputController() {
     // Empty input -> clear results and preview
     if (!value.trim()) {
       setSearchResults([]);
-      setPreview(null);
+      previewAndProject(null);
       return;
     }
     
@@ -51,7 +51,7 @@ export function useInputController() {
     
     // Update results (this also auto-previews first result)
     setSearchResults(results);
-  }, [currentTranslation, setSearchQuery, setSearchResults, setPreview]);
+  }, [currentTranslation, setSearchQuery, setSearchResults, previewAndProject]);
   
   /**
    * Handle keyboard navigation
@@ -76,7 +76,7 @@ export function useInputController() {
           const idx = selectedResultIndex >= 0 ? selectedResultIndex : 0;
           const passage = searchResults[idx]?.passage;
           if (passage) {
-            setPreview(passage); // setPreview projects the passage
+            previewAndProject(passage); // stage + project via the commit funnel
           }
         }
         break;
@@ -86,16 +86,16 @@ export function useInputController() {
         clearPreview();
         break;
     }
-  }, [selectNext, selectPrevious, searchResults, selectedResultIndex, setPreview, clearPreview]);
+  }, [selectNext, selectPrevious, searchResults, selectedResultIndex, previewAndProject, clearPreview]);
   
   /**
    * Handle result selection via click
    */
   const handleResultSelect = useCallback((index: number) => {
     if (index >= 0 && index < searchResults.length) {
-      setPreview(searchResults[index].passage);
+      previewAndProject(searchResults[index].passage);
     }
-  }, [searchResults, setPreview]);
+  }, [searchResults, previewAndProject]);
   
   /**
    * Handle autocomplete suggestion selection
@@ -109,9 +109,9 @@ export function useInputController() {
     setSearchResults(results);
     // Explicit user selection → project immediately
     if (results.length > 0) {
-      setPreview(results[0].passage);
+      previewAndProject(results[0].passage);
     }
-  }, [currentTranslation, setSearchQuery, setSearchResults, setPreview]);
+  }, [currentTranslation, setSearchQuery, setSearchResults, previewAndProject]);
 
   return {
     // State
