@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import packageJson from '../../../package.json';
-import { OnboardingManager, resetOnboarding } from '@/components/onboarding/OnboardingManager';
+import { OnboardingManager } from '@/components/onboarding/OnboardingManager';
 import { ContextualHint } from '@/components/onboarding/ContextualHint';
 import { useInputController, useGlobalKeyboard } from '@/core/inputController';
 import { useStateManager } from '@/core/stateManager';
@@ -14,13 +14,12 @@ import { PassageNavigation } from './PassageNavigation';
 import { BibleNavigator } from './BibleNavigator';
 import { ServicePlan } from './ServicePlan';
 import { RecentPassages } from './RecentPassages';
-import { ProjectionSettings } from './ProjectionSettings';
+import { SettingsAndMore } from './SettingsAndMore';
 import { ProjectionControl } from './ProjectionControl';
-import { Book, Monitor, HelpCircle, Undo2, Settings2, ChevronDown } from 'lucide-react';
+import { Book, Monitor, Undo2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   Select,
   SelectContent,
@@ -43,27 +42,6 @@ export function OperatorScreen() {
   const [searchFocused, setSearchFocused] = useState(false);
   const [browseOpened, setBrowseOpened] = useState(false);
   const [planOpened, setPlanOpened] = useState(false);
-  const [settingsOpened, setSettingsOpened] = useState(false);
-  const [arrowUsed, setArrowUsed] = useState(false);
-
-  // "?" keyboard shortcut toggles the footer shortcuts help popover.
-  // The global handler (useGlobalKeyboard) dispatches this event so the
-  // advertised "? — Show this help" shortcut actually works.
-  const [shortcutsOpen, setShortcutsOpen] = useState(false);
-  useEffect(() => {
-    const handler = () => setShortcutsOpen(open => !open);
-    window.addEventListener('wordde:toggle-shortcut-help', handler);
-    return () => window.removeEventListener('wordde:toggle-shortcut-help', handler);
-  }, []);
-
-  // Track arrow key usage for keyboard hint
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') setArrowUsed(true);
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, []);
 
   const {
     searchQuery,
@@ -279,96 +257,25 @@ export function OperatorScreen() {
             )}
           </ScrollArea>
 
-          {/* Display Settings dropdown at bottom */}
-          <div className="border-t border-border shrink-0">
-            <Popover onOpenChange={(open) => { if (open) setSettingsOpened(true); }}>
-              <PopoverTrigger asChild>
-                <button className="focus-console w-full flex items-center gap-1.5 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors">
-                  <Settings2 className="h-3.5 w-3.5" />
-                  <span className="font-medium">Display Settings</span>
-                </button>
-              </PopoverTrigger>
-              <PopoverContent
-                side="top"
-                align="start"
-                collisionPadding={12}
-                className="w-[360px] p-0 flex flex-col overflow-hidden glass-strong"
-                style={{ height: 'min(80vh, 560px)' }}
-              >
-                <ContextualHint id="display_settings" message="Customize what appears on screen" show={settingsOpened} className="m-3 mb-0 shrink-0" />
-                <ProjectionSettings />
-              </PopoverContent>
-            </Popover>
-          </div>
+          {/* Settings & More menu at bottom (display settings + tutorial replay) */}
+          <SettingsAndMore />
         </div>
 
         {/* Right Column - Presenter Panel */}
         <div className="flex-1 min-w-0 flex flex-col" data-tutorial="presenter">
-          <ContextualHint id="keyboard_nav" message="Use ← → to move between passages" show={arrowUsed} className="mx-4 mt-2" />
+          {/* One-time hint on first projection — same treatment as the other panel hints. */}
+          <ContextualHint id="keyboard_nav" message="Use ← → to move between passages" show={!!committedPassage} className="mx-4 mt-2" />
           <PresenterPanel />
         </div>
       </main>
 
-      {/* Keyboard shortcut hint bar */}
+      {/* Footer: pointer to Settings & More + app version */}
       <footer className="glass shrink-0">
         <div className="px-4 py-1.5 flex items-center justify-between text-[11px] text-muted-foreground">
           <div className="flex items-center gap-2">
-              <button
-              onClick={resetOnboarding}
-              className="focus-console flex items-center gap-1 px-2 py-0.5 rounded hover:bg-secondary/70 transition-colors text-muted-foreground hover:text-foreground"
-              title="Replay full onboarding and reset all hints"
-            >
-              <HelpCircle className="h-3 w-3" />
-              <span>Replay Tutorial</span>
-            </button>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-3 text-[11px]">
-              <span>
-                <kbd className="px-1 py-0.5 rounded bg-muted text-[10px] font-mono">←</kbd> Prev
-              </span>
-              <span>
-                <kbd className="px-1 py-0.5 rounded bg-muted text-[10px] font-mono">→</kbd> Next
-              </span>
-              <span>
-                <kbd className="px-1 py-0.5 rounded bg-muted text-[10px] font-mono">↑↓</kbd> Results
-              </span>
-            </div>
-            <Popover open={shortcutsOpen} onOpenChange={setShortcutsOpen}>
-              <PopoverTrigger asChild>
-                <button
-                  className="focus-console flex items-center gap-1 px-1.5 py-0.5 rounded hover:bg-secondary/70 transition-colors text-muted-foreground hover:text-foreground"
-                  title="Show all keyboard shortcuts"
-                >
-                  <span className="text-[10px] font-mono">?</span>
-                  <span className="text-[10px]">More</span>
-                </button>
-              </PopoverTrigger>
-              <PopoverContent
-                side="top"
-                align="end"
-                className="w-56 p-3"
-              >
-                <p className="text-[10px] font-medium text-muted-foreground mb-2">Keyboard Shortcuts</p>
-                <div className="space-y-1.5">
-                  {[
-                    { keys: '← →', label: 'Navigate passages' },
-                    { keys: '↑ ↓', label: 'Select search result' },
-                    { keys: 'N', label: 'Next service plan passage' },
-                    { keys: 'B', label: 'Blank / unblank screen' },
-                    { keys: 'P', label: 'Project current slide' },
-                    { keys: '⌘Z', label: 'Undo last projection' },
-                    { keys: 'Esc', label: 'Clear preview' },
-                    { keys: '?', label: 'Show this help' },
-                  ].map((shortcut) => (
-                    <div key={shortcut.keys} className="flex items-center justify-between text-[11px]">
-                      <span className="text-muted-foreground">{shortcut.label}</span>
-                      <kbd className="px-1 py-0.5 rounded bg-muted text-[10px] font-mono">{shortcut.keys}</kbd>
-                    </div>
-                  ))}
-                </div>
-              </PopoverContent>
-            </Popover>
+            <span className="text-[11px] text-muted-foreground/70">
+              Display settings, tutorial replay &amp; keyboard shortcuts live in Settings &amp; More (sidebar footer).
+            </span>
           </div>
           <span className="text-[10px] text-muted-foreground/60 select-none pointer-events-none">v{packageJson.version}</span>
         </div>

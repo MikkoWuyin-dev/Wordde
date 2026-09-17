@@ -5,6 +5,12 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { useStateManager } from './stateManager';
 import { SearchEngine } from './searchEngine';
+import {
+  ADVERTISED_SHORTCUTS,
+  HELP_TOGGLE_EVENT,
+  INPUT_PASS_THROUGH_KEYS,
+  NEXT_SERVICE_PLAN_EVENT,
+} from './shortcutRegistry';
 
 /**
  * Input Controller Hook
@@ -134,7 +140,12 @@ export function useInputController() {
 
 /**
  * Global keyboard shortcuts hook
- * For app-wide keyboard handling including passage navigation
+ * For app-wide keyboard handling including passage navigation.
+ *
+ * The advertised key set lives in `shortcutRegistry.ts` (single source of
+ * truth — the help view renders from it too). The switch below is the
+ * dispatch half: `src/test/shortcutRegistry.test.ts` fails if a registry row
+ * has no case here or a case exists without a registry row.
  */
 export function useGlobalKeyboard() {
   const {
@@ -195,11 +206,10 @@ export function useGlobalKeyboard() {
         target.isContentEditable
       ) {
         const emptyInput = target.tagName === 'INPUT' && !(target as HTMLInputElement).value;
-        const navigationKeys = [
-          'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown',
-          'PageUp', 'PageDown', 'Escape', '?',
-        ];
-        if (!(emptyInput && navigationKeys.includes(event.key))) {
+        // Derived from the shortcut registry (single source of truth) —
+        // every key the help advertises as globally dispatchable passes when
+        // the field is empty; letters never do (typing must not double-fire).
+        if (!(emptyInput && INPUT_PASS_THROUGH_KEYS.includes(event.key))) {
           return;
         }
       }
@@ -208,13 +218,14 @@ export function useGlobalKeyboard() {
 
       switch (event.key) {
         case '?':
-          // Advertised in the footer help: "? — Show this help".
+          // Registry row: keys '?', group General — "Show this help".
           event.preventDefault();
-          window.dispatchEvent(new CustomEvent('wordde:toggle-shortcut-help'));
+          window.dispatchEvent(new CustomEvent(HELP_TOGGLE_EVENT));
           return;
 
         case 'z':
         case 'Z':
+          // Registry row: keys 'z', requiresCtrlMeta — "Undo last projection".
           if (event.ctrlKey || event.metaKey) {
             event.preventDefault();
             h.undoProjection();
@@ -275,9 +286,10 @@ export function useGlobalKeyboard() {
 
         case 'n':
         case 'N':
+          // Registry row: keys 'n' — "Next service plan passage".
           if (event.ctrlKey || event.metaKey || event.altKey) return;
           event.preventDefault();
-          window.dispatchEvent(new CustomEvent('nextServicePlanPassage'));
+          window.dispatchEvent(new CustomEvent(NEXT_SERVICE_PLAN_EVENT));
           return;
 
         case 'Enter':
