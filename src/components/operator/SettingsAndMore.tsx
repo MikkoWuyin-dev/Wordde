@@ -101,6 +101,7 @@ export function SettingsAndMore() {
           className={cn(
             'w-[360px] p-0 flex flex-col overflow-hidden glass-strong',
             view === 'display' && 'h-[min(80vh,560px)]',
+            view === 'shortcuts' && 'max-h-[min(80vh,560px)]',
           )}
           onEscapeKeyDown={(e) => {
             // In a sub-view, Esc returns to the menu instead of dismissing
@@ -155,14 +156,13 @@ export function SettingsAndMore() {
                   <ChevronLeft className="h-3.5 w-3.5" />
                   Back
                 </button>
-                <span className="text-xs font-medium text-muted-foreground">Display Settings</span>
               </div>
               <div className="flex-1 min-h-0 overflow-y-auto">
                 <ProjectionSettings />
               </div>
             </div>
           ) : (
-            <div>
+            <div className="flex flex-col min-h-0 flex-1">
               <div className="flex items-center gap-1 px-2 py-1.5 border-b border-border shrink-0">
                 <button
                   onClick={() => setView('menu')}
@@ -172,18 +172,20 @@ export function SettingsAndMore() {
                   <ChevronLeft className="h-3.5 w-3.5" />
                   Back
                 </button>
-                <span className="text-xs font-medium text-muted-foreground">Keyboard Shortcuts</span>
               </div>
-              <div className="p-3 space-y-2">
+              <div className="flex-1 min-h-0 overflow-y-auto p-[9px] grid grid-cols-2 content-start gap-x-[15px] gap-y-[10.5px]">
                 {SHORTCUT_GROUPS.map((group) => {
                   const rows = ADVERTISED_SHORTCUTS.filter(s => s.group === group);
                   if (rows.length === 0) return null;
                   return (
-                    <div key={group}>
-                      <p className="text-[10px] font-medium text-muted-foreground/70 uppercase tracking-wide mb-1">{group}</p>
-                      <div className="space-y-1.5">
+                    <div key={group} className="flex flex-col gap-[4.5px]">
+                      <p className="text-[10px] font-medium text-muted-foreground/70 uppercase tracking-wide mb-[2px]">{group}</p>
+                      <div className="flex flex-col gap-[4.5px]">
                         {rows.map((shortcut) => (
-                          <ShortcutRow key={shortcut.keys} shortcut={shortcut} />
+                          <div key={shortcut.keys} className="flex items-center justify-between gap-3 text-[11px]">
+                            <span className="text-muted-foreground">{shortcut.label}</span>
+                            <kbd className="px-1 py-0.5 rounded bg-muted text-[10px] font-mono shrink-0">{shortcutDisplayKeys(shortcut)}</kbd>
+                          </div>
                         ))}
                       </div>
                     </div>
