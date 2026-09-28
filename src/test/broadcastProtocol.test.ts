@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { broadcastCommit, broadcastHeartbeat, onBroadcastMessage, getChannel } from '@/core/broadcastSync';
+import { broadcastCommit, broadcastHeartbeat, broadcastProjectorReady, onBroadcastMessage, getChannel } from '@/core/broadcastSync';
 import type { Passage } from '@/core/types';
 
 /**
@@ -82,5 +82,26 @@ describe('§20 / RI-020 — broadcast protocol versioning', () => {
     bus().emit(valid);
     off();
     expect(seen).toHaveLength(1);
+  });
+
+  it('sends PROJECTOR_READY through the versioned wrapper so the operator delivers it (R5)', () => {
+    // Regression: Projection.tsx used to post PROJECTOR_READY raw via
+    // getChannel().postMessage, bypassing the protocol stamp. The operator's
+    // version guard then silently dropped it and the guided setup dialog
+    // could never appear. The send must be stamped, and feeding it back
+    // through the guarded receive seam must be delivered.
+    bus().posted.length = 0;
+    broadcastProjectorReady();
+    expect(bus().posted).toHaveLength(1);
+    const ready = bus().posted[0] as { type?: string; version?: unknown };
+    expect(ready.type).toBe('PROJECTOR_READY');
+    expect(typeof ready.version).toBe('number');
+
+    const seen: unknown[] = [];
+    const off = onBroadcastMessage((msg) => seen.push(msg));
+    bus().emit(ready);
+    off();
+    expect(seen).toHaveLength(1);
+    expect(seen[0]).toMatchObject({ type: 'PROJECTOR_READY' });
   });
 });

@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useState, useRef, useCallback } from 'react';
-import { onBroadcastMessage, requestCurrentState, broadcastHeartbeat, loadPersistedProjectionState, getChannel } from '@/core/broadcastSync';
+import { onBroadcastMessage, requestCurrentState, broadcastHeartbeat, broadcastProjectorReady, loadPersistedProjectionState, getChannel } from '@/core/broadcastSync';
 import type { BlankSettings, SessionScreen } from '@/core/broadcastSync';
 import type { Passage } from '@/core/types';
 import { loadAllAssets } from '@/core/assetStorage';
@@ -211,8 +211,10 @@ const Projection = () => {
 
   // Heartbeat + announce ready
   useEffect(() => {
-    // Send PROJECTOR_READY immediately so operator knows we're alive
-    getChannel().postMessage({ type: 'PROJECTOR_READY' });
+    // Announce readiness through the versioned send wrapper — posting raw
+    // bypassed the protocol stamp, so the operator's version guard dropped
+    // the message and the guided setup dialog could never appear (§20/RI-020).
+    broadcastProjectorReady();
     broadcastHeartbeat();
     const interval = setInterval(broadcastHeartbeat, 2000);
     return () => clearInterval(interval);

@@ -158,6 +158,11 @@ export function broadcastHeartbeat(): void {
   post({ type: 'HEARTBEAT', timestamp: Date.now() });
 }
 
+/** Announce that the projection window finished booting (Projection → Operator). */
+export function broadcastProjectorReady(): void {
+  post({ type: 'PROJECTOR_READY' });
+}
+
 /** Send periodic state sync from operator */
 export function broadcastSync(passage: Passage | null, isBlanked: boolean, blankSettings?: BlankSettings): void {
   post({ type: 'SYNC', payload: passage, isBlanked, blankSettings });

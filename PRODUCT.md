@@ -29,7 +29,7 @@ Strips away the complexity of conventional presentation software: a pure client-
 
 ## Capabilities and Constraints
 
-Confirmed functionality: reference/keyword/semantic search with ranked results; BibleNavigator browse (book → chapter → verse); Service Plan (ordered, editable, persisted); recent passages (cap 15); undo of last passage; verse-by-verse navigation that extends the queue across chapter/book boundaries; blank screens in four styles (black, logo, soft background, session card) with five default session screens; image uploads (logo + up to 7 backgrounds, 10 MB max, IndexedDB); auto-fit verse rendering; progressive onboarding with replay; two-window sync with heartbeat + 3 s re-assertion + localStorage cold-start recovery.
+Confirmed functionality: reference/keyword/semantic search with ranked results; BibleNavigator browse (book → chapter → verse); Service Plan (ordered, editable, persisted); recent passages (cap 20); undo of last passage; verse-by-verse navigation that extends the queue across chapter/book boundaries; blank screens in four styles (black, logo, soft background, session card) with five default session screens; image uploads (logo + up to 7 backgrounds, 10 MB max, IndexedDB); auto-fit verse rendering; progressive onboarding with replay; two-window sync with heartbeat + 3 s re-assertion + localStorage cold-start recovery.
 
 Constraints:
 - Fully offline; all Bible text ships as static ZIP assets in `/public/data/`. No API, no backend, no auth.

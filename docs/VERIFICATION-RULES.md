@@ -1,6 +1,3 @@
-# docs/VERIFICATION-RULES.md
-
-```markdown
 # Bible Projection System — Verification Rules
 
 **Purpose:** Automated constraint enforcement for Impeccable (or manual pre-commit checks).  
@@ -231,31 +228,45 @@ localStorage\.(setItem|removeItem|clear)\s*\(
 ```
 
 **Allowed Exceptions:**
-- Inside existing helper functions that already have try/catch
+- Writes routed through `safeLocalSet`/`safeLocalRemove` (`src/core/safeStorage.ts`) — the app's standard never-throw boundary (they guard internally; do not double-wrap)
+- Writes inside function-level guards with equivalent semantics (e.g. `saveRecoverySnapshot` in `projectionRecovery.ts`)
 - Test files (mock environment)
 
 **Manual Check:**
-- Search for `localStorage.setItem`
-- Verify each is inside a try block
+- Search for `localStorage.setItem` / `removeItem`
+- Verify each is inside a try block or routed through `safeLocalSet`/`safeLocalRemove`
 - Verify catch block doesn't re-throw (unless critical startup)
+
+---
+
+### Reality check (2026-09)
+
+As shipped, every production `localStorage` write already routes through
+`safeLocalSet`/`safeLocalRemove` or an equivalent inline guard. Reads are
+individually try/catch'd. Treat any NEW raw write as a violation.
 
 ---
 
 ## 3. Pattern-Based Rules
 
-### Rule: VP-001 — No Direct UI → Repository Calls
+### Rule: VP-001 — No UI Write Paths Through the Repository; No Funnel Bypasses
 
 **Severity:** ERROR 🚫
 
-**Description:** UI components must not directly import or call bibleRepository.
+**Description:** The Repository is read-only. UI components may READ from it
+(this is the shipped, intended architecture — see CONSTRAINTS.md §2 reality
+check), but they must never write through it, and projection state must never
+be mutated outside the established commit funnel.
 
 **Forbidden Patterns:**
 ```typescript
 // ❌ REJECT - in any component file
-import { bibleRepository } from '@/core/bibleRepository';
+import { BibleRepository } from '@/core/bibleRepository';
 
 function MyComponent() {
-  const passage = bibleRepository.getPassage(...);
+  BibleRepository.saveVerse(...);              // NO - no write API exists
+  useStateManager.setState({ ... });           // NO - bypasses stateManager actions
+  broadcastCommit(myPassage);                  // NO - bypasses the commit funnel (RI-004)
 }
 ```
 
@@ -263,17 +274,12 @@ function MyComponent() {
 ```typescript
 // ✅ CORRECT
 import { useStateManager } from '@/core/stateManager';
+import { BibleRepository } from '@/core/bibleRepository';
 
 function MyComponent() {
-  const passage = useStateManager(state => state.committedPassage);
+  const passage = BibleRepository.getPassage({ ... });   // read: fine
+  useStateManager.getState().buildQueueFromPassage(passage); // commit via funnel
 }
-```
-
-**Detection:**
-```bash
-# Check all component files
-find src/components -name "*.tsx" -exec grep -l "bibleRepository" {} \;
-# Should return EMPTY (or only type imports)
 ```
 
 ---
@@ -678,7 +684,7 @@ git diff --name-only --diff-filter=A | grep -E "\.(ts|tsx)$"
 **Recovery:**
 - [ ] Operator reload restores queue
 - [ ] Operator reload restores indexes
-- [ ] Stale state (>24h) ignored
+- [ ] Stale state (>12h recovery freshness window) ignored
 
 **Translation:**
 - [ ] Missing translation returns empty, not KJV
@@ -1085,4 +1091,3 @@ git commit -m "..."        # Commit if passes
 ---
 
 **END OF VERIFICATION-RULES.md**
-```

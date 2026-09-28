@@ -1,10 +1,7 @@
-# docs/CONSTRAINTS.md
-
-```markdown
 # Bible Projection System — Constraints & Invariants
 
 **Purpose:** Quick-reference guide for inviolable architectural rules.  
-**Audience:** Developers, AI agents (FreeBuff), code reviewers, Impeccable verification rules.  
+**Audience:** Developers, AI agents (Freebuff), code reviewers, Impeccable verification rules.  
 **Related:** See `ARCHITECTURE.md` for detailed explanations.
 
 ---
@@ -114,15 +111,24 @@
    const setState = useStateManager((state) => state.setState);
    ```
 
-3. **Allow UI components to directly call Repository**
+3. **Let UI components WRITE through the Repository, or mutate projection state outside the commit funnel**
    ```typescript
    // ❌ FORBIDDEN
-   import { bibleRepository } from '@/core/bibleRepository';
+   import { BibleRepository } from '@/core/bibleRepository';
    
    function MyComponent() {
-     const passage = bibleRepository.getPassage(...); // NO
+     BibleRepository.saveVerse(...);  // NO - repository has no write API
+     useStateManager.setState(...);   // NO - mutation belongs in stateManager actions
    }
    ```
+
+   **Reality check (2026-09):** read-only repository access from operator UI
+   components is the shipped, intended architecture — search, Browse, Service
+   Plan, and Recent all resolve passages via `BibleRepository` reads and then
+   commit through stateManager actions (RI-004 commit funnel). The rule as
+   originally written ("no UI component may import the repository") forbade
+   the actual system. What remains forbidden: any write path through the
+   repository, and any projection-state mutation that bypasses the funnel.
 
 4. **Let Repository mutate application state**
    ```typescript
@@ -205,11 +211,17 @@
    localStorage.setItem('previewPassage', passage);
    ```
 
-2. **Persist projection lock state**
+2. **Persist projection lock state OUTSIDE the versioned recovery snapshot**
    ```typescript
-   // ❌ FORBIDDEN
+   // ❌ FORBIDDEN - ad-hoc, unversioned keys
    localStorage.setItem('projectionLocked', 'true');
    ```
+
+   **Reality check (2026-09):** `projectionLocked` IS persisted — but only as
+   part of the versioned, validated `projectionRecoveryState` snapshot
+   (`projectionRecovery.ts`), so lock state survives an operator reload
+   without becoming a standalone source of truth. The rule's intent stands:
+   no unversioned lock flag in localStorage.
 
 3. **Store Bible text in localStorage or Zustand**
    ```typescript
@@ -361,7 +373,7 @@
 
 ### ❌ NEVER
 
-1. **Lazy-load translations**
+1. **Lazy-load translations on the projection critical path**
    ```typescript
    // ❌ FORBIDDEN
    async function switchTranslation(code) {
@@ -369,6 +381,13 @@
      projectVerse();
    }
    ```
+
+   **Reality check (2026-09):** all five translations preload at boot via
+   `Promise.allSettled` (per-translation failure isolation, RI-043).
+   `setTranslation` retains a guarded `loadTranslation` fallback ONLY for a
+   translation that failed to preload or was added after boot — it delays the
+   switch, never the projection, and never falls back to another translation
+   (VF-002).
 
 2. **Block main thread for >100ms (except boot)**
    ```typescript
@@ -397,7 +416,7 @@
    ```typescript
    // ✅ CORRECT
    useEffect(() => {
-     preloadAllTranslations() // Promise.all over all 5
+     preloadAllTranslations() // Promise.allSettled - per-translation isolation
        .then(() => setReady(true));
    }, []);
    ```
@@ -799,25 +818,6 @@ useEffect(() => {
 
 ---
 
-**END OF CONSTRAINTS.md**
-```
-
 ---
 
-## What You Should Do Now
-
-### Step 1: Create the file
-```bash
-cd docs  # You should still be in the docs folder
-touch CONSTRAINTS.md
-```
-
-### Step 2: Copy the content
-Copy everything from:
-```markdown
-# Bible Projection System — Constraints & Invariants
-```
-to:
-```markdown
 **END OF CONSTRAINTS.md**
-```
