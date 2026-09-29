@@ -5,6 +5,8 @@
 import JSZip from 'jszip';
 import type { BibleBook, Passage, PassageReference, Verse } from './types';
 import { normalizeBibleJson, type TranslationMetadata } from './bibleNormalizer';
+import { loadCachedTranslation, saveCachedTranslation, type ParsedTranslation } from './bibleCache';
+import { decodeViaWorker } from './bibleDecodeClient';
 
 /**
  * Map of translation code → zip file path.
@@ -130,6 +132,18 @@ class BibleRepositoryClass {
     return this.translationMetadata.get(t) || {};
   }  /**
    * Load a single translation. Can be called multiple times for different translations.
+   *
+   * Three decode tiers (teardown §10 #1/#4):
+   *   1. IndexedDB cache — near-instant second boots; a hit is NOT re-written.
+   *   2. Web Worker — fetch + JSZip + parse + normalize off the main thread.
+   *   3. Main-thread decoder — the original path, verbatim (`decodeOnMainThread`).
+   *
+   * Every tier yields the same `ParsedTranslation` (identical keep-first dedup
+   * and normalization), so installation, alias registration, keyword indexing,
+   * and canonical book-order seeding run exactly once, from whichever tier
+   * served. A cache read is validated before use (RI-023); a worker failure or
+   * timeout falls back (RI-043); no tier ever substitutes another translation's
+   * data (RI-014), and verse text stays verbatim through every hop (VF-001).
    */
   async loadTranslation(translation: string): Promise<void> {
     if (this.loadedTranslations.has(translation)) return;
@@ -137,72 +151,52 @@ class BibleRepositoryClass {
     const zipPath = TRANSLATION_ZIPS[translation];
     if (!zipPath) throw new Error(`Unknown translation: ${translation}`);
 
-    try {
-      const response = await fetch(zipPath);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch ${zipPath}: HTTP ${response.status}`);
+    let parsed: ParsedTranslation | null = null;
+    let servedBy = '';
+
+    parsed = await loadCachedTranslation(translation);
+    // Defensive re-check at the seam (RI-023): a ParsedTranslation with a
+    // non-Map or empty booksMap is garbage — treat it as a cache miss and
+    // fall through to decode rather than crashing on it later.
+    if (parsed && (!(parsed.booksMap instanceof Map) || parsed.booksMap.size === 0)) {
+      console.warn(`[BibleRepository] Cached parse for ${translation} unusable; re-decoding.`);
+      parsed = null;
+    }
+    if (parsed) servedBy = 'IndexedDB cache';
+
+    if (!parsed) {
+      try {
+        parsed = await decodeViaWorker(translation, zipPath);
+        servedBy = 'Web Worker';
+      } catch (error) {
+        console.warn(
+          `[BibleRepository] Decode worker unavailable for ${translation}; falling back to the main thread.`,
+          error,
+        );
       }
-      const zipData = await response.arrayBuffer();
-      const zip = await JSZip.loadAsync(zipData);
+    }
 
-      const booksMap = new Map<string, BibleBook>();
-      const aggregatedMetadata: TranslationMetadata = {};
-      const parseErrors: string[] = [];
-      let jsonFileCount = 0;
-      const filePromises: Promise<void>[] = [];
+    if (!parsed) {
+      parsed = await this.decodeOnMainThread(translation, zipPath);
+      servedBy = 'main thread';
+    }
 
-      zip.forEach((relativePath, file) => {
-        if (!relativePath.endsWith('.json') || file.dir) return;
-        jsonFileCount++;
+    const { booksMap, metadata: aggregatedMetadata } = parsed;
 
-        const promise = file.async('text').then((content) => {
-          let raw: unknown;
-          try {
-            raw = JSON.parse(content);
-          } catch (e) {
-            parseErrors.push(`${relativePath}: invalid JSON (${(e as Error).message})`);
-            return;
-          }
+    if (servedBy !== 'IndexedDB cache') {
+      // Best-effort cache population for the next boot. Never throws (RI-022).
+      void saveCachedTranslation(translation, booksMap, aggregatedMetadata);
+    }
 
-          // Route every file through the normalization layer.
-          // Downstream code only ever sees the canonical BibleBook shape,
-          // regardless of whether the source file is canonical, an array,
-          // or the nested-object format with an `Info` block.
-          const { books, metadata } = normalizeBibleJson(raw);
-
-          // Merge metadata from any file in the archive (Info blocks
-          // typically appear once per translation; last write wins per key).
-          Object.assign(aggregatedMetadata, metadata);
-
-          for (const bookData of books) {
-            if (!bookData.book || !Array.isArray(bookData.chapters)) continue;
-            const key = bookData.book.toLowerCase();
-            if (booksMap.has(key)) {
-              // Fail-soft on duplicates: keep first occurrence so a stray
-              // duplicate file doesn't silently overwrite verified data.
-              console.warn(
-                `[BibleRepository] Duplicate book "${bookData.book}" in ${translation}; keeping first occurrence.`,
-              );
-              continue;
-            }
-            booksMap.set(key, bookData);
-            if (!this.bookAliases.has(key)) {
-              this.setupBookAliases(bookData.book);
-            }
-          }
-        });
-        filePromises.push(promise);
-      });
-
-      await Promise.all(filePromises);
-
-      if (jsonFileCount === 0) {
-        throw new Error(`No .json files found inside ${zipPath}`);
+    // Register book aliases for every book new to the repository (previously
+    // inline in the decoder; now shared by all three tiers).
+    for (const [key, book] of booksMap) {
+      if (!this.bookAliases.has(key)) {
+        this.setupBookAliases(book.book);
       }
-      if (booksMap.size === 0) {
-        const detail = parseErrors.length ? ` (${parseErrors.join('; ')})` : '';
-        throw new Error(`No valid books found in ${translation}${detail}`);
-      }    this.translations.set(translation, booksMap);
+    }
+
+    this.translations.set(translation, booksMap);
     this.keywordIndexes.set(translation, this.buildKeywordIndex(booksMap));
     this.translationMetadata.set(translation, aggregatedMetadata);
     this.loadedTranslations.add(translation);
@@ -210,37 +204,99 @@ class BibleRepositoryClass {
     // reflects the present, not the last boot attempt.
     this.failedTranslations.delete(translation);
 
-      // Build canonical book order from the first translation loaded
-      // (all translations share the 66-book canon). Seeded FROM the canonical
-      // spelling list (not the dataset's raw spelling) so a divergent source
-      // name can never leak into `bookNames` no matter which translation
-      // finishes first in the parallel preload; extra books beyond the canon
-      // are appended so non-standard datasets still appear.
-      if (this.bookNames.length === 0) {
-        const canonSet = new Set(CANONICAL_BOOK_ORDER.map((n) => n.toLowerCase()));
-        const names: string[] = [];
-        for (const book of booksMap.values()) {
-          if (!canonSet.has(book.book.toLowerCase())) names.push(book.book);
-        }
-        this.bookNames = [...CANONICAL_BOOK_ORDER, ...this.sortBooksInOrder(names)];
+    // Build canonical book order from the first translation loaded
+    // (all translations share the 66-book canon). Seeded FROM the canonical
+    // spelling list (not the dataset's raw spelling) so a divergent source
+    // name can never leak into `bookNames` no matter which translation
+    // finishes first in the parallel preload; extra books beyond the canon
+    // are appended so non-standard datasets still appear.
+    if (this.bookNames.length === 0) {
+      const canonSet = new Set(CANONICAL_BOOK_ORDER.map((n) => n.toLowerCase()));
+      const names: string[] = [];
+      for (const book of booksMap.values()) {
+        if (!canonSet.has(book.book.toLowerCase())) names.push(book.book);
       }
-
-      console.log(
-        `[BibleRepository] Loaded ${translation}: ${booksMap.size} books`,
-        aggregatedMetadata,
-      );
-    } catch (error) {
-      console.error(`Failed to load ${translation} Bible data:`, error);
-      throw error instanceof Error ? error : new Error(String(error));
+      this.bookNames = [...CANONICAL_BOOK_ORDER, ...this.sortBooksInOrder(names)];
     }
+
+    console.log(
+      `[BibleRepository] Loaded ${translation} (${servedBy}): ${booksMap.size} books`,
+      aggregatedMetadata,
+    );
   }
 
   /**
-   * Legacy compat: load KJV from zip path
+   * Tier 3: the original main-thread decoder, verbatim. The mandatory
+   * fallback when the cache is cold/unavailable and the worker fails or
+   * times out. Throws on any failure — loadTranslation propagates to the
+   * per-translation isolation in preloadAllTranslations (RI-043).
    */
-  async loadFromZip(zipPath: string): Promise<void> {
-    // If zipPath matches KJV, use the new method
-    await this.loadTranslation('KJV');
+  private async decodeOnMainThread(translation: string, zipPath: string): Promise<ParsedTranslation> {
+    const response = await fetch(zipPath);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch ${zipPath}: HTTP ${response.status}`);
+    }
+    const zipData = await response.arrayBuffer();
+    const zip = await JSZip.loadAsync(zipData);
+
+    const booksMap = new Map<string, BibleBook>();
+    const aggregatedMetadata: TranslationMetadata = {};
+    const parseErrors: string[] = [];
+    let jsonFileCount = 0;
+    const filePromises: Promise<void>[] = [];
+
+    zip.forEach((relativePath, file) => {
+      if (!relativePath.endsWith('.json') || file.dir) return;
+      jsonFileCount++;
+
+      const promise = file.async('text').then((content) => {
+        let raw: unknown;
+        try {
+          raw = JSON.parse(content);
+        } catch (e) {
+          parseErrors.push(`${relativePath}: invalid JSON (${(e as Error).message})`);
+          return;
+        }
+
+        // Route every file through the normalization layer.
+        // Downstream code only ever sees the canonical BibleBook shape,
+        // regardless of whether the source file is canonical, an array,
+        // or the nested-object format with an `Info` block.
+        const { books, metadata } = normalizeBibleJson(raw);
+
+        // Merge metadata from any file in the archive (Info blocks
+        // typically appear once per translation; last write wins per key).
+        Object.assign(aggregatedMetadata, metadata);
+
+        for (const bookData of books) {
+          if (!bookData.book || !Array.isArray(bookData.chapters)) continue;
+          const key = bookData.book.toLowerCase();
+          if (booksMap.has(key)) {
+            // Fail-soft on duplicates: keep first occurrence so a stray
+            // duplicate file doesn't silently overwrite verified data.
+            console.warn(
+              `[BibleRepository] Duplicate book "${bookData.book}" in ${translation}; keeping first occurrence.`,
+            );
+            continue;
+          }
+          booksMap.set(key, bookData);
+        }
+      });
+
+      filePromises.push(promise);
+    });
+
+    await Promise.all(filePromises);
+
+    if (jsonFileCount === 0) {
+      throw new Error(`No .json files found inside ${zipPath}`);
+    }
+    if (booksMap.size === 0) {
+      const detail = parseErrors.length ? ` (${parseErrors.join('; ')})` : '';
+      throw new Error(`No valid books found in ${translation}${detail}`);
+    }
+
+    return { booksMap, metadata: aggregatedMetadata };
   }
 
   /**
@@ -840,7 +896,6 @@ class BibleRepositoryClass {
    */
   private searchByKeywordScan(searchTerms: string[], limit: number): Passage[] {
     const results: Passage[] = [];
-
     const booksMap = this.getBooksMap();
     for (const book of booksMap.values()) {
       for (const chapter of book.chapters) {

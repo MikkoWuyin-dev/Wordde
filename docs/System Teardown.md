@@ -113,6 +113,18 @@ UI components  ──►  inputController  ──►  stateManager (Zustand)
 
 **Rendering flow:** React function components subscribing to Zustand slices. No memoized selectors — the store is small and updates are user-paced (a few per second at most), so full-store subscription is acceptable.
 
+### Offline delivery layer (PWA)
+
+Wordde's runtime was always offline-first, but until the PWA layer landed, a sanctuary with no internet could not even LOAD the app. Delivery is now offline too:
+
+- **`public/manifest.webmanifest`** — installable-app metadata (standalone display, landscape, `#08090a` theme/background, 3000×3000 icon), linked from `index.html` with an `apple-touch-icon`.
+- **`pwa/sw.js`** — the service worker source. It is NOT in `public/` because public files are copied verbatim and never pass through the build; `vite.config.ts`'s `wordde:sw-precache-inject` plugin emits it into `dist/` at `closeBundle`, prepending `self.__WORDDE_PRECACHE__ = [...refs]` — the hashed build assets (`/assets/index-*.js|css`, icon) parsed from the emitted `index.html` — and rewriting the placeholder `CACHE_VERSION` with the content-derived version (see below). Hashed filenames are unknowable at author time; without injection, an offline reload served the cached HTML shell but 503'd on the JS bundle. The static URL list is parsed from `pwa/sw.js` itself for hashing, so the precache set has exactly one home.
+- **Precache contents (19 entries):** both route shells (`/`, `/projection`), the manifest, all 7 fonts, all 5 Bible ZIPs, `semanticIndex.json`, and the hashed JS/CSS/icon. Install is all-or-nothing (`cache.addAll` in `install`, then `skipWaiting`); `activate` deletes every non-current cache and `clients.claim()`s.
+- **Serving:** same-origin GETs only; navigations try network then fall back to cached shell; everything else is cache-first with opportunistic caching of newly seen same-origin assets. Cache reads use `{ ignoreVary: true, ignoreSearch: true }` — the SW fetches without an `Origin` header while the page fetches fonts `crossorigin`, so a strict `Vary`-sensitive match 503'd fonts offline (found by the offline reload test, fixed in v3).
+- **Registration:** `src/main.tsx` registers `/sw.js` in `import.meta.env.PROD` only (Vite dev must never be cached), after `load`, fully guarded — a registration failure logs a warning and the app continues online (RI-022 discipline).
+- **Self-maintaining cache version (RI-059):** `CACHE_VERSION` is not edited by hand. The `wordde:sw-precache-inject` plugin derives it as `wordde-<12 hex chars>` from a SHA-256 over the worker source itself plus every precached URL and its content on disk (SPA routes hash the built `index.html`). Any content change — app code, worker logic, Bible data, fonts — automatically rotates the version; identical sources rebuild to an identical version (verified deterministic), so no false rotations. The plugin fails the build loudly if the placeholder declaration is missing. The old worker keeps serving until all clients reload, so a deploy never yanks assets out from under a live service; stale caches are deleted on activate.
+- **Verified end-to-end:** server killed → full reload → search → commit → blank/unblank all function with zero connectivity (`navigator.onLine` false-equivalent: server process dead); Bible text served from the cached ZIP.
+
 ### Backend structure
 There is none. Deliberately. There is no service layer, no API, no database, no auth. "Business logic" lives in three pure-ish modules (`bibleRepository`, `searchEngine`, `autocomplete`) that are separated from the mutable store by being read-only singletons.
 
@@ -254,6 +266,15 @@ A `Slide` is one verse. A `Passage` may hold a range. `passageToSlides()` explod
 
 Only **references** (`{id, name, createdAt}`) live in `blankSettings`; the binaries live under `bg:<uuid>` keys in IndexedDB. `MAX_BACKGROUNDS = 7`, `MAX_SIZE = 10 MB`, allowed types PNG/JPEG/WEBP (`validateImageFile`).
 
+### Inverted keyword index (teardown §7 scaling recommendation, landed)
+
+`searchByKeyword` was a full linear scan (~31k verses per keystroke). It now uses an inverted index built once per translation during `loadTranslation`:
+
+- **Structure** (`KeywordIndex` in `bibleRepository.ts`): unique lowercase tokens get sequential integer ids; each posting is ONE packed number `bookIdx*1_000_000 + chapterIdx*1000 + verseIdx` into the loaded map insertion order. Packing keeps the index compact (~28 MB across all 5 translations vs ~250 MB for per-verse string keys) and makes numeric sort order identical to canonical traversal order.
+- **Exact semantics with the old scan:** the scan matched a verse when ANY query term (>2 chars) was a SUBSTRING of its lowercase text (`matchCount > 0`). A query term never contains whitespace (terms are \s+-split), so "term is a substring of the text" ⟺ "term is a substring of one whitespace-token"; the index unions term matches in packed order, reproducing scan results AND order. Pinned by `src/test/keywordIndex.test.ts` (12 tests) against a brute-force reference, including the ANY-vs-ALL distinction that the old suites in `searchReference.test.ts` encode.
+- **Fallback for non-indexed stores:** translations never loaded through `loadTranslation` (test fixtures injected into the private stores, possibly with post-install text mutations) have no index; `searchByKeyword` detects this and runs the original scan (`searchByKeywordScan`) over the live store. The index is an accelerator, not a behavior change. An unloaded translation still returns empty — never another translation's data (RI-014).
+- **Boot cost:** one extra pass per translation during load (measured 2.0–3.1 s total for all five, within the documented 3–5 s envelope).
+
 ### Normalization
 `bibleNormalizer.normalizeBibleJson(raw)` accepts three shapes and emits `{books: BibleBook[], metadata}`. It also canonicalizes BOOK NAMES at this boundary: the shipped nested-object translations (NKJV/NLT/AMP) key the Book of Psalms `Psalm` while the canonical spellings (KJV/NIV, Browse, the repository's canonical order) say `Psalms` — the normalizer rewrites that one known divergence (and passes every other name through untouched, preserving object identity when no rename is needed). This matters because everything downstream keys books by that name, and the canonical order is seeded by whichever translation loads first; left un-canonicalized, Psalms vanished from Browse on a load race and reference lookups resolved to null across translations. Guarded by `src/test/bookNameAudit.test.ts`, which normalizes the real shipped zips and asserts the canonical 66-book list in every translation.
 1. Canonical single book — `{book, chapters: [...]}`.
@@ -280,7 +301,9 @@ Because all format knowledge is confined to this file, search, browse, and proje
 
 `preloadAllTranslations()` runs all five at boot from `OperatorScreen`'s mount effect, alongside `SearchEngine.loadSemanticIndex()`, behind a full-screen spinner. Each translation loads **independently** via `Promise.allSettled` over `loadTranslation` (RI-043 / MCD §24.3): one broken ZIP (missing file, HTTP error, corrupt data) cannot reject the whole preload. The method resolves normally on partial success (≥ 1 translation loaded) and throws **only** when zero translations loaded (total failure = unusable app; the boot `.catch` handles that). Every failure is logged with its translation name and error (RI-044). A failed translation simply stays unavailable — reads for it return empty via `getBooksMap`; there is **no fallback and no substitution** (RI-014/VF-002), and `currentTranslation` is never auto-switched.
 
-**Known limitation (deliberate, not fixed here):** if the *current/default* translation itself fails while others succeed, the app boots "loaded" but that translation renders empty (correct per RI-014 — no fallback). Surfacing "translation X unavailable" in the UI or letting the operator pick a loaded one is a separate product decision, not yet implemented.
+**Decode tiers (teardown §10 #1/#4, landed).** `loadTranslation` resolves each translation through three tiers, in order: (1) **IndexedDB cache** (`bibleCache.ts`, DB `bible_translation_cache`) — the parsed, normalized, deduplicated book array plus metadata; structured clone is lossless for the all-string canonical model, so verse text survives byte-for-byte (VF-001); records are strictly validated on read (RI-023) and a whole-record reject re-decodes rather than half-trusting. (2) **Web Worker** (`bibleDecodeWorker.ts` via `bibleDecodeClient.ts`) — fetch + JSZip + parse + normalize + keep-first dedup off the main thread, 60 s timeout guard; the worker imports the normalizer directly, so format knowledge stays inside the boundary (RI-042). (3) **Main-thread decoder** — the original path, verbatim, as the mandatory fallback (all jsdom tests and any non-worker environment exercise this tier). All tiers feed one install step: alias registration, keyword index, metadata, canonical book-order seeding run identically regardless of tier. Cache writes are best-effort after a decode (never after a cache hit). Verified in-browser: first boot decodes all five in the worker (~6.6 s here), second boot serves all five from cache (~2.1 s, 3.1× faster) with verbatim text, and an offline boot is fully served from cache. `tsc` does not type-check the worker (it is referenced via `new URL(...)` only) — it is compiled by the bundler; keep it import-clean.
+
+**Boot-health surfacing (teardown follow-up #5, landed):** boot failures are now visible. `BibleRepository` records per-translation failure reasons (`failedTranslations` map; cleared on a successful reload) and exposes `getTranslationHealth()` → `{ loaded, failed: [{code, error}], available }`. `OperatorScreen` renders a destructive banner (role="status", aria-live) naming every failed translation, the translation selector lists healthy translations normally and failed ones as disabled "— unavailable" rows, and a *total* boot failure (zero translations) shows a blocking recovery screen with the error and a Reload button instead of an app that can never work. Health is UI-level only — reads for a failed translation still return empty with **no fallback** (RI-014) and `currentTranslation` is never auto-switched.
 
 ### Integrity guarantees
 - `getBooksMap()` **never falls back to another translation.** It logs and returns an empty map. This is a deliberate, load-bearing decision: the earlier silent fallback produced the "label says NIV, text is KJV" class of bug.
@@ -304,7 +327,7 @@ Because all format knowledge is confined to this file, search, browse, and proje
 Two-column Old/New Testament book list → chapter grid → verse grid. Selecting a verse builds a queue from the passage under `currentTranslation` and projects it through the standard pipeline.
 
 ### 5.3 Service Plan
-Ordered, editable list persisted at `services` (auto-migrated from legacy `servicePlan` on read). Supports inline edit, reorder, safe delete, and active-item tracking. `N` or `Shift+Enter` dispatches a `nextServicePlanPassage` window event that the component consumes — the one place a DOM CustomEvent is used instead of the store, to avoid coupling the global keyboard hook to plan internals.
+Ordered, editable list persisted at `services` (auto-migrated from legacy `servicePlan` on read). Supports inline edit, reorder, safe delete, and active-item tracking. Deleting a passage or an entire service both require an `AlertDialog` confirmation (service delete is the most destructive plan action — a week's preparation — so its dialog names the service and its passage count). `N` or `Shift+Enter` dispatches a `nextServicePlanPassage` window event that the component consumes — the one place a DOM CustomEvent is used instead of the store, to avoid coupling the global keyboard hook to plan internals.
 
 ### 5.4 Recent Passages
 `addToRecent` is called from every projection. It removes any existing identical reference before unshifting, so the list is duplicate-free and ordered by last use, capped at 20. The cap lives in the exported `MAX_RECENT_PASSAGES` constant, shared by the store and the Recent tab — the tab renders the full list inside the operator's ScrollArea, so it must never truncate independently. Individual and bulk deletion are supported and do not touch what is live. The tab's LIVE highlight comes only from `projectionQueue[liveSlideIndex]` — a preview or mid-edit queue (`liveSlideIndex` null/stale) lights nothing. Re-opening parses the stored string against the core's canonical grammar (`book chapter:verseKey`), matching verse keys verbatim, lettered keys (`3a`) included, and fails visibly (inline destructive note, auto-clears, entry kept) when a reference is unrecognized or absent from the current translation — the usual case after a mid-service translation switch, since verse keys differ between translations.
@@ -330,7 +353,7 @@ The projection viewport is split into two siblings inside a full-screen flex col
 Because metadata is outside the measured bounds, long verses can never compress or overlap the reference, and spacing is identical for a 5-word verse and a 60-word verse.
 
 ### 5.9 Projection window setup
-`ProjectionControl` opens `window.open('/projection', 'projectionWindow', 'width=1280,height=720')`, sets status `connecting`, and on `PROJECTOR_READY` shows a three-step guided dialog: drag to the TV → press F11 → confirm only the verse is visible. Status badge shows idle / connecting / active / disconnected. No screen-detection or window-moving APIs are used — they are unreliable and permission-gated.
+`ProjectionControl` opens `window.open('/projection', 'projectionWindow', 'width=1280,height=720')`, sets status `connecting`, and on `PROJECTOR_READY` shows a three-step guided dialog: drag to the TV → press F11 → confirm only the verse is visible. Status badge shows idle / connecting / active / disconnected / **blocked**. Popup-blocked detection: `window.open` returning null (or a window that is immediately `closed`) transitions to `blocked` with a recovery dialog (guidance to allow pop-ups + a "Try again" retry through the same user gesture); dismissing the dialog returns to idle. `PROJECTOR_READY` stamps the heartbeat watchdog clock (a projector dying between READY and its first heartbeat previously stayed "Connected" forever — found by the status-machine tests). Status-machine transitions are pinned by `src/test/projectionStatusMachine.test.tsx` (8 tests, fake timers + the shared `FakeBroadcastChannel` double in `src/test/fakeBroadcastChannel.ts`). No screen-detection or window-moving APIs are used — they are unreliable and permission-gated.
 
 ### 5.10 Onboarding
 `OnboardingManager` runs a `welcome → prompt → tutorial → done` phase machine gated on `bible-projection-onboarded`. `TutorialOverlay` measures the target rect, calls `scrollIntoView({behavior:'smooth', block:'nearest'})` when the target is offscreen, clamps the tooltip to a 12 px viewport inset (correct under browser zoom and resize), and always renders a fixed Exit button so the user can never be trapped. `ContextualHint` shows a one-time inline hint per feature, keyed `hint_seen_<id>`. "Replay Tutorial" (inside the Settings & More menu, sidebar footer — see §5.12) clears the onboarding flag and every hint flag, then reloads. The `keyboard_nav` hint fires on the session's first commit (`show={!!committedPassage}`), matching the other panel hints' trigger style — it does not wait for an actual arrow press.
@@ -389,14 +412,17 @@ Fails visibly (blank result) rather than incorrectly (wrong text under the right
 **10. No backend at all.**
 Zero cost, zero ops, guaranteed offline. Downside: no multi-device control, no shared plans between machines, no analytics, no central content updates.
 
+**11. Strict Content Security Policy via meta tag (P0 security hardening).**
+`index.html` ships `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' blob: data:; media-src 'self' blob:; connect-src 'self' ws: wss:; base-uri 'self'; form-action 'self'; object-src 'none'`. Rationale: `'self'`-only scripts and objects is the right default for an offline SPA with zero external origins; `style-src 'unsafe-inline'` is required because React style attributes and the dynamic `background-image` style in `BlankOverlay` are load-bearing; `img-src blob:` serves user-uploaded logo/backgrounds from IndexedDB object URLs; `connect-src ws:` anticipates the future LAN-WebSocket transport without opening anything today. Vite's dev server injects an inline React-refresh preamble, so `vite.config.ts` carries a dev-only `csp-dev-relaxer` plugin that swaps in an equivalent policy with `'unsafe-inline'` scripts and localhost ws/http connect targets — **only while `mode === "development"`**; production builds and `vite preview` serve the strict policy verbatim. Verified: production `dist/index.html` contains exactly one external module script and zero inline handlers, so `script-src 'self'` holds. Deliberately NOT added: nonces/hashes (Vite regenerates filenames per build; a meta policy can't carry per-build hashes without another plugin — revisit if the policy ever needs to drop `'unsafe-inline'` styles).
+
 ---
 
 ## 7. Scalability
 
 ### What breaks first
-1. **Memory.** Five fully parsed translations are the dominant cost. At ~10 translations, low-end 4 GB laptops — the exact hardware churches donate to A/V — will start swapping or OOM the tab.
-2. **Boot time.** `preloadAllTranslations` fans out over N ZIPs with `Promise.allSettled` (per-translation failure isolation since the R2 fix), each decoded on the main thread by JSZip. Decode is not parallel; it competes for the single JS thread. Boot grows roughly linearly with translation count.
-3. **Keyword search.** `searchByKeyword` is a full linear scan over every verse of the current translation — roughly 31,000 verses × string ops per keystroke over 3 characters. It is already the slowest interaction and will become visibly laggy well before the memory ceiling.
+1. **Memory.** Five fully parsed translations are the dominant cost. At ~10 translations, low-end 4 GB laptops — the exact hardware churches donate to A/V — will start swapping or OOM the tab. (The IndexedDB cache does not change resident memory — parsed data still lives in RAM per the deliberate preload trade.)
+2. **Boot time.** ~~Decode on the main thread~~ **Largely resolved** — decode runs in a Web Worker (main thread stays responsive during boot), and repeat boots skip fetch+decode entirely via the IndexedDB parse cache (measured 6.6 s → 2.1 s for five translations on the dev machine). A cold boot still grows roughly linearly with translation count.
+3. **Keyword search.** ~~Full linear scan~~ **Resolved** — keyword search now uses an inverted index built at load time (see §4), turning the per-keystroke 31k-verse scan into a token lookup. Boot cost is one extra pass per translation (~10% of decode time, measured 2.0–3.1 s total, unchanged UX).
 4. **Semantic index.** A flat array scanned linearly with per-entry synonym loops. Fine at ~hundreds of entries; unusable at tens of thousands.
 5. **localStorage.** Combined footprint is small (a few KB), but `projectionState` is written on *every* projection — synchronous main-thread I/O in the hot path.
 
@@ -406,10 +432,10 @@ Zero cost, zero ops, guaranteed offline. Downside: no multi-device control, no s
 - Full-store re-render on every write (negligible now).
 
 ### To reach 10× / 100×
-- Move ZIP decode into a Web Worker; stream results so the first translation is usable before the last finishes.
+- ~~Move ZIP decode into a Web Worker~~ **Done** — `bibleDecodeWorker.ts`/`bibleDecodeClient.ts` with a 60 s fallback timeout (see §4).
 - Replace eager full-preload with: preload the two most-used translations, lazy-load the rest with a warm-on-idle prefetch.
-- Build an inverted keyword index once at load (token → verse IDs) instead of scanning; or switch to a purpose-built client index.
-- Persist parsed translations in IndexedDB so subsequent boots skip fetch + decode entirely.
+- ~~Build an inverted keyword index once at load~~ **Done** — `buildKeywordIndex` + indexed `searchByKeyword` (see §4 and the class docblock in `bibleRepository.ts`).
+- ~~Persist parsed translations in IndexedDB so subsequent boots skip fetch + decode entirely~~ **Done** — `bibleCache.ts` (see §4).
 - Convert the semantic index to a keyed map with a prefix trie.
 - Batch/debounce `persistProjectionState` writes.
 - For multi-device control (a genuinely different scale axis), the `BroadcastChannel` abstraction would be swapped for a transport interface with a local WebSocket implementation — the message schema in `broadcastSync.ts` is already the right seam.
@@ -420,7 +446,7 @@ Zero cost, zero ops, guaranteed offline. Downside: no multi-device control, no s
 
 | Failure | Trigger | Current mitigation | Residual risk |
 |---|---|---|---|
-| Projection window never opens | Popup blocker | Status stays `connecting`; setup dialog never appears | No explicit "popup blocked" message |
+| Projection window never opens | Popup blocker | `window.open` returning null/`closed` transitions to `blocked`; recovery dialog offers pop-up guidance and a "Try again" retry; dismissing returns to idle | Retry can be re-blocked by a strict blocker; the dialog then says so via the same path |
 | Projection window closed mid-service | Operator error | Polled `window.closed` → status `idle`; reopening restores from localStorage | Screen is dark until reopened |
 | Broadcast message dropped | Tab throttling, backgrounded window | 3 s `SYNC` re-assert | Up to 3 s of stale content |
 | Operator window reloads | Crash, accidental refresh | Projection keeps rendering last passage; on boot `restoreProjectionSession()` restores queue, indexes, history, blank state, and translation from the `projectionRecoveryState` snapshot (12 h window) | Recovery snapshot only persists when the queue is non-empty; a reload while idle starts clean |
@@ -480,9 +506,10 @@ Zero cost, zero ops, guaranteed offline. Downside: no multi-device control, no s
 9. **Move `blankSettings` into Zustand** with an explicit persistence middleware, closing the one hole in the single-source-of-truth rule.
 
 ### Existing technical debt
-- `loadFromZip(zipPath)` ignores its argument and always loads KJV — dead legacy compat.
+- ~~`loadFromZip(zipPath)` ignores its argument and always loads KJV — dead legacy compat.~~ **Removed** (orphan cleanup): zero callers verified before deletion (RI-051/RI-052).
 - Legacy navigation methods (`goToNextChapter`, `previewNextVerse`, `displayCurrentChapter`, …) duplicate slide-queue logic that `slideNext`/`loadChapterAsQueue` already implement.
-- `AppState.displayMode` and the `StateAction` union in `types.ts` are declared and never used.
+- ~~`AppState.displayMode` and the `StateAction` union in `types.ts` are declared and never used.~~ **Removed** (orphan cleanup); `types.ts` is protected (VF-100) — this edit deleted only dead declarations, no live type changed.
+- Orphaned components `EmergencyControls.tsx` and `PreviewPanel.tsx` (fully defined, never imported by any module or test) **Removed** (orphan cleanup) per MCD §24.6: identify, verify references are zero, then remove deliberately.
 - `persistProjectionState.timestamp` is written and never read.
 - `Projection.tsx` sets both `channel.onmessage` (a logger) and an `addEventListener` subscription — two mechanisms on one channel.
 - The `RELOAD_ASSETS` handler closes over a stale `assetUrls` (its effect has an empty dependency array), so object-URL revocation can miss URLs.
