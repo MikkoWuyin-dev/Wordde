@@ -12,6 +12,10 @@ dist
 dist-ssr
 *.local
 
+# Playwright artifacts (e2e)
+test-results
+playwright-report
+
 # Agent session logs (Freebuff/Codebuff)
 .freebuff/
 
