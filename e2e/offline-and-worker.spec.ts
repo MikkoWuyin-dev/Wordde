@@ -38,9 +38,11 @@ async function bootForReal(page: Page): Promise<void> {
   // same localStorage key finishOnboarding() writes and skip it entirely.
   await page.addInitScript(() => localStorage.setItem('bible-projection-onboarded', 'true'));
   await page.goto('/', { waitUntil: 'domcontentloaded' });
-  // OperatorScreen overrides the SearchInput default with the placeholder
-  // "Search reference or keyword..." — anchor on the override, not the default.
-  const search = page.getByPlaceholder(/search reference or keyword/i);
+  // Canonical copy from SearchInput's SEARCH_PLACEHOLDER ("Search by reference
+  // or keyword... (e.g., John 3:16)") — single-sourced, pinned by a drift
+  // guard in src/test/searchInputKeys.test.tsx. The "by" is load-bearing: a
+  // once-divergent call-site override lacked it and broke these locators.
+  const search = page.getByPlaceholder(/search by reference or keyword/i);
   try {
     await expect(search).toBeVisible({ timeout: 120_000 }); // cold decode budget
   } catch (err) {
@@ -144,7 +146,7 @@ test.describe('service-worker offline reload', () => {
     expect(swState).toBe('activated');
 
     // 2. Commit the canary verse while ONLINE (projection + recovery snapshot).
-    const search = page.getByPlaceholder(/search reference or keyword/i);
+    const search = page.getByPlaceholder(/search by reference or keyword/i);
     await search.fill('John 3:16');
     await search.press('Enter');
     await expect(page.getByText(verse, { exact: true }).first()).toBeVisible({ timeout: 15_000 });

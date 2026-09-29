@@ -21,6 +21,13 @@ const typeIcons = {
   verse: FileText,
 };
 
+/** The canonical search-field copy, single-sourced because the operator UI
+ * and the e2e suite both key off it. Do NOT pass a divergent `placeholder`
+ * at a call site — `searchInputKeys.test.tsx` has a source drift guard that
+ * fails the build if one appears (a divergent override once broke the e2e
+ * locator by silently replacing this copy). */
+export const SEARCH_PLACEHOLDER = 'Search by reference or keyword... (e.g., John 3:16)';
+
 export function SearchInput({
   value,
   onChange,
@@ -28,7 +35,7 @@ export function SearchInput({
   onClear,
   onSelectSuggestion,
   isLoading = false,
-  placeholder = 'Search by reference or keyword... (e.g., John 3:16)',
+  placeholder = SEARCH_PLACEHOLDER,
   onFocus: onFocusProp,
 }: SearchInputProps) {
   const inputRef = useRef<HTMLInputElement>(null);

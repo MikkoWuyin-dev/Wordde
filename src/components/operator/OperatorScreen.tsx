@@ -283,7 +283,6 @@ export function OperatorScreen() {
                   onClear={clearPreview}
                   onSelectSuggestion={handleSuggestionSelect}
                   isLoading={isLoading}
-                  placeholder="Search reference or keyword..."
                   onFocus={() => setSearchFocused(true)}
                 />
                 <ContextualHint id="search" message='Type a passage like "John 3:16"' show={searchFocused} />

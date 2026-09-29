@@ -1,7 +1,10 @@
 import { describe, it, expect, beforeEach, afterAll, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { useStateManager } from '@/core/stateManager';
-import { SearchInput } from '@/components/operator/SearchInput';
+import { SEARCH_PLACEHOLDER, SearchInput } from '@/components/operator/SearchInput';
 import { useGlobalKeyboard, useInputController } from '@/core/inputController';
 import { BibleRepository } from '@/core/bibleRepository';
 import type { BibleBook, Passage, Slide } from '@/core/types';
@@ -140,6 +143,30 @@ beforeEach(() => {
 
 afterAll(() => {
   vi.unstubAllGlobals();
+});
+
+/**
+ * Placeholder drift guard (regression: OperatorScreen passed its own
+ * `placeholder="Search reference or keyword..."`, silently replacing the
+ * canonical copy — the e2e suite keyed on the default and both tests failed
+ * with "element(s) not found"). The canonical text is now exported and the
+ * component default; this pins BOTH ends: the rendered default and a source
+ * scan that fails if any call site ever passes `placeholder` again.
+ */
+describe('SearchInput placeholder is single-sourced', () => {
+  const source = readFileSync(
+    resolve(dirname(fileURLToPath(import.meta.url)), '../components/operator/OperatorScreen.tsx'),
+    'utf8',
+  );
+
+  it('renders the canonical SEARCH_PLACEHOLDER when no placeholder prop is given', () => {
+    render(<SearchInput value="" onChange={() => {}} onKeyDown={() => {}} onClear={() => {}} />);
+    expect(screen.getByPlaceholderText(SEARCH_PLACEHOLDER)).toBeInTheDocument();
+  });
+  it('no call site overrides the placeholder (drift guard)', () => {
+    expect(source).not.toMatch(/placeholder\s*=/);
+    expect(source).toContain('<SearchInput');
+  });
 });
 
 describe('SearchInput keyboard contract (real pipeline)', () => {
