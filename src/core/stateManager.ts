@@ -212,7 +212,6 @@ export const useStateManager = create<StateManager>((set, get) => ({
   selectedResultIndex: -1,
   committedPassage: null,
   currentTranslation: 'KJV',
-  displayMode: 'operator-only',
   isLoading: false,
   isBibleLoaded: false,
 

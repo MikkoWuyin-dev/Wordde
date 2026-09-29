@@ -16,7 +16,7 @@ import { ServicePlan } from './ServicePlan';
 import { RecentPassages } from './RecentPassages';
 import { SettingsAndMore } from './SettingsAndMore';
 import { ProjectionControl } from './ProjectionControl';
-import { Book, Monitor, Undo2 } from 'lucide-react';
+import { Book, BookX, Monitor, Undo2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
@@ -42,6 +42,10 @@ export function OperatorScreen() {
   const [searchFocused, setSearchFocused] = useState(false);
   const [browseOpened, setBrowseOpened] = useState(false);
   const [planOpened, setPlanOpened] = useState(false);
+  /** Total boot failure (zero translations loaded) — shown as a blocking screen. */
+  const [bootError, setBootError] = useState<string | null>(null);
+  /** Per-translation boot failures (partial success) — surfaced, never hidden (RI-044). */
+  const [failedTranslations, setFailedTranslations] = useState<{ code: string; error: string }[]>([]);
 
   const {
     searchQuery,
@@ -83,12 +87,19 @@ export function OperatorScreen() {
         .then(() => {
           setBibleLoaded(true);
           setLoading(false);
+          // Surface any per-translation boot failures (teardown follow-up #5):
+          // the app continues with what loaded, but the operator must SEE what
+          // is missing — silent emptiness reads as “the app is broken” (RI-044).
+          setFailedTranslations(BibleRepository.getTranslationHealth().failed);
           // Bible data is available — only now can the active projection
           // session be reconstructed after an operator reload/crash.
           useStateManager.getState().restoreProjectionSession();
         })
         .catch((error) => {
           console.error('Failed to load Bible:', error);
+          // Total failure (zero translations): show a visible, actionable
+          // blocking screen instead of an app that can never work.
+          setBootError(error instanceof Error ? error.message : String(error));
           setLoading(false);
         });
     }
@@ -127,9 +138,49 @@ export function OperatorScreen() {
     );
   }
 
+  // Total boot failure: no translation could load (missing/corrupt data files,
+  // storage unreadable). Nothing in the app can work — fail visibly (RI-044).
+  if (bootError) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-4 max-w-md px-6">
+          <BookX className="h-12 w-12 text-destructive mx-auto" />
+          <h2 className="text-xl font-semibold text-foreground">Bible data could not be loaded</h2>
+          <p className="text-muted-foreground text-sm leading-relaxed">
+            None of the translations could be read from this device. Check that
+            the app files are intact, then reload this window.
+          </p>
+          <p className="text-[11px] text-muted-foreground/70 font-mono break-all">{bootError}</p>
+          <Button onClick={() => window.location.reload()}>Reload</Button>
+        </div>
+      </div>
+    );
+  }
+
+  const healthyTranslations = BibleRepository
+    .getAvailableTranslations()
+    .filter((t) => !failedTranslations.some((f) => f.code === t));
+  const currentTranslationFailed = failedTranslations.some((f) => f.code === currentTranslation);
+
   return (
     <div className="h-screen bg-background flex flex-col overflow-hidden">
       <OnboardingManager />
+      {/* Partial boot failure banner (teardown follow-up #5 / RI-044): the app
+          works with what loaded, but the operator must see what is missing and
+          how to recover — switch to a healthy translation below. */}
+      {failedTranslations.length > 0 && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="shrink-0 bg-destructive/10 border-b border-destructive/30 px-4 py-1.5 text-xs text-destructive flex items-center gap-2"
+        >
+          <BookX className="h-3.5 w-3.5 shrink-0" />
+          <span>
+            {failedTranslations.map((f) => f.code).join(', ')} could not be loaded — switch to a
+            healthy translation above if needed.
+          </span>
+        </div>
+      )}
       {/* Header */}
       <header className="glass shrink-0">
         <div className="px-4 py-2">
@@ -149,8 +200,18 @@ export function OperatorScreen() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-popover border-border">
-                  {BibleRepository.getAvailableTranslations().map((t) => (
+                  {healthyTranslations.map((t) => (
                     <SelectItem key={t} value={t} className="text-foreground">{t}</SelectItem>
+                  ))}
+                  {failedTranslations.map((f) => (
+                    <SelectItem
+                      key={f.code}
+                      value={f.code}
+                      disabled
+                      className="text-muted-foreground/50"
+                    >
+                      {f.code} — unavailable
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>

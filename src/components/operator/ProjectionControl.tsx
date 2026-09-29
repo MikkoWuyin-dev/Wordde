@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { onBroadcastMessage, broadcastStateResponse, broadcastSync, loadBlankSettings } from '@/core/broadcastSync';
 import { useStateManager } from '@/core/stateManager';
-import { Monitor, ExternalLink, Wifi, WifiOff, MonitorUp, Maximize, CheckCircle2 } from 'lucide-react';
+import { Monitor, ExternalLink, Wifi, WifiOff, MonitorUp, Maximize, CheckCircle2, ShieldAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 
-export type ProjectionStatus = 'idle' | 'connecting' | 'active' | 'disconnected';
+export type ProjectionStatus = 'idle' | 'connecting' | 'active' | 'disconnected' | 'blocked';
 
 const SETUP_STEPS = [
   {
@@ -38,6 +38,11 @@ export function ProjectionControl() {
   useEffect(() => {
     const unsub = onBroadcastMessage((msg) => {
       if (msg.type === 'PROJECTOR_READY') {
+        // READY is liveness evidence: stamp the watchdog clock. Without this,
+        // a projector that died between READY and its first heartbeat kept
+        // the operator on "Connected" forever — the watchdog guard requires
+        // lastHeartbeatRef to be set. (Found by the status-machine tests.)
+        lastHeartbeatRef.current = Date.now();
         if (status === 'connecting') {
           setShowSetup(true);
         }
@@ -106,11 +111,24 @@ export function ProjectionControl() {
     }
 
     setStatus('connecting');
-    projectorWindowRef.current = window.open(
+    const opened = window.open(
       '/projection',
       'projectionWindow',
       'width=1280,height=720'
     );
+
+    // Popup-blocked detection (audit P1 UX #9): window.open returns null when
+    // the browser blocks the popup. Previously the status stuck on
+    // "Connecting…" forever with no explanation. Distinguish three outcomes:
+    //   • null              → blocked: show recovery guidance
+    //   • window + closed   → opened then immediately closed: same treatment
+    //   • window + open     → normal path; PROJECTOR_READY/HEARTBEAT take over
+    if (!opened || opened.closed) {
+      projectorWindowRef.current = null;
+      setStatus('blocked');
+      return;
+    }
+    projectorWindowRef.current = opened;
 
     // Send INIT state after a short delay
     setTimeout(() => {
@@ -122,6 +140,13 @@ export function ProjectionControl() {
       );
     }, 500);
   }, [status]);
+
+  /** Recovery from 'blocked': retry through the same window.open path (a
+   * user gesture is present, so most blockers allow it now). */
+  const retryProjection = useCallback(() => {
+    setStatus('idle');
+    startProjection();
+  }, [startProjection]);
 
   const handleSetupComplete = useCallback(() => {
     setShowSetup(false);
@@ -152,6 +177,12 @@ export function ProjectionControl() {
       variant: 'destructive' as const,
       disabled: false,
     },
+    blocked: {
+      label: 'Popup Blocked',
+      icon: ShieldAlert,
+      variant: 'destructive' as const,
+      disabled: false,
+    },
   };
 
   const config = statusConfig[status];
@@ -168,6 +199,7 @@ export function ProjectionControl() {
               status === 'active' && 'bg-paprika animate-spark',
               status === 'connecting' && 'bg-yellow animate-spark',
               status === 'disconnected' && 'bg-destructive',
+              status === 'blocked' && 'bg-destructive',
               status === 'idle' && 'bg-muted-foreground/40'
             )}
           />
@@ -175,6 +207,7 @@ export function ProjectionControl() {
             {status === 'active' && 'Connected'}
             {status === 'connecting' && 'Connecting…'}
             {status === 'disconnected' && 'Disconnected'}
+            {status === 'blocked' && 'Blocked'}
             {status === 'idle' && 'Not started'}
           </span>
         </div>
@@ -189,6 +222,30 @@ export function ProjectionControl() {
               {config.label}
             </button>
       </div>
+
+      {/* Popup-blocked guidance (audit P1 UX #9): visible, actionable recovery
+          instead of an endless "Connecting…". */}
+      {status === 'blocked' && (
+        <Dialog open onOpenChange={(open) => { if (!open) setStatus('idle'); }}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <ShieldAlert className="h-5 w-5 text-destructive" />
+                Your browser blocked the projection window
+              </DialogTitle>
+              <DialogDescription>
+                Wordde opens a second window for the TV or projector, and the
+                browser stopped it. Allow pop-ups for this site, or try again —
+                this button usually works because you just clicked it.
+              </DialogDescription>
+            </DialogHeader>
+            <Button onClick={retryProjection} className="w-full" size="lg">
+              <ExternalLink className="h-4 w-4 mr-2" />
+              Try again
+            </Button>
+          </DialogContent>
+        </Dialog>
+      )}
 
       {/* Setup Guide Dialog */}
       <Dialog open={showSetup} onOpenChange={setShowSetup}>

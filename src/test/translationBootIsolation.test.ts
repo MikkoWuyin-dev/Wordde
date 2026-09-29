@@ -22,6 +22,7 @@ import { BibleRepository } from '@/core/bibleRepository';
 type RepoPrivate = {
   translations: Map<string, unknown>;
   loadedTranslations: Set<string>;
+  failedTranslations: Map<string, string>;
   translationMetadata: Map<string, unknown>;
   bookNames: string[];
   bookAliases: Map<string, string[]>;
@@ -32,6 +33,7 @@ function reset() {
   const r = BibleRepository as unknown as RepoPrivate;
   r.translations.clear();
   r.loadedTranslations.clear();
+  r.failedTranslations.clear();
   r.translationMetadata.clear();
   r.bookAliases.clear();
   r.bookNames = [];
@@ -90,5 +92,36 @@ describe('RI-043 — translation boot isolation', () => {
     // NKJV never loaded: empty, not another translation's verses.
     expect(BibleRepository.getVerses('John', '3', 'NKJV')).toEqual([]);
     expect(BibleRepository.getBook('John', 'NKJV')).toBeNull();
+  });
+});
+
+describe('translation health reporting (teardown follow-up #5 / RI-044)', () => {
+  it('reports loaded, failed (with reason), and the full configured set after a partial boot', async () => {
+    await BibleRepository.preloadAllTranslations().catch(() => undefined);
+
+    const health = BibleRepository.getTranslationHealth();
+    expect(health.available).toEqual(['KJV', 'NIV', 'NKJV', 'NLT', 'AMP']);
+    expect(health.loaded).toEqual(expect.arrayContaining(['KJV', 'NIV', 'NLT', 'AMP']));
+    expect(health.failed).toHaveLength(1);
+    expect(health.failed[0].code).toBe('NKJV');
+    expect(typeof health.failed[0].error).toBe('string');
+    expect(health.failed[0].error.length).toBeGreaterThan(0);
+  });
+
+  it('clears a failure record once the translation loads successfully', async () => {
+    // First boot: NKJV fails.
+    await BibleRepository.preloadAllTranslations().catch(() => undefined);
+    expect(BibleRepository.getTranslationHealth().failed.map((f) => f.code)).toContain('NKJV');
+
+    // Second attempt (e.g. files restored): NKJV now loads.
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({ ok: true, arrayBuffer: async () => goodZip }) as unknown as Response),
+    );
+    await BibleRepository.loadTranslation('NKJV');
+
+    const health = BibleRepository.getTranslationHealth();
+    expect(health.failed.map((f) => f.code)).not.toContain('NKJV');
+    expect(health.loaded).toContain('NKJV');
   });
 });

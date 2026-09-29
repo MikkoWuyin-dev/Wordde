@@ -94,19 +94,12 @@ export interface AppState {
   
   // Current Translation State
   currentTranslation: string;
-  
-  // Display Mode State
-  displayMode: 'dual' | 'operator-only';
-  
+
   // Loading states
   isLoading: boolean;
   isBibleLoaded: boolean;
 }
 
-/**
- * Actions that can mutate state
- * All mutations go through StateManager
- */
 /**
  * A single projection slide
  */
@@ -117,18 +110,3 @@ export interface Slide {
   chapter: string;
   verse: string;
 }
-
-/**
- * Actions that can mutate state
- * All mutations go through StateManager
- */
-export type StateAction =
-  | { type: 'SET_SEARCH_QUERY'; payload: string }
-  | { type: 'SET_SEARCH_RESULTS'; payload: SearchResult[] }
-  | { type: 'SET_PREVIEW'; payload: Passage | null }
-  | { type: 'SET_SELECTED_INDEX'; payload: number }
-  | { type: 'COMMIT_PASSAGE' } // Commits current preview
-  | { type: 'CLEAR_PREVIEW' }
-  | { type: 'SET_TRANSLATION'; payload: string }
-  | { type: 'SET_LOADING'; payload: boolean }
-  | { type: 'SET_BIBLE_LOADED'; payload: boolean };

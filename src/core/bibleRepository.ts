@@ -58,6 +58,29 @@ class BibleRepositoryClass {
   /** Canonical book order (same across translations) */
   private bookNames: string[] = [];
   private loadedTranslations: Set<string> = new Set();
+  /** Per-translation boot failure reasons (teardown follow-up #5 / RI-044): failures must be visible, not silent. */
+  private failedTranslations: Map<string, string> = new Map();
+
+  /**
+   * Inverted keyword index per translation (teardown §7 scaling recommendation).
+   * Replaces the per-keystroke linear scan over ~31k verses.
+   *
+   * Design: unique lowercase tokens get sequential integer ids; each posting
+   * is ONE packed number — `bookIdx * 1_000_000 + chapterIdx * 1000 + verseIdx`
+   * — where the indices point into the loaded `booksMap` insertion order and
+   * the verse arrays. Packing keeps memory compact (~28 MB across all five
+   * translations vs ~250 MB for per-verse string keys) and makes numeric sort
+   * order IDENTICAL to canonical book/chapter/verse traversal order.
+   *
+   * Equivalence with the replaced linear scan: the scan matched a verse when
+   * ANY query term (>2 chars) was a substring of the verse's lowercase text
+   * (`matchCount > 0`). A query term contains no whitespace (terms are split
+   * on \s+), so "term is a substring of the text" ⟺ "term is a substring of
+   * one whitespace-token of the text"; the index unions term matches in
+   * packed order, reproducing scan results and order exactly — pinned by
+   * src/test/keywordIndex.test.ts against a brute-force reference.
+   */
+  private keywordIndexes: Map<string, KeywordIndex> = new Map();
   private currentTranslation: string = 'KJV';
 
   // Book name normalization map: alias -> array of matching book names
@@ -74,6 +97,25 @@ class BibleRepositoryClass {
     return [...this.loadedTranslations];
   }
 
+  /**
+   * Boot health of the configured translations (teardown follow-up #5):
+   * which loaded, which failed (with why), and everything configured.
+   * The operator UI consumes this to surface partial boot failure instead of
+   * rendering an app that silently shows empty results (RI-044 — failure
+   * must be visible; RI-014 — never fall back, let the operator choose).
+   */
+  getTranslationHealth(): {
+    loaded: string[];
+    failed: { code: string; error: string }[];
+    available: string[];
+  } {
+    return {
+      loaded: [...this.loadedTranslations],
+      failed: [...this.failedTranslations.entries()].map(([code, error]) => ({ code, error })),
+      available: Object.keys(TRANSLATION_ZIPS),
+    };
+  }
+
   setCurrentTranslation(translation: string) {
     this.currentTranslation = translation;
   }
@@ -86,11 +128,8 @@ class BibleRepositoryClass {
   getTranslationMetadata(translation?: string): TranslationMetadata {
     const t = translation || this.currentTranslation;
     return this.translationMetadata.get(t) || {};
-  }
-
-  /**
-   * Load a single translation from its zip file.
-   * Can be called multiple times for different translations.
+  }  /**
+   * Load a single translation. Can be called multiple times for different translations.
    */
   async loadTranslation(translation: string): Promise<void> {
     if (this.loadedTranslations.has(translation)) return;
@@ -163,11 +202,13 @@ class BibleRepositoryClass {
       if (booksMap.size === 0) {
         const detail = parseErrors.length ? ` (${parseErrors.join('; ')})` : '';
         throw new Error(`No valid books found in ${translation}${detail}`);
-      }
-
-      this.translations.set(translation, booksMap);
-      this.translationMetadata.set(translation, aggregatedMetadata);
-      this.loadedTranslations.add(translation);
+      }    this.translations.set(translation, booksMap);
+    this.keywordIndexes.set(translation, this.buildKeywordIndex(booksMap));
+    this.translationMetadata.set(translation, aggregatedMetadata);
+    this.loadedTranslations.add(translation);
+    // A successful (re)load clears any earlier failure record so health
+    // reflects the present, not the last boot attempt.
+    this.failedTranslations.delete(translation);
 
       // Build canonical book order from the first translation loaded
       // (all translations share the 66-book canon). Seeded FROM the canonical
@@ -233,6 +274,10 @@ class BibleRepositoryClass {
     results.forEach((result, i) => {
       if (result.status === 'rejected') {
         failures.push({ translation: translations[i], error: result.reason });
+        this.failedTranslations.set(
+          translations[i],
+          result.reason instanceof Error ? result.reason.message : String(result.reason),
+        );
       }
     });
     const loadedCount = translations.length - failures.length;
@@ -692,10 +737,109 @@ class BibleRepositoryClass {
     return results;
   }
 
+  /**
+   * Build the inverted keyword index for one translation at load time.
+   * Pure function of the loaded booksMap (see class field docblock).
+   */
+  private buildKeywordIndex(booksMap: Map<string, BibleBook>): KeywordIndex {
+    const tokenIds = new Map<string, number>();
+    const postings: number[][] = [];
+    const books: string[] = [];
+
+    let bookIdx = 0;
+    for (const book of booksMap.values()) {
+      books.push(book.book.toLowerCase());
+      for (let chapterIdx = 0; chapterIdx < book.chapters.length; chapterIdx++) {
+        const chapter = book.chapters[chapterIdx];
+        for (let verseIdx = 0; verseIdx < chapter.verses.length; verseIdx++) {
+          const verse = chapter.verses[verseIdx];
+          const packed = bookIdx * 1_000_000 + chapterIdx * 1000 + verseIdx;
+          const tokens = verse.text.toLowerCase().split(/\s+/).filter(Boolean);
+          for (const token of tokens) {
+            let id = tokenIds.get(token);
+            if (id === undefined) {
+              id = postings.length;
+              tokenIds.set(token, id);
+              postings.push([]);
+            }
+            postings[id].push(packed);
+          }
+        }
+      }
+      bookIdx++;
+    }
+    return { tokenIds, postings, books };
+  }
+
   searchByKeyword(query: string, limit: number = 20): Passage[] {
     const results: Passage[] = [];
     const searchTerms = query.toLowerCase().split(/\s+/).filter(t => t.length > 2);
     if (searchTerms.length === 0) return results;
+
+    const index = this.keywordIndexes.get(this.currentTranslation);
+    if (!index) {
+      // No index for this translation (never loaded through loadTranslation —
+      // e.g. test fixtures injected into the private stores, which may also
+      // mutate verse text after install). Fall back to the original linear
+      // scan over the live store — same semantics the index was verified
+      // against. An UNLOADED translation still yields empty via getBooksMap
+      // (never another translation's data, RI-014).
+      return this.searchByKeywordScan(searchTerms, limit);
+    }
+
+    // 1. Collect UNION semantics — the replaced linear scan matched a verse
+    //    when ANY term was a substring of its text (`matchCount > 0`), not
+    //    all terms. A term matches a verse iff it is a substring of one of
+    //    the verse's whitespace tokens; union across terms, dedup via Set.
+    const candidateSet = new Set<number>();
+    for (const term of searchTerms) {
+      for (const [token, id] of index.tokenIds) {
+        if (token.includes(term)) {
+          for (const packed of index.postings[id]) candidateSet.add(packed);
+        }
+      }
+    }
+    if (candidateSet.size === 0) return results;
+
+    // 2. Numeric order == canonical traversal order (packed encoding), so
+    //    sorting the union restores the exact result order of the old scan.
+    const candidates = [...candidateSet].sort((a, b) => a - b);
+
+    // 2. Numeric order == canonical traversal order (packed encoding), so no
+    //    re-sort is needed and result order matches the replaced linear scan.
+    for (const packed of candidates) {
+      const bookKey = index.books[Math.floor(packed / 1_000_000)];
+      const chapterIdx = Math.floor((packed % 1_000_000) / 1000);
+      const verseIdx = packed % 1000;
+
+      const booksMap = this.getBooksMap();
+      const book = booksMap.get(bookKey);
+      const chapter = book?.chapters[chapterIdx];
+      const verse = chapter?.verses[verseIdx];
+      if (!book || !chapter || !verse) continue; // corrupt index — skip, never crash (RI-012 spirit)
+
+      const passage = this.getPassage({
+        book: book.book,
+        chapter: chapter.chapter,
+        verseStart: verse.verse,
+        translation: this.currentTranslation,
+      });
+      if (passage) {
+        results.push(passage);
+        if (results.length >= limit) return results;
+      }
+    }
+
+    return results;
+  }
+
+  /**
+   * The original linear keyword scan, kept verbatim as the fallback for
+   * translations without a built index (see searchByKeyword). Reads the LIVE
+   * store, so it sees post-load text mutations that the index cannot.
+   */
+  private searchByKeywordScan(searchTerms: string[], limit: number): Passage[] {
+    const results: Passage[] = [];
 
     const booksMap = this.getBooksMap();
     for (const book of booksMap.values()) {
@@ -720,9 +864,21 @@ class BibleRepositoryClass {
         }
       }
     }
-
     return results;
   }
+}
+
+/**
+ * Inverted keyword index for one translation. See the class field docblock for
+ * the packing scheme and the equivalence argument.
+ */
+interface KeywordIndex {
+  /** lowercase token → posting-list id */
+  tokenIds: Map<string, number>;
+  /** posting-list id → packed verse references */
+  postings: number[][];
+  /** book key (lowercased) by index position — decodes the packed book part */
+  books: string[];
 }
 
 // Singleton instance

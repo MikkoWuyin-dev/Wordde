@@ -86,6 +86,10 @@ export function ServicePlan() {
 
   // Delete confirmation state
   const [deleteConfirmIdx, setDeleteConfirmIdx] = useState<number | null>(null);
+  /** Whole-service deletion is the most destructive action in the plan (a
+   * week's preparation, instant, no undo) — it must be confirmed. Passage
+   * delete already confirms via deleteConfirmIdx; this mirrors that pattern. */
+  const [deleteConfirmService, setDeleteConfirmService] = useState<Service | null>(null);
 
   const { buildQueueFromPassage, buildQueueFromChapter, currentTranslation } = useStateManager();
 
@@ -283,7 +287,7 @@ export function ServicePlan() {
                         <button onClick={e => { e.stopPropagation(); duplicateService(svc); }} className="p-0.5 rounded hover:bg-accent" title="Duplicate">
                           <Copy className="h-3 w-3 text-muted-foreground" />
                         </button>
-                        <button onClick={e => { e.stopPropagation(); deleteService(svc.id); }} className="p-0.5 rounded hover:bg-destructive/20" title="Delete">
+                        <button onClick={e => { e.stopPropagation(); setDeleteConfirmService(svc); }} className="p-0.5 rounded hover:bg-destructive/20" title="Delete">
                           <Trash2 className="h-3 w-3 text-destructive" />
                         </button>
                       </div>
@@ -294,6 +298,35 @@ export function ServicePlan() {
             </div>
           )}
         </div>
+
+        {/* Service delete confirmation — mirrors the passage-delete dialog. */}
+        <AlertDialog open={deleteConfirmService !== null} onOpenChange={open => { if (!open) setDeleteConfirmService(null); }}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Service</AlertDialogTitle>
+              <AlertDialogDescription>
+                Delete “{deleteConfirmService?.name}” and its{' '}
+                {deleteConfirmService?.passages.length ?? 0}{' '}
+                {deleteConfirmService?.passages.length === 1 ? 'passage' : 'passages'}? This cannot
+                be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  if (deleteConfirmService) {
+                    deleteService(deleteConfirmService.id);
+                    setDeleteConfirmService(null);
+                  }
+                }}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Delete Service
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     );
   }
