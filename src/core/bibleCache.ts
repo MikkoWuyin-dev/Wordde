@@ -13,6 +13,13 @@
 // (RI-023) — a malformed or partially-written record is rejected (null), and
 // boot falls through to the decode tiers. All writes are best-effort and
 // never throw into the caller (RI-022 discipline, like safeStorage).
+//
+// Data versioning: every record is stamped with CACHE_DATA_VERSION. When the
+// shipped translation zips or the normalization output changes, bump that
+// constant — records stamped with any other value (including records written
+// before the field existed) fail validation, are re-decoded from source, and
+// are overwritten on the next successful load. Stale data can therefore never
+// be served after a Bible data update.
 
 import type { BibleBook, Chapter, Verse } from './types';
 import type { TranslationMetadata } from './bibleNormalizer';
@@ -20,6 +27,17 @@ import type { TranslationMetadata } from './bibleNormalizer';
 const DB_NAME = 'bible_translation_cache';
 const DB_VERSION = 1;
 const STORE = 'translations';
+
+/**
+ * Version of the cached payload — both the source Bible data and the
+ * normalization semantics that produced it. Bump when shipped `/data` zips
+ * change or the normalizer's output changes meaning: every record is stamped
+ * with this value at write time, and validation rejects any other value, so
+ * bumping invalidates every stale cache on the next boot with no migration
+ * step. (Not an IndexedDB schema version — no store change is involved, so
+ * DB_VERSION stays untouched.)
+ */
+export const CACHE_DATA_VERSION = 1;
 
 /** What loadTranslation consumes from any decode tier. */
 export interface ParsedTranslation {
@@ -29,6 +47,7 @@ export interface ParsedTranslation {
 
 interface CachedTranslationRecord {
   code: string;
+  dataVersion: number;
   books: BibleBook[];
   metadata: TranslationMetadata;
   cachedAt: number;
@@ -72,17 +91,24 @@ function isBibleBook(b: unknown): b is BibleBook {
  * Validate a record read from IndexedDB. Returns null when anything is
  * malformed — a whole-record reject (not per-book filtering) keeps the cache
  * honest: doubtful data is re-decoded from source instead of half-trusted.
+ *
+ * The data-version gate is the invalidation mechanism: a record stamped with
+ * anything but the current CACHE_DATA_VERSION (or with no stamp at all, i.e.
+ * written before versioning existed) is treated as malformed so stale Bible
+ * data is re-decoded and re-written rather than served.
  */
 export function validateCachedRecord(raw: unknown): CachedTranslationRecord | null {
   if (!raw || typeof raw !== 'object') return null;
   const rec = raw as Record<string, unknown>;
   if (typeof rec.code !== 'string' || !rec.code) return null;
+  if (rec.dataVersion !== CACHE_DATA_VERSION) return null;
   if (!Array.isArray(rec.books) || rec.books.length === 0) return null;
   if (!rec.books.every(isBibleBook)) return null;
   if (!rec.metadata || typeof rec.metadata !== 'object') return null;
   if (typeof rec.cachedAt !== 'number') return null;
   return {
     code: rec.code,
+    dataVersion: rec.dataVersion,
     books: rec.books as BibleBook[],
     metadata: rec.metadata as TranslationMetadata,
     cachedAt: rec.cachedAt,
@@ -116,6 +142,7 @@ export async function saveCachedTranslation(
       const tx = db.transaction(STORE, 'readwrite');
       const record: CachedTranslationRecord = {
         code,
+        dataVersion: CACHE_DATA_VERSION,
         books: [...booksMap.values()],
         metadata,
         cachedAt: Date.now(),

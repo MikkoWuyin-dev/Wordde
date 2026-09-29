@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import JSZip from 'jszip';
 import { BibleRepository } from '@/core/bibleRepository';
 import {
+  CACHE_DATA_VERSION,
   validateCachedRecord,
   booksArrayToMap,
   loadCachedTranslation,
@@ -23,6 +24,9 @@ import {
  * Contract pinned here:
  *   • a valid cached record is USED (decode tiers skipped, no re-write)
  *   • a malformed cached record is IGNORED (falls through to decode)
+ *   • a record stamped with anything but the current CACHE_DATA_VERSION is
+ *     IGNORED — bumping the version invalidates stale Bible data (re-decoded,
+ *     never served)
  *   • a successful decode writes the cache (best-effort)
  *   • failed decode tiers never substitute another translation (RI-014)
  */
@@ -99,6 +103,7 @@ afterEach(() => {
 describe('cached record validation (RI-023)', () => {
   const goodRecord = {
     code: 'KJV',
+    dataVersion: CACHE_DATA_VERSION,
     cachedAt: Date.now(),
     metadata: {},
     books: [
@@ -127,6 +132,23 @@ describe('cached record validation (RI-023)', () => {
     expect(validateCachedRecord({ ...goodRecord, metadata: null })).toBeNull();
     expect(validateCachedRecord({ ...goodRecord, cachedAt: 'now' })).toBeNull();
     expect(validateCachedRecord({ ...goodRecord, code: '' })).toBeNull();
+  });
+
+  it('rejects records whose data version is not the current CACHE_DATA_VERSION (stale-data invalidation)', () => {
+    // A record written before versioning existed has no stamp at all.
+    const legacyRecord: Record<string, unknown> = { ...goodRecord };
+    delete legacyRecord.dataVersion;
+
+    expect(validateCachedRecord(legacyRecord)).toBeNull();
+    expect(validateCachedRecord({ ...goodRecord, dataVersion: CACHE_DATA_VERSION + 1 })).toBeNull();
+    expect(validateCachedRecord({ ...goodRecord, dataVersion: CACHE_DATA_VERSION - 1 })).toBeNull();
+    expect(validateCachedRecord({ ...goodRecord, dataVersion: 0 })).toBeNull();
+    expect(validateCachedRecord({ ...goodRecord, dataVersion: String(CACHE_DATA_VERSION) })).toBeNull(); // wrong type
+    expect(validateCachedRecord({ ...goodRecord, dataVersion: undefined })).toBeNull();
+  });
+
+  it('accepts a record stamped with the current CACHE_DATA_VERSION', () => {
+    expect(validateCachedRecord({ ...goodRecord, dataVersion: CACHE_DATA_VERSION })).not.toBeNull();
   });
 
   it('booksArrayToMap preserves insertion order and keep-first duplicates', () => {
