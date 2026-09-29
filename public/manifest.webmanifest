@@ -1,0 +1,19 @@
+{
+  "name": "Wordde — Bible Projection",
+  "short_name": "Wordde",
+  "description": "Offline-first Bible verse search and projection for live services.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#08090a",
+  "theme_color": "#08090a",
+  "icons": [
+    {
+      "src": "/App%20Icon%20Orange.png",
+      "sizes": "3000x3000",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

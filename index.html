@@ -2,8 +2,23 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <!--
+      Content Security Policy (CONSTRAINTS.md §7). Shipped policy — strict, production-grade:
+        • default-src 'self'      — everything defaults to same-origin (offline-first: no external origins exist)
+        • script-src 'self'       — no inline/eval scripts; Vite emits external module bundles
+        • style-src 'unsafe-inline' — React style attributes and dynamic background-image styles are load-bearing
+        • img-src blob:           — user-uploaded logo/backgrounds load from IndexedDB object URLs
+        • img-src data:           — margin for icon/fallback data URIs in bundled UI primitives
+        • connect-src ws:/wss:    — Vite HMR in dev; future LAN-WebSocket remote transport (Teardown §7)
+      Development note: `vite` dev injects an inline React-refresh preamble, so the dev
+      server swaps this policy for a relaxed one via vite.config.ts (csp-dev-relaxer).
+      `vite preview` serves this file as built and therefore tests the real policy.
+    -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' blob: data:; media-src 'self' blob:; connect-src 'self' ws: wss:; worker-src 'self'; base-uri 'self'; form-action 'self'; object-src 'none'" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/png" href="/App Icon Orange.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/App%20Icon%20Orange.png" />
     <link rel="preload" href="/fonts/Poppins-Regular.ttf" as="font" type="font/ttf" crossorigin />
     <link rel="preload" href="/fonts/Poppins-SemiBold.ttf" as="font" type="font/ttf" crossorigin />
     <link rel="preload" href="/fonts/PlayfairDisplay-Regular.ttf" as="font" type="font/ttf" crossorigin />
