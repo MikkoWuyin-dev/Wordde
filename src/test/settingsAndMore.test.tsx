@@ -1,12 +1,13 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { ThemeProvider } from 'next-themes';
 import { SettingsAndMore } from '@/components/operator/SettingsAndMore';
 
 /**
  * Regression suite for the "Settings & More" sidebar-footer shell.
  *
  * Pins the merged entry's contract:
- *  - one trigger opens a menu with exactly three items;
+ *  - one trigger opens a menu with exactly four items;
  *  - "Display Settings" swaps in the real ProjectionSettings panel in place
  *    and Back returns to the menu (no state leak between views);
  *  - "Replay Tutorial" routes through resetOnboarding — the same full reset
@@ -49,12 +50,13 @@ function flushEffects() {
 }
 
 describe('SettingsAndMore shell', () => {
-  it('opens a menu with exactly three entries', async () => {
+  it('opens a menu with exactly four entries', async () => {
     const items = await openMenu();
-    expect(items).toHaveLength(3);
+    expect(items).toHaveLength(4);
     expect(items[0]).toHaveTextContent('Display Settings');
-    expect(items[1]).toHaveTextContent('Replay Tutorial');
-    expect(items[2]).toHaveTextContent('Keyboard Shortcuts');
+    expect(items[1]).toHaveTextContent('Theme');
+    expect(items[2]).toHaveTextContent('Replay Tutorial');
+    expect(items[3]).toHaveTextContent('Keyboard Shortcuts');
   });
 
   it('Display Settings swaps in the panel in place; Back returns to the menu', async () => {
@@ -69,7 +71,7 @@ describe('SettingsAndMore shell', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Back to menu' }));
     const items = await waitFor(() => screen.getAllByRole('menuitem'));
-    expect(items).toHaveLength(3);
+    expect(items).toHaveLength(4);
   });
 
   it('Replay Tutorial routes through resetOnboarding', async () => {
@@ -89,7 +91,7 @@ describe('SettingsAndMore shell', () => {
     fireEvent.click(trigger); // toggles the popover closed
     fireEvent.click(trigger); // and open again
     const items = await waitFor(() => screen.getAllByRole('menuitem'));
-    expect(items).toHaveLength(3);
+    expect(items).toHaveLength(4);
     expect(screen.queryByText('Black Screen')).toBeNull();
   });
 
@@ -106,7 +108,7 @@ describe('SettingsAndMore shell', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Back to menu' }));
     const items = await waitFor(() => screen.getAllByRole('menuitem'));
-    expect(items).toHaveLength(3);
+    expect(items).toHaveLength(4);
   });
 
   it('the ? shortcut event opens straight onto the shortcuts view and toggles closed', async () => {
@@ -128,6 +130,86 @@ describe('SettingsAndMore shell', () => {
     // Reopening (via trigger) always starts at the menu, not the shortcuts view.
     fireEvent.click(trigger);
     const items = await waitFor(() => screen.getAllByRole('menuitem'));
-    expect(items).toHaveLength(3);
+    expect(items).toHaveLength(4);
+  });
+});
+
+/**
+ * Theme picker — pins the system-default toggle contract: a fresh profile
+ * (empty storage) shows System as selected; every choice persists to
+ * next-themes' storage key and applies the class next-themes and the
+ * no-flash boot script both key on. Scoped queries are used because the
+ * shared beforeEach renders a second (provider-less) instance.
+ */
+describe('Theme picker', () => {
+  beforeEach(() => {
+    // The shared beforeEach mounted a provider-less instance for the shell
+    // suite; drop it so this suite's provider-scoped instance is the only
+    // one in the DOM and role queries are unambiguous.
+    cleanup();
+    localStorage.clear();
+    resetOnboardingMock.mockClear();
+    document.documentElement.classList.remove('light', 'dark');
+  });
+
+  function renderWithTheme() {
+    return render(
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <SettingsAndMore />
+      </ThemeProvider>,
+    );
+  }
+
+  async function openThemeView(q: ReturnType<typeof render>) {
+    fireEvent.click(q.getAllByRole('button', { name: /settings & more/i })[0]);
+    await waitFor(() => q.getAllByRole('menuitem'));
+    fireEvent.click(q.getByRole('menuitem', { name: /^Theme$/i }));
+    await waitFor(() => q.getByRole('radiogroup', { name: 'Theme' }));
+  }
+
+  it('Theme opens the picker view; Back returns to the menu', async () => {
+    const q = renderWithTheme();
+    await openThemeView(q);
+    expect(q.getByRole('radiogroup', { name: 'Theme' })).toBeTruthy();
+    fireEvent.click(q.getByRole('button', { name: 'Back to menu' }));
+    const items = await waitFor(() => q.getAllByRole('menuitem'));
+    expect(items).toHaveLength(4);
+  });
+
+  it('starts on System (the automatic default) before the user chooses', async () => {
+    const q = renderWithTheme();
+    await openThemeView(q);
+    const group = q.getByRole('radiogroup', { name: 'Theme' });
+    expect(within(group).getByRole('radio', { name: /system/i })).toBeChecked();
+    expect(within(group).getByRole('radio', { name: /light/i })).not.toBeChecked();
+    expect(within(group).getByRole('radio', { name: /dark/i })).not.toBeChecked();
+  });
+
+  it('choosing Light sticks: persisted and applied to <html>', async () => {
+    const q = renderWithTheme();
+    await openThemeView(q);
+    act(() => {
+      fireEvent.click(
+        within(q.getByRole('radiogroup', { name: 'Theme' })).getByRole('radio', { name: /light/i }),
+      );
+    });
+    await waitFor(() => expect(document.documentElement).toHaveClass('light'));
+    expect(localStorage.getItem('theme')).toBe('light');
+  });
+
+  it('choosing Dark sticks; System returns to follow-the-device', async () => {
+    const q = renderWithTheme();
+    await openThemeView(q);
+    const group = () => q.getByRole('radiogroup', { name: 'Theme' });
+    act(() => {
+      fireEvent.click(within(group()).getByRole('radio', { name: /dark/i }));
+    });
+    await waitFor(() => expect(document.documentElement).toHaveClass('dark'));
+    expect(localStorage.getItem('theme')).toBe('dark');
+
+    act(() => {
+      fireEvent.click(within(group()).getByRole('radio', { name: /system/i }));
+    });
+    await waitFor(() => expect(localStorage.getItem('theme')).toBe('system'));
   });
 });

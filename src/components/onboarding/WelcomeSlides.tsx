@@ -49,7 +49,7 @@ export function WelcomeSlides({ onComplete }: WelcomeSlidesProps) {
     <div className="fixed inset-0 z-[100] bg-background flex items-center justify-center">
       <div className="max-w-md w-full mx-4 text-center space-y-8">
         {/* Icon */}
-        <div className="mx-auto w-16 h-16 rounded-2xl bg-card border border-border shadow-[0_6px_18px_-4px_hsl(240_20%_8%_/_0.5)] flex items-center justify-center">
+        <div className="mx-auto w-16 h-16 rounded-2xl bg-card border border-border shadow-[var(--shadow-popover)] flex items-center justify-center">
           <Icon className="h-8 w-8 text-primary" />
         </div>
 

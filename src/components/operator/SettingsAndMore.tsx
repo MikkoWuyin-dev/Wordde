@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Settings2, Monitor, RotateCcw, Keyboard, ChevronDown, ChevronLeft } from 'lucide-react';
+import { Settings2, Monitor, RotateCcw, Keyboard, ChevronDown, ChevronLeft, Sun, Moon, Laptop } from 'lucide-react';
+import { useTheme } from 'next-themes';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ContextualHint } from '@/components/onboarding/ContextualHint';
 import { resetOnboarding } from '@/components/onboarding/OnboardingManager';
@@ -15,10 +16,12 @@ import { cn } from '@/lib/utils';
 
 /**
  * SettingsAndMore — one sidebar-footer entry ("Settings & More") that opens a
- * small menu with three items:
+ * small menu with four items:
  *
  *   • Display Settings — swaps in place to the full ProjectionSettings panel
  *     (the panel component is reused unchanged, no new props).
+ *   • Theme — System (automatic default, follows the device) / Light / Dark,
+ *     backed by next-themes so the choice persists app-wide.
  *   • Replay Tutorial — triggers `resetOnboarding()` exactly like the footer
  *     button it replaces (full hint reset + reload), so onboarding state and
  *     contextual-hint state reset identically.
@@ -41,7 +44,7 @@ import { cn } from '@/lib/utils';
 
 export function SettingsAndMore() {
   const [open, setOpen] = useState(false);
-  const [view, setView] = useState<'menu' | 'display' | 'shortcuts'>('menu');
+  const [view, setView] = useState<'menu' | 'display' | 'theme' | 'shortcuts'>('menu');
 
   // Latest-value ref so the once-registered `?` listener can read current
   // state without being re-registered on every render.
@@ -130,6 +133,14 @@ export function SettingsAndMore() {
               </button>
               <button
                 role="menuitem"
+                onClick={() => setView('theme')}
+                className="focus-console w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-secondary/60 transition-colors"
+              >
+                <Laptop className="h-4 w-4 text-muted-foreground" />
+                <span>Theme</span>
+              </button>
+              <button
+                role="menuitem"
                 onClick={resetOnboarding}
                 className="focus-console w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-secondary/60 transition-colors"
               >
@@ -160,6 +171,20 @@ export function SettingsAndMore() {
               <div className="flex-1 min-h-0 overflow-y-auto">
                 <ProjectionSettings />
               </div>
+            </div>
+          ) : view === 'theme' ? (
+            <div className="flex flex-col min-h-0 flex-1">
+              <div className="flex items-center gap-1 px-2 py-1.5 border-b border-border shrink-0">
+                <button
+                  onClick={() => setView('menu')}
+                  aria-label="Back to menu"
+                  className="focus-console flex items-center gap-1 px-1.5 py-0.5 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors"
+                >
+                  <ChevronLeft className="h-3.5 w-3.5" />
+                  Back
+                </button>
+              </div>
+              <ThemePicker />
             </div>
           ) : (
             <div className="flex flex-col min-h-0 flex-1">
@@ -196,6 +221,41 @@ export function SettingsAndMore() {
           )}
         </PopoverContent>
       </Popover>
+    </div>
+  );
+}
+
+/** Theme choice: System (automatic default) / Light / Dark. Backed by
+ * next-themes — `theme` is the user's stored choice ('system' until they
+ * pick), so System shows as selected on fresh profiles. */
+const THEME_OPTIONS = [
+  { value: 'system', label: 'System', hint: 'Follow this device', icon: Laptop },
+  { value: 'light', label: 'Light', hint: 'Snow ground', icon: Sun },
+  { value: 'dark', label: 'Dark', hint: 'Console black', icon: Moon },
+] as const;
+
+function ThemePicker() {
+  const { theme, setTheme } = useTheme();
+  return (
+    <div className="py-1.5 px-2 flex flex-col gap-1" role="radiogroup" aria-label="Theme">
+      {THEME_OPTIONS.map(({ value, label, hint, icon: Icon }) => (
+        <button
+          key={value}
+          role="radio"
+          aria-checked={theme === value}
+          onClick={() => setTheme(value)}
+          className={cn(
+            'focus-console w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm transition-colors',
+            theme === value
+              ? 'bg-secondary/60 text-foreground'
+              : 'text-muted-foreground hover:text-foreground hover:bg-secondary/40',
+          )}
+        >
+          <Icon className="h-4 w-4 shrink-0" />
+          <span className="font-medium">{label}</span>
+          <span className="ml-auto text-xs text-muted-foreground/70">{hint}</span>
+        </button>
+      ))}
     </div>
   );
 }

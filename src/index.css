@@ -56,17 +56,133 @@
 @tailwind utilities;
 
 /* Wordde Design System
-   Operator interface for church service use.
-   Black (#08090a) owns the ground — a near-neutral cool black that lets the
-   congregation-facing content breathe. Paprika (#e4572e) is the single action
-   voice: it marks what is LIVE and what the operator's next move is.
-   Hunter (#34623f) confirms and secures: prepared, blanked, safe.
-   Yellow (#faff00) is a controlled signal only — transitional states, never text.
-   Snow (#fcfcfc) carries reading hierarchy on the dark ground.
+   Operator interface for church service use. Two themes on one token set:
+   "Pura" (light, default) puts dark ink on a snow ground; "Console" (dark)
+   keeps the original near-neutral cool black. In both, Paprika (#e4572e) is
+   the single action voice — it marks what is LIVE and the operator's next
+   move — and Hunter (#34623f) confirms and secures: prepared, blanked, safe.
+   Yellow (#faff00) is a controlled signal only — transitional states, never
+   text. The congregation-facing projection window is pure black in every
+   theme and never follows the toggle.
 */
 
 @layer base {
+  /* ---------- Light "Pura" theme (default): snow ground, dark ink ---------- */
   :root {
+    --black: 240 20% 92%;
+    --background: 0 0% 98%;
+    --background-elevated: 0 0% 100%;
+    --foreground: 240 11% 8%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 240 11% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 11% 10%;
+
+    --secondary: 240 12% 93%;
+    --secondary-foreground: 240 8% 26%;
+
+    --muted: 240 10% 92%;
+    --muted-foreground: 240 6% 38%;
+
+    /* ---------- Core palette ---------- */
+    --paprika: 14 77% 54%;
+    --paprika-foreground: 240 11% 7%;
+    --paprika-bright: 14 85% 45%;
+
+    --hunter: 134 31% 29%;
+    --hunter-foreground: 0 0% 98%;
+    --hunter-bright: 134 32% 24%;
+
+    /* "Snow" role on light ground = the dark ink: overlays on the pure
+       projection window and hsl(var(--snow) / a) usages stay dark-on-light. */
+    --snow: 240 11% 12%;
+    --snow-soft: 240 9% 30%;
+    --snow-foreground: 0 0% 98%;
+
+    --yellow: 60 100% 42%;
+    --yellow-foreground: 240 11% 8%;
+
+    /* ---------- Semantic reuse ---------- */
+    --primary: var(--paprika);
+    --primary-foreground: var(--paprika-foreground);
+
+    --accent: 240 10% 92%;
+    --accent-foreground: 240 8% 26%;
+
+    --destructive: 0 72% 48%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 240 8% 86%;
+    --input: 240 10% 88%;
+    --ring: var(--paprika);
+
+    /* ---------- Depth (offset shadows on the snow ground) ---------- */
+    --neu-raised: 0 1px 2px hsl(240 12% 20% / 0.14),
+                  0 2px 6px hsl(240 12% 20% / 0.08),
+                  inset 0 1px 0 hsl(0 0% 100% / 0.8);
+    --neu-raised-strong: 0 4px 10px -2px hsl(240 12% 20% / 0.16),
+                         0 8px 22px -4px hsl(240 12% 20% / 0.12),
+                         inset 0 1px 0 hsl(0 0% 100% / 0.9);
+    --neu-depressed: inset 0 1px 2px hsl(240 12% 20% / 0.12),
+                     inset 0 1px 0 hsl(0 0% 100% / 0.5);
+    --neu-flat-depressed: inset 0 1px 2px hsl(240 12% 20% / 0.1);
+
+    --radius-sm: 0.625rem;
+    --radius-md: 0.75rem;
+    --radius-lg: 1rem;
+    --radius-xl: 1.25rem;
+
+    --radius: var(--radius-md);
+
+    /* ---------- Glass (liquid: sheen gradient + inset top highlight) ---------- */
+    --glass-surface: 0 0% 100% / 0.55;
+    --glass-border: 0 0% 100% / 0.7;
+    --glass-strong: 0 0% 100% / 0.78;
+    --glass-sheen: linear-gradient(to bottom, hsl(0 0% 100% / 0.65), hsl(0 0% 100% / 0.25));
+    --glass-highlight: 0 0% 100% / 0.9;
+
+    /* Full shadow values — components reference these whole (shadow-[var(--shadow-*)]). */
+    --shadow-soft: 0 1px 2px hsl(240 12% 20% / 0.16), inset 0 1px 0 hsl(0 0% 100% / 0.8);
+    --shadow-strong: 0 4px 10px -2px hsl(240 12% 20% / 0.18),
+                     0 8px 22px -4px hsl(240 12% 20% / 0.14),
+                     inset 0 1px 0 hsl(0 0% 100% / 0.9);
+    --shadow-popover: 0 6px 18px -4px hsl(240 12% 20% / 0.16);
+
+    --btn-glass-bg: 0 0% 100% / 0.55;
+    --btn-glass-border: 0 0% 0% / 0.1;
+
+    --glow-drop: 240 12% 20% / 0.18;
+
+    /* ---------- Atmosphere (body radial gradient stops) ---------- */
+    --atmo-a: 0 0% 100%;
+    --atmo-b: 240 20% 95%;
+    --atmo-c: 240 18% 93%;
+
+    /* ---------- Scripture ---------- */
+    --scripture-text: 240 14% 10%;
+    --scripture-reference: var(--paprika-bright);
+    --preview-border: var(--paprika);
+    --committed-glow: var(--paprika);
+
+    /* ---------- Projection (congregation-facing window stays pure) ---------- */
+    --projection-bg: 0 0% 0%;
+    --projection-text: 0 0% 100%;
+
+    /* ---------- Sidebar legacy tokens (functional path preserved) ---------- */
+    --sidebar-background: 0 0% 97%;
+    --sidebar-foreground: 240 8% 26%;
+    --sidebar-primary: var(--paprika);
+    --sidebar-primary-foreground: var(--paprika-foreground);
+    --sidebar-accent: 240 12% 92%;
+    --sidebar-accent-foreground: 240 8% 26%;
+    --sidebar-border: 240 8% 86%;
+    --sidebar-ring: var(--paprika);
+  }
+
+  /* ---------- Dark "Console" theme: the original palette, opt-in via class ---------- */
+  :root.dark {
     /* ---------- Ground: #08090a family (hue 240, chroma falls toward black) ---------- */
     --black: 240 11% 3%;
     --background: 240 10% 4%;
@@ -133,10 +249,29 @@
 
     --radius: var(--radius-md);
 
-    /* ---------- Glass ---------- */
+    /* ---------- Glass (liquid: sheen gradient + inset top highlight) ---------- */
     --glass-surface: 240 9% 8% / 0.6;
     --glass-border: 240 7% 18% / 0.45;
     --glass-strong: 240 9% 7% / 0.78;
+    --glass-sheen: linear-gradient(to bottom, hsl(0 0% 100% / 0.09), hsl(0 0% 100% / 0.02));
+    --glass-highlight: 0 0% 100% / 0.14;
+
+    /* Full shadow values — components reference these whole (shadow-[var(--shadow-*)]). */
+    --shadow-soft: 0 1px 2px hsl(240 11% 2% / 0.7), inset 0 1px 0 hsl(0 0% 100% / 0.06);
+    --shadow-strong: 0 4px 10px -2px hsl(240 11% 2% / 0.75),
+                     0 8px 22px -4px hsl(240 11% 2% / 0.6),
+                     inset 0 1px 0 hsl(0 0% 100% / 0.08);
+    --shadow-popover: 0 6px 18px -4px hsl(240 11% 2% / 0.6);
+
+    --btn-glass-bg: 240 9% 10% / 0.5;
+    --btn-glass-border: 0 0% 100% / 0.16;
+
+    --glow-drop: 240 11% 2% / 0.7;
+
+    /* ---------- Atmosphere (body radial gradient stops) ---------- */
+    --atmo-a: 240 8% 8%;
+    --atmo-b: 240 11% 3.5%;
+    --atmo-c: 240 11% 3%;
 
     /* ---------- Scripture ---------- */
     --scripture-text: 240 14% 97%;
@@ -175,7 +310,7 @@
     /* The atmosphere: one soft lift of light falling away into #08090a,
        so the black ground reads as depth, not as a flat fill. */
     background:
-      radial-gradient(140% 90% at 50% -20%, hsl(240 8% 8%) 0%, hsl(240 11% 3.5%) 58%, hsl(240 11% 3%) 100%)
+      radial-gradient(140% 90% at 50% -20%, hsl(var(--atmo-a)) 0%, hsl(var(--atmo-b)) 58%, hsl(var(--atmo-c)) 100%)
       hsl(var(--black));
     background-attachment: fixed;
     color: hsl(var(--foreground));
@@ -289,19 +424,19 @@
     font-weight: 500;
     line-height: 16px;
     border-radius: 10px;
-    background: hsl(240 9% 10% / 0.5);
+    background: hsl(var(--btn-glass-bg));
     backdrop-filter: blur(18px) saturate(1.2);
     -webkit-backdrop-filter: blur(18px) saturate(1.2);
-    border: 1px solid hsl(0 0% 100% / 0.16);
+    border: 1px solid hsl(var(--btn-glass-border));
     color: hsl(var(--paprika-bright));
     box-shadow:
-      inset 0 1px 0 hsl(0 0% 100% / 0.2),
-      0 1px 2px hsl(240 11% 2% / 0.5);
+      inset 0 1px 0 hsl(var(--glass-highlight)),
+      0 1px 2px hsl(var(--glow-drop));
     transition: border-color 120ms ease, color 120ms ease;
   }
   .btn-projection-glass:hover {
-    border-color: hsl(14 85% 68% / 0.45);
-    color: hsl(14 90% 74%);
+    border-color: hsl(var(--paprika) / 0.45);
+    color: hsl(var(--paprika-bright));
   }
   .btn-projection-glass:active {
     transform: translateY(0.5px);
@@ -378,20 +513,27 @@
     border-radius: var(--radius-lg);
   }
 
+  /* Liquid glass: gradient sheen over a translucent surface, heavier blur
+     and saturation, and an inset top highlight — the light edge that makes
+     the material read as glass rather than fog. All colors are per-theme. */
   .glass {
-    background: hsl(var(--glass-surface));
-    backdrop-filter: blur(8px) saturate(1.1);
-    -webkit-backdrop-filter: blur(8px) saturate(1.1);
+    background: var(--glass-sheen), hsl(var(--glass-surface));
+    backdrop-filter: blur(14px) saturate(1.4);
+    -webkit-backdrop-filter: blur(14px) saturate(1.4);
     border: 1px solid hsl(var(--glass-border));
     border-radius: var(--radius-md);
+    box-shadow: inset 0 1px 0 hsl(var(--glass-highlight));
   }
 
   .glass-strong {
-    background: hsl(var(--glass-strong));
-    backdrop-filter: blur(12px) saturate(1.2);
-    -webkit-backdrop-filter: blur(12px) saturate(1.2);
+    background: var(--glass-sheen), hsl(var(--glass-strong));
+    backdrop-filter: blur(20px) saturate(1.5);
+    -webkit-backdrop-filter: blur(20px) saturate(1.5);
     border: 1px solid hsl(var(--glass-border));
     border-radius: var(--radius-lg);
+    box-shadow:
+      inset 0 1px 0 hsl(var(--glass-highlight)),
+      0 8px 24px -8px hsl(var(--glow-drop));
   }
 
   .glass-divider {
@@ -449,7 +591,7 @@
     background: linear-gradient(to top, hsl(var(--card)), transparent);
   }
   .fade-bottom-soft {
-    background: linear-gradient(to top, hsl(240 8% 7%), transparent);
+    background: linear-gradient(to top, hsl(var(--card)), transparent);
   }
 }
 
@@ -490,13 +632,13 @@
 @keyframes glow-pulse {
   0%, 100% {
     box-shadow:
-      0 10px 26px -4px hsl(240 11% 2% / 0.7),
+      0 10px 26px -4px hsl(var(--glow-drop)),
       0 0 0 1px hsl(var(--paprika) / 0.28),
       0 0 18px hsl(var(--paprika) / 0.18);
   }
   50% {
     box-shadow:
-      0 10px 26px -4px hsl(240 11% 2% / 0.7),
+      0 10px 26px -4px hsl(var(--glow-drop)),
       0 0 0 1px hsl(var(--paprika) / 0.45),
       0 0 30px hsl(var(--paprika) / 0.3);
   }

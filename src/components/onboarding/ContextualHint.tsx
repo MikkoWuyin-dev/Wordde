@@ -44,7 +44,7 @@ export function ContextualHint({ id, message, show, className }: ContextualHintP
   return (
     <div
       className={cn(
-        'text-[11px] text-primary/80 bg-card border border-primary/20 rounded-md px-2.5 py-1.5 shadow-[0_1px_2px_hsl(240_20%_8%_/_0.4)]',
+        'text-[11px] text-primary/80 bg-card border border-primary/20 rounded-md px-2.5 py-1.5 shadow-[var(--shadow-soft)]',
         'animate-fade-in',
         className
       )}

@@ -57,6 +57,7 @@ const PRECACHE_URLS = [
   '/',
   '/projection',
   '/manifest.webmanifest',
+  '/theme-boot.js',
   '/fonts/Autography.otf',
   '/fonts/PlayfairDisplay-Regular.ttf',
   '/fonts/Poppins-Bold.ttf',

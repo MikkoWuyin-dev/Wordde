@@ -22,10 +22,16 @@
     <link rel="preload" href="/fonts/Poppins-Regular.ttf" as="font" type="font/ttf" crossorigin />
     <link rel="preload" href="/fonts/Poppins-SemiBold.ttf" as="font" type="font/ttf" crossorigin />
     <link rel="preload" href="/fonts/PlayfairDisplay-Regular.ttf" as="font" type="font/ttf" crossorigin />
+    <!-- No-flash theme boot: resolves the persisted theme before first paint.
+         External file because the CSP ships script-src 'self' (no inline). -->
+    <script src="/theme-boot.js"></script>
     <!-- Wordde — offline-first Bible search and projection -->
     <title>Wordde</title>
     <meta name="description" content="An offline first, simplicity focused presentation software that allows operators to look up Bible verses and project at high speeds.">
-    <meta name="theme-color" content="#08090a" />
+    <!-- Chrome color follows the SYSTEM (the automatic default theme); a hard
+         user override still renders correctly, only this chrome tint stays system-true. -->
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f7f7f8" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#08090a" />
     <meta property="og:type" content="website" />
     <meta property="og:title" content="Wordde" />
     <meta property="og:description" content="An offline first, simplicity focused presentation software that allows operators to look up Bible verses and project at high speeds." />

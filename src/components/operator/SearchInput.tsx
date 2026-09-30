@@ -189,9 +189,9 @@ export function SearchInput({
         placeholder={placeholder}
         className={cn(
           "h-12 pl-10 pr-10 text-lg rounded-xl",
-          "bg-card border border-border shadow-[0_1px_2px_hsl(240_11%_2%_/_0.7),inset_0_1px_0_hsl(0_0%_100%_/_0.06)]",
+          "bg-card border border-border shadow-[var(--shadow-soft)]",
           "focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-paprika",
-          "focus-visible:shadow-[0_4px_10px_-2px_hsl(240_11%_2%_/_0.75),0_8px_22px_-4px_hsl(240_11%_2%_/_0.6),inset_0_1px_0_hsl(0_0%_100%_/_0.08)]",
+          "focus-visible:shadow-[var(--shadow-strong)]",
           "placeholder:text-muted-foreground/60",
           "font-sans"
         )}
@@ -216,7 +216,7 @@ export function SearchInput({
 
       {/* Autocomplete dropdown */}
       {showSuggestions && suggestions.length > 0 && (
-        <div className="absolute left-0 right-0 top-full mt-1.5 z-50 rounded-xl border border-border bg-popover shadow-[0_6px_18px_-4px_hsl(240_11%_2%_/_0.6)] overflow-hidden">
+        <div className="absolute left-0 right-0 top-full mt-1.5 z-50 rounded-xl border border-border bg-popover shadow-[var(--shadow-popover)] overflow-hidden">
           {suggestions.map((suggestion, index) => {
             const Icon = typeIcons[suggestion.type];
             return (
