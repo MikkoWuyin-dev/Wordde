@@ -87,3 +87,21 @@ test.describe('no-flash theme boot', () => {
     expect(await page.evaluate(() => document.documentElement.classList.contains('dark'))).toBe(true);
   });
 });
+
+test.describe('live system follow (event-driven)', () => {
+  // Different mechanism from the boot script above: with the app RUNNING and
+  // 'system' selected, next-themes listens to the matchMedia 'change' event
+  // and must re-apply the theme WITHOUT a reload. The flip to light here can
+  // only be delivered by that event — the boot script has already run.
+  test('flipping the OS scheme while System is selected re-themes live', async ({ page }) => {
+    await page.emulateMedia({ colorScheme: 'dark' });
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
+    await expect(page.locator('html')).toHaveClass(/dark/, { timeout: 15_000 });
+
+    await page.emulateMedia({ colorScheme: 'light' });
+    await expect(page.locator('html')).toHaveClass(/light/, { timeout: 5_000 });
+
+    await page.emulateMedia({ colorScheme: 'dark' });
+    await expect(page.locator('html')).toHaveClass(/dark/, { timeout: 5_000 });
+  });
+});
