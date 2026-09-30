@@ -12,6 +12,9 @@ import { defineConfig } from '@playwright/test';
  */
 export default defineConfig({
   testDir: './e2e',
+  // Reaps the preview server the offline spec respawns after its mid-test
+  // kill — without this, `npm run test:e2e` leaks a process holding :4174.
+  globalTeardown: './e2e/global-teardown.ts',
   timeout: 180_000, // cold decode of all five translations + offline budget
   expect: { timeout: 15_000 },
   fullyParallel: false,

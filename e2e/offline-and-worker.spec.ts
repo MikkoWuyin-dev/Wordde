@@ -1,7 +1,7 @@
-import { execSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import JSZip from 'jszip';
 import { expect, test, type Page } from '@playwright/test';
+import { killPreviewListener, spawnPreview } from './helpers/preview-server';
 
 /**
  * The two verifications that were manual-only (Teardown §8 residual):
@@ -25,8 +25,6 @@ import { expect, test, type Page } from '@playwright/test';
  * serves dist/ on :4174 — the SW registers in prod builds only, so this
  * also exercises the strict CSP and the real bundle.
  */
-
-const PREVIEW_PORT = process.env.PLAYWRIGHT_PREVIEW_PORT ?? '4174';
 
 /** All five translation codes, matching TRANSLATION_ZIPS. */
 const CODES = ['KJV', 'NIV', 'NKJV', 'NLT', 'AMP'];
@@ -132,6 +130,14 @@ test.describe('worker decode tier', () => {
 });
 
 test.describe('service-worker offline reload', () => {
+  // The test below KILLS the preview server (true network death). Playwright
+  // starts one webServer per run and will not restart it, so spawn a fresh
+  // preview afterwards — later specs in this run need a live server.
+  // e2e/global-teardown.ts (registered in playwright.config.ts) reaps it.
+  test.afterAll(async () => {
+    await spawnPreview();
+  });
+
   test('offline reload: SW serves the app and the committed verse renders verbatim', async ({ page }) => {
     test.setTimeout(240_000);
     page.on('console', (msg) => consoleLines.push(msg.text()));
@@ -154,7 +160,7 @@ test.describe('service-worker offline reload', () => {
     // 3. Kill the preview server. A real reload must hit dead HTTP —
     //    context.setOffline fakes the network flag but cannot stop the
     //    SW's fetches, so only a process kill is a true offline test.
-    killPreview();
+    killPreviewListener();
 
     // 4. Reload offline: shell + hashed bundles must come from the precache.
     await page.reload({ waitUntil: 'domcontentloaded' });
@@ -166,31 +172,3 @@ test.describe('service-worker offline reload', () => {
     await expect(page.getByText('Bible data could not be loaded')).toHaveCount(0);
   });
 });
-
-/** Kill whatever LISTENS on the preview port (Windows/Unix). Only LISTENING
- * sockets are targeted — outbound ESTABLISHED connections from the test's
- * own browser must never match, or we would kill the browser mid-test.
- * "Port already free" is tolerated: bootForReal succeeded moments earlier,
- * so the server was alive. */
-function killPreview(): void {
-  try {
-    if (process.platform === 'win32') {
-      const out = execSync(`netstat -ano | findstr LISTENING | findstr :${PREVIEW_PORT}`, {
-        encoding: 'utf8',
-      });
-      const pids = new Set(
-        out
-          .split(/\r?\n/)
-          .map((l) => l.trim().split(/\s+/).pop())
-          .filter((p): p is string => !!p && /^\d+$/.test(p)),
-      );
-      pids.delete(String(process.pid));
-      for (const pid of pids) execSync(`taskkill /F /PID ${pid}`, { stdio: 'ignore' });
-    } else {
-      execSync(`kill $(lsof -t -iTCP:${PREVIEW_PORT} -sTCP:LISTEN) 2>/dev/null`, { stdio: 'ignore' });
-    }
-  } catch {
-    // Port already free — the server was demonstrably up moments ago
-    // (bootForReal completed), so proceeding is safe.
-  }
-}
