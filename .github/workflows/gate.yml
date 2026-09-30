@@ -1,0 +1,73 @@
+# Full verification gate — the same sequence the local gate enforces:
+#   tsc --noEmit → vitest → vite build → Playwright e2e (build + vite preview + real Chromium)
+#
+# The e2e webServer (playwright.config.ts) builds and serves dist/ itself,
+# so the suite runs against the exact production artifact the build step
+# produced. CI=true is set by GitHub automatically, which also forces
+# `reuseExistingServer: false` — the runner owns the server lifecycle.
+#
+# Chromium is cached keyed on the npm lockfile (which pins @playwright/test
+# and therefore the browser build); OS deps are installed every run — apt is
+# fast and runner images drift.
+name: gate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: gate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Cache Playwright Chromium
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Install Playwright Chromium
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: npx playwright install chromium
+
+      - name: Install Playwright OS dependencies
+        run: npx playwright install-deps chromium
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: E2E tests
+        run: npx playwright test
+
+      - name: Upload Playwright artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-artifacts
+          path: |
+            test-results/
+            playwright-report/
+          retention-days: 7
+          if-no-files-found: ignore
