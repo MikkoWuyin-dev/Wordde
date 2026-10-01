@@ -182,7 +182,7 @@ export function OperatorScreen() {
         </div>
       )}
       {/* Header */}
-      <header className="glass shrink-0">
+      <header className="glass shrink-0 rounded-none">
         <div className="px-4 py-2">
           <div className="flex items-center justify-between gap-4">
             <h1 className="font-wordmark font-normal text-3xl min-[1100px]:text-4xl leading-none tracking-normal text-foreground">Wordde</h1>
