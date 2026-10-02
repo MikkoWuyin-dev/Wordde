@@ -152,6 +152,13 @@
 
     --btn-glass-bg: 0 0% 100% / 0.55;
     --btn-glass-border: 0 0% 0% / 0.1;
+    --btn-glass-bg-hover: 0 0% 100% / 0.78;
+
+    /* Interactive glass fills: .glass-item rows/tiles — hover, selected, ring.
+       On the light ground a glass fill reads as a translucent DARK tint. */
+    --item-glass-hover: 240 12% 20% / 0.06;
+    --item-glass-selected: 240 14% 20% / 0.11;
+    --item-glass-ring: var(--paprika) / 0.45;
 
     --glow-drop: 240 12% 20% / 0.18;
 
@@ -265,6 +272,13 @@
 
     --btn-glass-bg: 240 9% 10% / 0.5;
     --btn-glass-border: 0 0% 100% / 0.16;
+    --btn-glass-bg-hover: 240 9% 13% / 0.6;
+
+    /* Interactive glass fills: on the black ground a glass fill reads as a
+       translucent WHITE veil. */
+    --item-glass-hover: 0 0% 100% / 0.07;
+    --item-glass-selected: 0 0% 100% / 0.13;
+    --item-glass-ring: var(--paprika) / 0.5;
 
     --glow-drop: 240 11% 2% / 0.7;
 
@@ -393,11 +407,13 @@
     transition: background-color 120ms ease, box-shadow 120ms ease, transform 80ms ease;
   }
   .result-item.selected {
-    background: hsl(var(--paprika) / 0.14);
-    box-shadow: inset 0 0 0 1px hsl(var(--paprika) / 0.4);
+    background: hsl(var(--item-glass-selected));
+    box-shadow:
+      inset 0 0 0 1px hsl(var(--item-glass-ring)),
+      inset 0 1px 0 hsl(var(--glass-highlight));
   }
   .result-item:hover:not(.selected) {
-    background: hsl(var(--secondary) / 0.5);
+    background: hsl(var(--item-glass-hover));
   }
   .result-item:focus-visible {
     box-shadow: inset 0 0 0 2px hsl(var(--paprika) / 0.55);
@@ -539,6 +555,77 @@
   .glass-divider {
     height: 1px;
     background: linear-gradient(to right, transparent, hsl(var(--glass-border)), transparent);
+  }
+
+  /* Liquid glass for ordinary controls: the .glass material tuned to button
+     scale. Lives in the components layer so call-site utilities (rounded-*,
+     h-*, border color) keep winning — the recipe only supplies the material.
+     Used by the Button variants (default/secondary/outline), the Select
+     trigger, and the passage-navigator transport chips. */
+  .btn-glass {
+    background: var(--glass-sheen), hsl(var(--btn-glass-bg));
+    backdrop-filter: blur(14px) saturate(1.4);
+    -webkit-backdrop-filter: blur(14px) saturate(1.4);
+    border: 1px solid hsl(var(--btn-glass-border));
+    box-shadow:
+      inset 0 1px 0 hsl(var(--glass-highlight)),
+      0 1px 2px hsl(var(--glow-drop));
+    transition: background-color 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
+  }
+  .btn-glass:hover {
+    background: var(--glass-sheen), hsl(var(--btn-glass-bg-hover));
+    border-color: hsl(var(--glass-border));
+  }
+  .btn-glass:active {
+    transform: translateY(0.5px);
+  }
+  .btn-glass:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  /* Keyboard focus for glass controls: the base-layer .focus-console ring is
+     outranked by any components-layer box-shadow, so the recipe carries its
+     own ring (same pattern as .btn-projection-glass). Utilities-layer rings
+     (the shadcn focus-visible:ring-*) still win over this. */
+  .btn-glass:focus-visible {
+    outline: none;
+    box-shadow:
+      inset 0 1px 0 hsl(var(--glass-highlight)),
+      0 0 0 2px hsl(var(--paprika) / 0.55);
+  }
+
+  /* The primary action keeps its paprika voice: the same glass material with
+     a dense paprika field behind the sheen, so text-primary-foreground keeps
+     its contrast on both themes while the surface turns to glass. */
+  .btn-glass-accent {
+    background: var(--glass-sheen), hsl(var(--paprika) / 0.82);
+    border-color: hsl(var(--paprika) / 0.55);
+  }
+  .btn-glass-accent:hover {
+    background: var(--glass-sheen), hsl(var(--paprika) / 0.92);
+    border-color: hsl(var(--paprika) / 0.75);
+  }
+
+  /* Fill-only interactive glass for rows and tiles INSIDE panels and lists
+     (dropdown items, menu entries, browse tiles). Deliberately no
+     backdrop-filter — a 66-book or 150-chapter grid must stay cheap to
+     render. Hover is a quiet fill; selected (persistent) or keyboard-
+     highlighted (Radix data-highlighted / real focus) is a stronger fill
+     with the accent inset ring. */
+  .glass-item {
+    transition: background-color 120ms ease, box-shadow 120ms ease, color 120ms ease;
+  }
+  .glass-item:not(.glass-item-selected):hover {
+    background: hsl(var(--item-glass-hover));
+    box-shadow: inset 0 1px 0 hsl(var(--glass-highlight));
+  }
+  .glass-item-selected,
+  .glass-item:focus-visible,
+  .glass-item[data-highlighted] {
+    background: hsl(var(--item-glass-selected));
+    box-shadow:
+      inset 0 0 0 1px hsl(var(--item-glass-ring)),
+      inset 0 1px 0 hsl(var(--glass-highlight));
   }
 
   .chip-paprika {

@@ -216,17 +216,17 @@ export function SearchInput({
 
       {/* Autocomplete dropdown */}
       {showSuggestions && suggestions.length > 0 && (
-        <div className="absolute left-0 right-0 top-full mt-1.5 z-50 rounded-xl border border-border bg-popover shadow-[var(--shadow-popover)] overflow-hidden">
+        <div className="glass-strong absolute left-0 right-0 top-full mt-1.5 z-50 rounded-xl shadow-[var(--shadow-popover)] overflow-hidden">
           {suggestions.map((suggestion, index) => {
             const Icon = typeIcons[suggestion.type];
             return (
               <button
                 key={`${suggestion.reference}-${index}`}
                 className={cn(
-                  "w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left transition-colors",
+                  "glass-item w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left",
                   index === selectedSuggestion
-                    ? "bg-hunter/15 text-hunter-bright border border-hunter/30"
-                    : "hover:bg-muted/50 text-foreground"
+                    ? "glass-item-selected text-hunter-bright shadow-[inset_0_0_0_1px_hsl(var(--hunter)/0.4),inset_0_1px_0_hsl(var(--glass-highlight))]"
+                    : "text-foreground"
                 )}
                 onMouseDown={(e) => {
                   e.preventDefault(); // Prevent input blur

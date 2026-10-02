@@ -182,7 +182,7 @@ export function OperatorScreen() {
         </div>
       )}
       {/* Header */}
-      <header className="glass shrink-0">
+      <header className="glass shrink-0 rounded-none">
         <div className="px-4 py-2">
           <div className="flex items-center justify-between gap-4">
             <h1 className="font-wordmark font-normal text-3xl min-[1100px]:text-4xl leading-none tracking-normal text-foreground">Wordde</h1>
@@ -194,12 +194,12 @@ export function OperatorScreen() {
                 }}
               >
                 <SelectTrigger
-                  className="h-8 px-2 text-xs font-medium min-w-[92px] bg-transparent border-border/60 text-muted-foreground"
+                  className="h-8 px-2 text-xs font-medium min-w-[92px] text-muted-foreground"
                   title="Switch translation"
                 >
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-popover border-border">
+                <SelectContent>
                   {healthyTranslations.map((t) => (
                     <SelectItem key={t} value={t} className="text-foreground">{t}</SelectItem>
                   ))}
@@ -262,8 +262,8 @@ export function OperatorScreen() {
                   className={cn(
                     'focus-console flex-1 px-3 py-2.5 text-sm font-medium transition-all border-b-2 -mb-px',
                     isActive
-                      ? 'border-paprika text-paprika shadow-[0_1px_0_0_hsl(12_84%_56%_/_0.5)]'
-                      : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-secondary/60'
+                      ? 'glass-item-selected border-paprika text-paprika'
+                      : 'glass-item border-transparent text-muted-foreground hover:text-foreground'
                   )}
                 >
                   {tab.label}
