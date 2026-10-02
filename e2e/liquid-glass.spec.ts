@@ -131,10 +131,25 @@ for (const theme of ['dark', 'light'] as const) {
       expect(await backdrop(page, '[role="listbox"]')).toContain('blur');
 
       // Keyboard focus (Radix focus-moves the highlighted option) lights it.
+      // The race to avoid: Radix may auto-highlight the first option on open
+      // AND move on the ArrowDown, so a fixed-index probe can sample the
+      // moment the highlight has moved past it. The invariant is that SOME
+      // option carries the glass fill — assert over all of them.
       await page.keyboard.press('ArrowDown');
       await expect
-        .poll(async () => fill(page, '[role="option"]'), { timeout: 2_000 })
-        .not.toBe('rgba(0, 0, 0, 0)');
+        .poll(
+          async () => {
+            const n = await page.locator('[role="option"]').count();
+            let lit = 0;
+            for (let i = 0; i < n; i++) {
+              const c = await page.locator('[role="option"]').nth(i);
+              if (!TRANSPARENT.has(await c.evaluate((el) => getComputedStyle(el).backgroundColor))) lit++;
+            }
+            return lit;
+          },
+          { timeout: 10_000 },
+        )
+        .toBeGreaterThanOrEqual(1);
     });
 
     test('passage-navigator transport chips are glass', async ({ page }) => {
