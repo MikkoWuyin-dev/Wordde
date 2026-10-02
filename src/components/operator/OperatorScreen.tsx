@@ -262,7 +262,12 @@ export function OperatorScreen() {
                   className={cn(
                     'focus-console flex-1 px-3 py-2.5 text-sm font-medium transition-all border-b-2 -mb-px',
                     isActive
-                      ? 'glass-item-selected border-paprika text-paprika'
+                      ? // The selected fill WITHOUT its full inset ring — the
+                        // paprika underline is the tab's voice; a ring on the
+                        // other three sides reads as an orange box. The
+                        // utility replaces the recipe's box-shadow (utilities
+                        // layer wins), re-adding only the glass top highlight.
+                        'glass-item-selected border-paprika text-paprika shadow-[inset_0_1px_0_hsl(var(--glass-highlight))]'
                       : 'glass-item border-transparent text-muted-foreground hover:text-foreground'
                   )}
                 >

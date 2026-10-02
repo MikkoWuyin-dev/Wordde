@@ -104,17 +104,29 @@ for (const theme of ['dark', 'light'] as const) {
     });
 
     test('tab switches: active glass fill, quiet hover on inactive', async ({ page }) => {
-      // Active tab wears the selected fill + ring; inactive stays transparent.
+      // Active tab wears the selected fill; inactive stays transparent.
       expect(TRANSPARENT.has(await fill(page, 'button:has-text("Browse")'))).toBe(true);
+
+      // The tab's ONLY paprika voice is the bottom underline: the selected
+      // recipe's inset ring (spread 0 0 0 1px) must NOT wrap the other three
+      // sides — that read as an orange box around the active tab. Polled, not
+      // one-shot: a read racing the stylesheet/mount must retry, not fail.
+      await expect
+        .poll(
+          async () =>
+            page.$eval('button:has-text("Search")', (el) => getComputedStyle(el).boxShadow),
+          { timeout: 5_000 },
+        )
+        .not.toContain('0px 0px 0px 1px');
 
       await page.getByRole('button', { name: 'Browse', exact: true }).click();
       await expect
-        .poll(async () => fill(page, 'button:has-text("Browse")'), { timeout: 2_000 })
+        .poll(async () => fill(page, 'button:has-text("Browse")'), { timeout: 5_000 })
         .not.toBe('rgba(0, 0, 0, 0)');
 
       // The previously-active tab went quiet again.
       await expect
-        .poll(async () => fill(page, 'button:has-text("Search")'), { timeout: 2_000 })
+        .poll(async () => fill(page, 'button:has-text("Search")'), { timeout: 5_000 })
         .toMatch(/rgba\(0, 0, 0, 0\)|transparent/);
     });
 
