@@ -86,7 +86,7 @@ export function SettingsAndMore() {
       <Popover open={open} onOpenChange={handleOpenChange}>
         <PopoverTrigger asChild>
           <button
-            className="focus-console w-full flex items-center gap-1.5 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors"
+            className="focus-console w-full flex items-center gap-1.5 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-secondary/40 hover:shadow-[inset_0_1px_0_hsl(var(--glass-highlight))] transition-colors"
             aria-haspopup="menu"
             aria-expanded={open}
           >
@@ -126,7 +126,7 @@ export function SettingsAndMore() {
               <button
                 role="menuitem"
                 onClick={() => setView('display')}
-                className="focus-console w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-secondary/60 transition-colors"
+                className="glass-item focus-console w-full flex items-center gap-2 px-3 py-2 text-sm"
               >
                 <Monitor className="h-4 w-4 text-muted-foreground" />
                 <span>Display Settings</span>
@@ -134,7 +134,7 @@ export function SettingsAndMore() {
               <button
                 role="menuitem"
                 onClick={() => setView('theme')}
-                className="focus-console w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-secondary/60 transition-colors"
+                className="glass-item focus-console w-full flex items-center gap-2 px-3 py-2 text-sm"
               >
                 <Laptop className="h-4 w-4 text-muted-foreground" />
                 <span>Theme</span>
@@ -142,7 +142,7 @@ export function SettingsAndMore() {
               <button
                 role="menuitem"
                 onClick={resetOnboarding}
-                className="focus-console w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-secondary/60 transition-colors"
+                className="glass-item focus-console w-full flex items-center gap-2 px-3 py-2 text-sm"
               >
                 <RotateCcw className="h-4 w-4 text-muted-foreground" />
                 <span>Replay Tutorial</span>
@@ -150,7 +150,7 @@ export function SettingsAndMore() {
               <button
                 role="menuitem"
                 onClick={() => setView('shortcuts')}
-                className="focus-console w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-secondary/60 transition-colors"
+                className="glass-item focus-console w-full flex items-center gap-2 px-3 py-2 text-sm"
               >
                 <Keyboard className="h-4 w-4 text-muted-foreground" />
                 <span>Keyboard Shortcuts</span>
@@ -162,7 +162,7 @@ export function SettingsAndMore() {
                 <button
                   onClick={() => setView('menu')}
                   aria-label="Back to menu"
-                  className="focus-console flex items-center gap-1 px-1.5 py-0.5 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors"
+                  className="btn-glass focus-console flex items-center gap-1 px-1.5 py-0.5 rounded text-xs text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <ChevronLeft className="h-3.5 w-3.5" />
                   Back
@@ -178,7 +178,7 @@ export function SettingsAndMore() {
                 <button
                   onClick={() => setView('menu')}
                   aria-label="Back to menu"
-                  className="focus-console flex items-center gap-1 px-1.5 py-0.5 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors"
+                  className="btn-glass focus-console flex items-center gap-1 px-1.5 py-0.5 rounded text-xs text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <ChevronLeft className="h-3.5 w-3.5" />
                   Back
@@ -192,7 +192,7 @@ export function SettingsAndMore() {
                 <button
                   onClick={() => setView('menu')}
                   aria-label="Back to menu"
-                  className="focus-console flex items-center gap-1 px-1.5 py-0.5 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors"
+                  className="btn-glass focus-console flex items-center gap-1 px-1.5 py-0.5 rounded text-xs text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <ChevronLeft className="h-3.5 w-3.5" />
                   Back
@@ -247,8 +247,8 @@ function ThemePicker() {
           className={cn(
             'focus-console w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm transition-colors',
             theme === value
-              ? 'bg-secondary/60 text-foreground'
-              : 'text-muted-foreground hover:text-foreground hover:bg-secondary/40',
+              ? 'glass-item-selected text-foreground'
+              : 'glass-item text-muted-foreground hover:text-foreground',
           )}
         >
           <Icon className="h-4 w-4 shrink-0" />

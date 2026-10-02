@@ -79,13 +79,14 @@ export function BibleNavigator() {
     }
   }, [selectedBook, selectedChapter, buildQueueFromPassage, currentTranslation]);
 
+  // Going back one level keeps that level's selection visible — the selected
+  // tile stays lit (persistent selected look). Picking a different tile resets
+  // the deeper selection, exactly as before.
   const goBack = useCallback(() => {
     if (level === 'verses') {
       setLevel('chapters');
-      setSelectedChapter(null);
     } else if (level === 'chapters') {
       setLevel('books');
-      setSelectedBook(null);
     }
   }, [level]);
 
@@ -102,7 +103,10 @@ export function BibleNavigator() {
           <button
             key={book}
             onClick={() => handleBookClick(book)}
-            className="focus-console w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-xs text-left transition-all group"
+            className={cn(
+              'btn-glass focus-console w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-xs text-left transition-all group',
+              selectedBook === book && 'glass-item-selected'
+            )}
           >
             <span className="truncate text-foreground">{book}</span>
             <ChevronRight className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 shrink-0" />
@@ -139,7 +143,10 @@ export function BibleNavigator() {
             <button
               key={ch}
               onClick={() => handleChapterClick(ch)}
-              className="focus-console flex items-center justify-center h-8 rounded-lg text-sm font-medium transition-all hover:bg-secondary/70 text-foreground"
+              className={cn(
+                'btn-glass focus-console flex items-center justify-center h-8 rounded-lg text-sm font-medium transition-all text-foreground',
+                selectedChapter === ch && 'glass-item-selected'
+              )}
             >
               {ch}
             </button>
@@ -162,7 +169,7 @@ export function BibleNavigator() {
               <button
                 key={v.verse}
                 onClick={() => handleVerseClick(v.verse)}
-                className="focus-console flex items-center justify-center h-8 rounded-lg text-sm font-medium transition-all hover:bg-secondary/70 text-foreground"
+                className="btn-glass focus-console flex items-center justify-center h-8 rounded-lg text-sm font-medium transition-all text-foreground"
               >
                 {v.verse}
               </button>

@@ -20,7 +20,7 @@ export function PassageNavigation() {
         size="sm"
         onClick={goToPreviousChapter}
         title="Previous chapter"
-        className="hidden xl:inline-flex text-muted-foreground hover:text-foreground"
+        className="btn-glass hidden xl:inline-flex text-muted-foreground hover:text-foreground"
       >
         <ChevronsLeft className="h-4 w-4" />
       </Button>
@@ -29,7 +29,7 @@ export function PassageNavigation() {
         size="sm"
         onClick={goToPreviousVerse}
         title="Previous passage (←)"
-        className="text-muted-foreground hover:text-foreground"
+        className="btn-glass text-muted-foreground hover:text-foreground"
       >
         <ChevronLeft className="h-4 w-4" />
       </Button>
@@ -41,7 +41,7 @@ export function PassageNavigation() {
         size="sm"
         onClick={goToNextVerse}
         title="Next passage (→)"
-        className="text-muted-foreground hover:text-foreground"
+        className="btn-glass text-muted-foreground hover:text-foreground"
       >
         <ChevronRight className="h-4 w-4" />
       </Button>
@@ -50,7 +50,7 @@ export function PassageNavigation() {
         size="sm"
         onClick={goToNextChapter}
         title="Next chapter"
-        className="hidden xl:inline-flex text-muted-foreground hover:text-foreground"
+        className="btn-glass hidden xl:inline-flex text-muted-foreground hover:text-foreground"
       >
         <ChevronsRight className="h-4 w-4" />
       </Button>
