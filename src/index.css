@@ -136,6 +136,13 @@
 
     --radius: var(--radius-md);
 
+    /* Glass geometry: the material recipes read these at point of use, so
+       theming can tune corner roundness per theme — and the .glass-flush
+       variant re-points them to 0 locally instead of fighting the layer
+       system with rounded-none utilities. */
+    --glass-radius: var(--radius-md);
+    --glass-strong-radius: var(--radius-lg);
+
     /* ---------- Glass (liquid: sheen gradient + inset top highlight) ---------- */
     --glass-surface: 0 0% 100% / 0.55;
     --glass-border: 0 0% 100% / 0.7;
@@ -255,6 +262,13 @@
     --radius-xl: 1.25rem;
 
     --radius: var(--radius-md);
+
+    /* Glass geometry: the material recipes read these at point of use, so
+       theming can tune corner roundness per theme — and the .glass-flush
+       variant re-points them to 0 locally instead of fighting the layer
+       system with rounded-none utilities. */
+    --glass-radius: var(--radius-md);
+    --glass-strong-radius: var(--radius-lg);
 
     /* ---------- Glass (liquid: sheen gradient + inset top highlight) ---------- */
     --glass-surface: 240 9% 8% / 0.6;
@@ -537,7 +551,7 @@
     backdrop-filter: blur(14px) saturate(1.4);
     -webkit-backdrop-filter: blur(14px) saturate(1.4);
     border: 1px solid hsl(var(--glass-border));
-    border-radius: var(--radius-md);
+    border-radius: var(--glass-radius);
     box-shadow: inset 0 1px 0 hsl(var(--glass-highlight));
   }
 
@@ -546,10 +560,18 @@
     backdrop-filter: blur(20px) saturate(1.5);
     -webkit-backdrop-filter: blur(20px) saturate(1.5);
     border: 1px solid hsl(var(--glass-border));
-    border-radius: var(--radius-lg);
+    border-radius: var(--glass-strong-radius);
     box-shadow:
       inset 0 1px 0 hsl(var(--glass-highlight)),
       0 8px 24px -8px hsl(var(--glow-drop));
+  }
+
+  /* Flush variant: edge-to-edge chrome (the operator header and footer).
+     Re-pointing the radius tokens locally keeps the material parameterized —
+     utilities-layer rounded-* at a call site still wins over either. */
+  .glass-flush {
+    --glass-radius: 0px;
+    --glass-strong-radius: 0px;
   }
 
   .glass-divider {

@@ -182,7 +182,7 @@ export function OperatorScreen() {
         </div>
       )}
       {/* Header */}
-      <header className="glass shrink-0 rounded-none">
+      <header className="glass glass-flush shrink-0">
         <div className="px-4 py-2">
           <div className="flex items-center justify-between gap-4">
             <h1 className="font-wordmark font-normal text-3xl min-[1100px]:text-4xl leading-none tracking-normal text-foreground">Wordde</h1>
@@ -335,7 +335,7 @@ export function OperatorScreen() {
       </main>
 
       {/* Footer: pointer to Settings & More + app version */}
-      <footer className="glass shrink-0 rounded-none">
+      <footer className="glass glass-flush shrink-0">
         <div className="px-4 py-1.5 flex items-center justify-between text-[11px] text-muted-foreground">
           <div className="flex items-center gap-2">
             <span className="text-[11px] text-muted-foreground/70">

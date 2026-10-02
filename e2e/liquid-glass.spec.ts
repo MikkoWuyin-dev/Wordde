@@ -209,5 +209,19 @@ for (const theme of ['dark', 'light'] as const) {
         .poll(async () => fill(page, '[role="menuitem"]:has-text("Display Settings")'), { timeout: 2_000 })
         .not.toBe('rgba(0, 0, 0, 0)');
     });
+
+    test('the chrome bars are flush glass (token, not utilities)', async ({ page }) => {
+      // The header/footer carry .glass-flush, which re-points --glass-radius
+      // to 0 at the element; the .glass recipe must resolve to a square,
+      // edge-to-edge frame. A refactor that breaks the token wiring (dropping
+      // the variant, hardcoding the recipe radius) fails here in both themes.
+      for (const sel of ['header', 'footer']) {
+        await expect
+          .poll(async () => page.$eval(sel, (el) => getComputedStyle(el).borderRadius), {
+            timeout: 5_000,
+          })
+          .toBe('0px');
+      }
+    });
   });
 }
