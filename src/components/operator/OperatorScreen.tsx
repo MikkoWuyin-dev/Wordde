@@ -330,7 +330,7 @@ export function OperatorScreen() {
       </main>
 
       {/* Footer: pointer to Settings & More + app version */}
-      <footer className="glass shrink-0">
+      <footer className="glass shrink-0 rounded-none">
         <div className="px-4 py-1.5 flex items-center justify-between text-[11px] text-muted-foreground">
           <div className="flex items-center gap-2">
             <span className="text-[11px] text-muted-foreground/70">
