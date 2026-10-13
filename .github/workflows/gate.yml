@@ -1,5 +1,5 @@
 # Full verification gate — the same sequence the local gate enforces:
-#   tsc --noEmit → vitest → vite build → Playwright e2e (build + vite preview + real Chromium)
+#   typecheck (tsc -b) → vitest → vite build → Playwright e2e (build + vite preview + real Chromium)
 #
 # The e2e webServer (playwright.config.ts) builds and serves dist/ itself,
 # so the suite runs against the exact production artifact the build step
@@ -50,7 +50,11 @@ jobs:
         run: npx playwright install-deps chromium
 
       - name: Typecheck
-        run: npx tsc --noEmit
+        # `npx tsc --noEmit` at the repo root is a NO-OP: tsconfig.json sets
+        # "files": [] with only project references, so non-build mode compiles
+        # zero files and exits 0 no matter what. This step therefore guarded
+        # main against nothing. `npm run typecheck` is `tsc -b` (see AGENTS.md §2).
+        run: npm run typecheck
 
       - name: Unit tests
         run: npm test

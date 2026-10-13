@@ -402,3 +402,27 @@ describe('SearchEngine integration with multiple reference results', () => {
     expect(books).toContain('1 Chronicles');
   });
 });
+
+describe('SearchEngine nearby passages follow stored order (VF-003 — no verse arithmetic)', () => {
+  beforeEach(() => reset());
+
+  it('offers the stored successor of a lettered verse, not parseInt(verse) + 1', () => {
+    installFixture('TEST', [book('John', { '3': ['3', '3a', '3b', '4'] })]);
+
+    // limit 3 fills exactly: the exact match plus its two nearby verses, so the
+    // semantic/keyword fallbacks never run and the assertion stays deterministic.
+    const refs = SearchEngine.search('John 3:3', 'TEST', 3).map(r => r.passage.displayReference);
+
+    expect(refs).toEqual(['John 3:3', 'John 3:3a', 'John 3:3b']);
+    // Pre-fix arithmetic derived "John 3:4" here, skipping the real 3a/3b keys.
+    expect(refs).not.toContain('John 3:4');
+  });
+
+  it('follows non-contiguous keys (1, 2, 5) without inventing missing verses', () => {
+    installFixture('TEST', [book('Nahum', { '1': ['1', '2', '5'] })]);
+
+    const refs = SearchEngine.search('Nahum 1:1', 'TEST', 3).map(r => r.passage.displayReference);
+
+    expect(refs).toEqual(['Nahum 1:1', 'Nahum 1:2', 'Nahum 1:5']);
+  });
+});

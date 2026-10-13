@@ -1,0 +1,821 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Wordde — Audit Findings, Evidence &amp; Agent Handoff</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { margin: 0; background: #f7f7f8; color: #16181d;
+         font: 15px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 980px; margin: 0 auto; padding: 40px 24px 96px; }
+  h1 { font-size: 1.9em; line-height: 1.25; margin: 0 0 .6em; letter-spacing: -.01em; }
+  h2 { font-size: 1.35em; margin: 2.2em 0 .5em; padding-bottom: .3em;
+       border-bottom: 1px solid #e3e5ea; letter-spacing: -.005em; }
+  h3 { font-size: 1.1em; margin: 1.8em 0 .4em; }
+  p { margin: .7em 0; }
+  a { color: #1f66d0; }
+  code { background: #eceef2; border-radius: 4px; padding: .12em .38em;
+         font: .88em/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  pre { background: #16181d; color: #e8eaee; border-radius: 8px; padding: 14px 16px;
+        overflow-x: auto; font-size: 12.5px; line-height: 1.55; }
+  pre code { background: none; color: inherit; padding: 0; font-size: inherit; }
+  blockquote { margin: 1.1em 0; padding: .55em 1em; background: #fff6e0;
+               border-left: 4px solid #e0a92b; border-radius: 0 6px 6px 0; }
+  blockquote p { margin: 0; }
+  table { border-collapse: collapse; width: 100%; margin: 1.1em 0; font-size: .94em; }
+  th, td { border: 1px solid #dfe2e8; padding: 7px 10px; text-align: left; vertical-align: top; }
+  th { background: #eef0f4; font-weight: 600; }
+  tbody tr:nth-child(even) { background: #fafbfc; }
+  hr { border: 0; border-top: 1px solid #e3e5ea; margin: 2.4em 0; }
+  ul, ol { padding-left: 1.5em; }
+  li { margin: .3em 0; }
+  @media (prefers-color-scheme: dark) {
+    body { background: #0d0f13; color: #e4e7ec; }
+    h2, hr { border-color: #262a33; }
+    code { background: #22262e; }
+    th, td { border-color: #2a2f39; }
+    th { background: #1b1f27; }
+    tbody tr:nth-child(even) { background: #141821; }
+    a { color: #6aa8ff; }
+    blockquote { background: #241f10; }
+  }
+</style></head>
+<body><main>
+<h1>Wordde — Audit Findings, Evidence &amp; Agent Handoff</h1>
+<p><strong>Date:</strong> 2026-10-13</p>
+<p><strong>Branch:</strong> <code>main</code></p>
+<p><strong>Scope:</strong> the entire <code>Wordde/</code> working tree — <code>src/</code> (206 files), <code>pwa/</code>, <code>public/</code>, <code>e2e/</code>, tests, build/lint/TS config, dependency graph.</p>
+<p><strong>Method:</strong> static read of every core module (<code>src/core/*</code>) and every operator/projection/onboarding component, plus executed commands (see §2). Findings cite <code>file:line</code>.</p>
+<p><strong>Author:</strong> automated audit agent. <strong>No application source was modified.</strong> The only files this audit added are in <code>docs/</code>.</p>
+<h3>Audience &amp; how to use this document</h3>
+<p>This is written for <strong>other coding agents</strong> picking up work in this repo. Read it <em>after</em> <code>AGENTS.md</code> and <em>before</em> touching anything. It is deliberately explicit about <strong>evidence</strong> (command output, line numbers) so you can re-verify rather than trust. Every claim marked <strong>Verified</strong> was executed or read directly; claims marked <strong>Inferred</strong> are reasoning from code structure and are flagged as such.</p>
+<hr />
+<h2>0. Read this first</h2>
+<p>Three things in this document will change how you work:</p>
+<ol>
+<li><strong>The typecheck command mandated by <code>AGENTS.md</code> cannot fail.</strong> <code>npx tsc --noEmit</code> exits <code>0</code> while the project has <strong>12 real type errors</strong>, because the root <code>tsconfig.json</code> sets <code>"files": []</code> and only lists project references — in non-build mode TypeScript compiles <em>zero files</em>. The real check is <code>npx tsc -b</code> (or <code>-p tsconfig.app.json</code>), which exits <code>2</code>. See §3.4.</li>
+<li><strong><code>npm run lint</code> is red</strong> — exit <code>1</code>, 6 errors + 15 warnings. One of those warnings <em>is</em> the most serious bug in the codebase (an object-URL leak). See §6.2 and §3.1.</li>
+<li><strong>The test suite is currently fully green</strong> — 25 files, 214/214 tests, exit <code>0</code> (§2, §6.4). An earlier flake did not reproduce. Do not "fix" a failing test that is no longer failing.</li>
+</ol>
+<hr />
+<h2>1. TL;DR — findings by severity</h2>
+<table><thead><tr>
+<th>#</th>
+<th>Severity</th>
+<th>Finding</th>
+<th>Location</th>
+</tr></thead><tbody>
+<tr>
+<td>1</td>
+<td><strong>High</strong></td>
+<td>Projection window's object-URL revoke loop is a <strong>no-op stale closure</strong>; every image reload orphans blob URLs, and unmount never revokes</td>
+<td><code>src/pages/Projection.tsx:248</code></td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>High</strong></td>
+<td><strong>Mandated <code>tsc</code> check is a no-op</strong>; 12 real type errors hidden behind it</td>
+<td><code>tsconfig.json</code>, <code>src/core/bibleDecodeClient.ts:59</code>, <code>src/test/recentPassages.test.tsx</code></td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>High</strong></td>
+<td><strong>No React error boundary</strong> anywhere — one render throw blanks the whole operator UI</td>
+<td><code>src/App.tsx</code></td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>High</strong></td>
+<td><code>getNearbyPassages</code> re-introduces <strong>integer verse arithmetic</strong> (banned by VF-003) and drops the translation arg</td>
+<td><code>src/core/searchEngine.ts:144-160</code></td>
+</tr>
+<tr>
+<td>5</td>
+<td>Medium</td>
+<td>Autocomplete re-resolves the query <strong>66× per keystroke</strong></td>
+<td><code>src/core/autocomplete.ts:51</code></td>
+</tr>
+<tr>
+<td>6</td>
+<td>Medium</td>
+<td><strong>11 call sites subscribe to the whole Zustand store</strong> → full operator re-render per keystroke</td>
+<td>10 files, §4.4</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Medium</td>
+<td><strong>No debounce</strong> on the typing path; suggestions + search run synchronously per character</td>
+<td><code>src/components/operator/SearchInput.tsx</code>, <code>src/core/inputController.ts</code></td>
+</tr>
+<tr>
+<td>8</td>
+<td>Medium</td>
+<td>Fonts ship as <strong>~1.01 MB of TTF/OTF</strong>; Autography (the first-paint wordmark) is <strong>not preloaded</strong></td>
+<td><code>public/fonts/</code>, <code>index.html</code></td>
+</tr>
+<tr>
+<td>9</td>
+<td>Medium</td>
+<td>~12 unused dependencies propping up <strong>40 of 49</strong> unreachable <code>src/components/ui/*</code> files</td>
+<td><code>package.json</code>, <code>src/components/ui/</code></td>
+</tr>
+<tr>
+<td>10</td>
+<td>Medium</td>
+<td>Unguarded raw <code>localStorage</code> <strong>reads</strong> on the boot/projection path (writes were hardened, reads missed)</td>
+<td><code>Projection.tsx:185</code>, <code>ContextualHint.tsx:20</code>, <code>OnboardingManager.tsx:24</code></td>
+</tr>
+<tr>
+<td>11</td>
+<td>Low</td>
+<td>SW <code>skipWaiting()</code>+<code>clients.claim()</code> contradicts the documented mid-service guarantee</td>
+<td><code>pwa/sw.js:82,93</code></td>
+</tr>
+<tr>
+<td>12</td>
+<td>Low</td>
+<td>Doc drift: Teardown §5.12 says "exactly three items"; code + test say <strong>four</strong></td>
+<td><code>docs/System Teardown.md:381</code></td>
+</tr>
+</tbody></table>
+<hr />
+<h2>2. Verification log — every command run, with exact results</h2>
+<p>All commands run from <code>Wordde/</code>. Nothing below is inferred.</p>
+<table><thead><tr>
+<th>#</th>
+<th>Command</th>
+<th>Exit</th>
+<th>Result</th>
+</tr></thead><tbody>
+<tr>
+<td>1</td>
+<td><code>npx tsc --noEmit</code></td>
+<td><strong>0</strong></td>
+<td><strong>Misleading pass.</strong> Root config has <code>files: []</code>; compiles 0 files. See §3.4.</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>npx tsc -b</code></td>
+<td><strong>2</strong></td>
+<td><strong>FAIL — 12 errors</strong> (1 in <code>src/core/bibleDecodeClient.ts</code>, 11 in <code>src/test/recentPassages.test.tsx</code>).</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>npx tsc --noEmit -p tsconfig.app.json</code></td>
+<td><strong>2</strong></td>
+<td>Same 12 errors — confirms it is not a <code>-b</code> artifact.</td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>npm run lint</code> (<code>npx eslint .</code>)</td>
+<td><strong>1</strong></td>
+<td><strong>FAIL — 6 errors, 15 warnings</strong> (full list in §6.2).</td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>npx vitest run</code></td>
+<td><strong>0</strong></td>
+<td><strong>PASS — 25 files, 214/214 tests</strong>, 45.80 s (setup 32.86 s, collect 82.91 s, tests 40.78 s, env 107.85 s).</td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>npx vite build</code></td>
+<td><strong>0</strong></td>
+<td><strong>PASS</strong> — <code>dist/assets/index-*.js</code> 622,187 B; <code>index-*.css</code> 83,158 B; <code>bibleDecodeWorker-*.js</code> 99,473 B. Emits chunk-size warning.</td>
+</tr>
+<tr>
+<td>7</td>
+<td><code>npm run test:e2e</code> (Playwright)</td>
+<td><strong>0</strong></td>
+<td><strong>NOT RUN during the audit; since run in full and green.</strong> Requires <code>vite build &amp;amp;&amp;amp; vite preview</code> on :4174. <code>npm run test:e2e</code> → <strong>24 tests passed, exit 0, 2.0 m</strong> across all four specs — <code>liquid-glass</code>, <code>offline-and-worker</code>, <code>projection-hardening</code> (new), <code>theme-boot</code>. Nothing needed fixing. See §10.1 for what this does <em>not</em> discharge.</td>
+</tr>
+<tr>
+<td>8</td>
+<td><code>git status --short</code></td>
+<td>0</td>
+<td>Only <code>?? docs/Wordde_Codebase_Audit_2026-10-13.md</code> (+ this file) — <strong>no source modified</strong>.</td>
+</tr>
+<tr>
+<td>9</td>
+<td><code>git branch --show-current</code></td>
+<td>0</td>
+<td><code>main</code>.</td>
+</tr>
+</tbody></table>
+<h3>Test-suite detail (run #5, the one that matters)</h3>
+<pre><code>
+ Test Files  25 passed (25)
+      Tests  214 passed (214)
+   Duration  45.80s
+VITEST_EXIT=0
+</code></pre>
+<p>Notable: <code>src/test/settingsAndMore.test.tsx</code> (10 tests) took <strong>16.6 s</strong> — the single slowest file, and the source of the earlier flake. On this run its "exactly four entries" assertion passed in 939 ms. <strong>An earlier audit run recorded 213/214 with that test timing out (7.1 s vs a 5 s default) under full-suite load.</strong> Conclusion: the assertion is correct; the file is load-sensitive because jsdom + 25-file parallelism leaves no timeout headroom. Treat as flaky-under-load, not broken.</p>
+<h3>Raw lint output (run #4)</h3>
+<pre><code>
+✖ 21 problems (6 errors, 15 warnings)
+</code></pre>
+<p>Errors (these are the ones that break the build gate):</p>
+<table><thead><tr>
+<th>File:line</th>
+<th>Rule</th>
+</tr></thead><tbody>
+<tr>
+<td><code>src/components/ui/command.tsx:24</code></td>
+<td><code>@typescript-eslint/no-empty-object-type</code></td>
+</tr>
+<tr>
+<td><code>src/components/ui/textarea.tsx:5</code></td>
+<td><code>@typescript-eslint/no-empty-object-type</code></td>
+</tr>
+<tr>
+<td><code>src/core/broadcastSync.ts:76</code></td>
+<td><code>no-empty</code></td>
+</tr>
+<tr>
+<td><code>src/core/broadcastSync.ts:192</code></td>
+<td><code>no-empty</code></td>
+</tr>
+<tr>
+<td><code>src/test/bibleCache.integration.test.ts:181</code></td>
+<td><code>prefer-const</code></td>
+</tr>
+<tr>
+<td><code>tailwind.config.ts:128</code></td>
+<td><code>@typescript-eslint/no-require-imports</code></td>
+</tr>
+</tbody></table>
+<p>Warnings of interest (the rest are <code>react-refresh/only-export-components</code> shadcn residue):</p>
+<ul>
+<li>**<code>src/pages/Projection.tsx:258</code> — <code>react-hooks/exhaustive-deps</code> missing <code>assetUrls</code>. This warning <em>is</em> the leak in §3.1.** Do not dismiss it.</li>
+<li><code>src/components/operator/SearchInput.tsx:166</code> — missing <code>releaseFocusAfterCommit</code>.</li>
+<li><code>src/components/onboarding/TutorialOverlay.tsx:172</code> — missing <code>currentSlideIndex</code>.</li>
+<li><code>src/components/operator/RecentPassages.tsx:22</code> — <code>safeQueue</code> conditional destabilises a <code>useCallback</code> at line 92.</li>
+</ul>
+<hr />
+<h2>3. Correctness &amp; reliability</h2>
+<h3>3.1 Object-URL leak: the revoke loop can never work — <strong>Verified</strong> (read + lint)</h3>
+<p><strong><code>src/pages/Projection.tsx:249-258</code></strong> (the mounting broadcast listener, deps <code>[]</code>):</p>
+<pre><code>
+} else if (msg.type === 'RELOAD_ASSETS') {
+  Object.values(assetUrls).forEach(u =&gt; { if (u) URL.revokeObjectURL(u); });  // line 248
+  loadAllAssets().then(setAssetUrls);
+}
+</code></pre>
+<p><code>assetUrls</code> is captured at first render, when it is <code>{}</code> (line 151: <code>useState&amp;lt;Record&amp;lt;string,string&amp;gt;&amp;gt;({})</code>). The effect closes over that empty object forever, so <strong>the revoke loop is provably a no-op</strong>. ESLint reports exactly this at <code>258:6</code>.</p>
+<p>Corroborating evidence:</p>
+<ul>
+<li>The producer's own contract says revocation is required — <code>src/core/assetStorage.ts:95-96</code>: <em>"Caller is responsible for revoking URLs when replacing the map."</em></li>
+<li><code>URL.revokeObjectURL</code> appears in the codebase exactly 4 times: 3 in <code>ProjectionSettings.tsx</code> (75, 84, 121 — its own local map, correct) and <strong>once</strong> in <code>Projection.tsx:248 (this dead line). </code>src/core/assetStorage.ts` has <strong>none</strong>.</li>
+<li>The mount effect (<code>Projection.tsx:181-210</code>) calls <code>loadAllAssets().then(setAssetUrls)</code> at line 183 with <strong>no cleanup</strong> returning a revoke — so closing the projection window also orphans the entire set.</li>
+</ul>
+<p><strong>Impact:</strong> every background/logo change broadcast (<code>RELOAD_ASSETS</code>) while the projection window is open allocates a fresh set of blob URLs and orphans the previous set. Blob URLs pin their backing <code>Blob</code> in memory until revoked <strong>or</strong> the document is destroyed, so on a long service with background changes this grows without bound. Low frequency, unbounded growth — a real leak, not a theoretical one.</p>
+<p><strong>Fix direction:</strong> hold the map in a <code>ref</code> alongside state so the listener reads the live value (<code>assetUrlsRef.current</code>), revoke in the <code>setAssetUrls</code> updater (functional form: revoke <code>prev</code> before returning <code>next</code>), and add an unmount cleanup that revokes the current set. Sizing: ~15 lines in one file. <strong>Do not</strong> just add <code>assetUrls</code> to the dep array — that re-subscribes the channel on every asset change and is worse.</p>
+<h3>3.2 No error boundary anywhere — <strong>Verified</strong> (read)</h3>
+<p><code>src/App.tsx</code> wraps the tree in <code>ThemeProvider → QueryClientProvider → TooltipProvider → BrowserRouter → Routes</code>. There is <strong>no</strong> <code>componentDidCatch</code> / <code>ErrorBoundary</code> / <code>errorElement</code> anywhere in <code>src/</code>.</p>
+<p>There <em>is</em> a boot-failure path for Bible loading, but nothing catches a <strong>render-time</strong> throw. A malformed <code>Passage</code> restored from <code>localStorage</code> (parsed at <code>Projection.tsx:187-192</code> with <code>JSON.parse</code> and only a <code>try/catch</code> around the parse — no shape validation), or a corrupt recovery snapshot that passes validation but not render, unmounts the whole React tree to a blank white page.</p>
+<p>This contradicts <code>PRODUCT.md</code> principle 4 (<em>"Recovery over prevention"</em>) and principle 2 (<em>offline-first, survive crashes and refreshes</em>). <strong>Fix direction:</strong> one class-component boundary (or <code>react-error-boundary</code>) wrapping each route separately — the projection window should be independently recoverable from the operator window. Sizing: ~40 lines + a fallback.</p>
+<h3>3.3 <code>getNearbyPassages</code> breaks the no-verse-arithmetic invariant — <strong>Verified</strong> (read)</h3>
+<p><code>src/core/searchEngine.ts:144-160</code>:</p>
+<pre><code>
+private getNearbyPassages(basePassage: Passage, count: number): Passage[] {
+  const { book, chapter, verseStart } = basePassage.reference;
+  const verses = BibleRepository.getVerses(book, chapter);      // &lt;-- translation arg DROPPED
+  const startNum = parseInt(verseStart, 10);                    // &lt;-- arithmetic on a verse key
+  for (let i = 1; i &lt;= count; i++) {
+    const nextVerseNum = String(startNum + i);                  // &lt;-- "3a" -&gt; "4"
+    const verse = verses.find(v =&gt; v.verse === nextVerseNum);
+</code></pre>
+<p>Two independent defects:</p>
+<ol>
+<li><strong>Verse arithmetic.</strong> <code>AGENTS.md</code> §3 states it as a hard rule: <em>"No verse arithmetic — navigate by array index off the real key, never <code>parseInt(verse)+1</code> (VF-003)."</em> The repository already provides the correct primitive: <code>BibleRepository.getNextVerse()</code> at <code>src/core/bibleRepository.ts:638</code>, which every other call site in <code>stateManager.ts</code> uses (<code>:179</code>, <code>:428</code>, <code>:576</code>, <code>:610</code>). For <code>verseStart = "3a"</code>, this helper proposes <code>"4"</code>, <code>"5"</code> — silently skipping <code>3b</code> and mis-ordering "nearby" results. Lettered verses are real, tested data (<code>bibleNormalizer.test.ts</code> asserts the order <code>3, 3a, 3b, 4</code>).</li>
+<li><strong>Translation dropped.</strong> <code>getVerses(bookName, chapter, translation?)</code> (<code>bibleRepository.ts:614</code>) is called <strong>without</strong> the translation, so it reads whatever <code>currentTranslation</code> happens to be — not the translation the search ran under. The very next call, <code>getPassage({..., translation: basePassage.reference.translation})</code>, <em>does</em> pass it, so the two reads can disagree mid-flight.</li>
+</ol>
+<p><strong>Fix direction:</strong> replace the whole loop body with <code>BibleRepository.getNextVerse(book, chapter, verse, translation)</code> walked forward by array index, threading <code>basePassage.reference.translation</code> through. Sizing: ~20 lines, one method.</p>
+<h3>3.4 The mandated typecheck is a no-op — <strong>Verified</strong> (executed)</h3>
+<p><code>AGENTS.md</code> §2 says the checks that must pass are <code>npx tsc --noEmit</code>, <code>npm test</code>, <code>npm run build</code>. Running <code>npx tsc --noEmit</code> gives exit <code>0</code>.</p>
+<p>That pass is vacuous. <code>tsconfig.json</code>:</p>
+<pre><code>
+{ "compilerOptions": { ... }, "files": [], "references": [{ "path": "./tsconfig.app.json" }, { "path": "./tsconfig.node.json" }] }
+</code></pre>
+<p>With <code>files: []</code> and references, plain <code>tsc</code> (non-build mode) has <strong>nothing to compile</strong>. Every real error is invisible. <code>npx tsc -b</code> — and <code>npx tsc --noEmit -p tsconfig.app.json</code> — exit <strong>2</strong> with 12 errors:</p>
+<p><strong>(a) One production-code error</strong> — <code>src/core/bibleDecodeClient.ts:59</code>:</p>
+<pre><code>
+worker.onmessage = (event: MessageEvent&lt;DecodeResponse&gt;) =&gt; {
+  const data = event.data;
+  if (data &amp;&amp; data.ok) { resolve({...}) }
+  else { reject(new Error(data?.error || 'Unknown decode worker error')); }   // &lt;-- TS2339
+</code></pre>
+<p><code>DecodeResponse</code> (defined identically in the client at <code>:19-21</code> and the worker at <code>:27-29</code>) <strong>is</strong> a correct discriminated union:</p>
+<pre><code>
+| { ok: true;  books: BibleBook[]; metadata: TranslationMetadata }
+| { ok: false; error: string }
+</code></pre>
+<p>TS2339 says <code>Property 'error' does not exist on type '{ ok: true; books; metadata }'</code> — i.e. TS refused to narrow away the <code>ok: true</code> member in the <code>else</code> branch. <strong>Inferred cause:</strong> the project runs with <code>strictNullChecks: false</code> (§6.3), which defeats truthiness-based narrowing of the union by <code>data &amp;amp;&amp;amp;</code>. I have not proven this by experiment; treat the <em>error</em> as verified and the <em>mechanism</em> as the most likely explanation.</p>
+<p><strong>(b) Eleven test-only errors</strong> — <code>src/test/recentPassages.test.tsx</code> lines 75, 117, 131, 144, 165, 184, 199, 209 (and their continuation blocks): every <code>useStateManager.setState({ ...partial })</code> call passes an object of a few fields where the signature wants <code>StateManager | ((s) =&amp;gt; StateManager)</code>. The test fabricates partial store slices; TypeScript rejects them. <strong>This is a real, reproducible type failure</strong> — the test passes at runtime but does not typecheck.</p>
+<p><strong>Fix direction:</strong> (1) add a <code>"typecheck": "tsc -b"</code> script and change <code>AGENTS.md</code> §2 to call it — <em>this is the single highest-leverage change in this document</em>, because it converts a permanently-green gate into a real one; (2) then fix the 12 errors it uncovers; (3) for CI use <code>tsc -b --noEmit</code> — <strong>verified working</strong> on this project's TypeScript (5.8.3): same 12 errors, exit 2. Sizing: one config line + the fixes.</p>
+<p><strong>Two operational side effects to handle</strong> (both observed directly, not inferred):</p>
+<ul>
+<li>Because project references are composite, the command writes <code>tsconfig.app.tsbuildinfo</code> and <code>tsconfig.node.tsbuildinfo</code> to the repo root, and <code>.gitignore</code> does <strong>not</strong> cover them (<code>git check-ignore</code> confirms). Adopting this gate without a <code>*.tsbuildinfo</code> ignore rule dirties the tree on every typecheck. <code>--noEmit</code> does <strong>not</strong> avoid this — it still writes them.</li>
+<li>A <strong>cold</strong> <code>tsc -b</code> run takes minutes (it exceeded a 240 s budget here and completed in the background), versus milliseconds for the no-op. That cost is plausibly part of <em>why</em> the no-op went unnoticed — worth knowing before you wire it into a pre-commit hook.</li>
+</ul>
+<p><strong>The no-op also sat in CI.</strong> <code>.github/workflows/gate.yml</code> runs <code>npx tsc --noEmit</code> as its <code>Typecheck</code> step, so the gate guarding <code>main</code> has always passed regardless of type errors — the mandated check's real home, and the audit did not inspect <code>.github/</code>. Changed to <code>npm run typecheck</code> alongside fix #1. <em>(Added post-audit.)</em></p>
+<blockquote>⚠️ <strong>Read <code>AGENTS.md</code> §4 before editing <code>tsconfig.*</code> or <code>bibleDecodeClient.ts</code></strong>: <code>src/core/bibleNormalizer.ts</code>, <code>src/core/broadcastSync.ts</code>, <code>src/core/types.ts</code> are protected (VF-100), and <code>docs/ARCHITECTURE.md</code>, <code>CONSTRAINTS.md</code>, <code>DEVELOPMENT.md</code>, <code>VERIFICATION-RULES.md</code> are human-maintained (VF-101). <code>bibleDecodeClient.ts</code> is <em>not</em> on the protected list, but changing a <code>tsconfig</code> affects the whole tree — surface the change rather than doing it silently.</blockquote>
+<h3>3.5 Unguarded raw <code>localStorage</code> reads — <strong>Verified</strong> (read)</h3>
+<p><code>AGENTS.md</code> VF-005 requires every <code>localStorage</code> access to be guarded; the project has a <code>src/core/safeStorage.ts</code> helper (<code>safeLocalSet</code> / <code>safeLocalRemove</code>) and used it on the <strong>write</strong> side. Three <strong>read</strong> sites were missed:</p>
+<table><thead><tr>
+<th>Location</th>
+<th>Code</th>
+</tr></thead><tbody>
+<tr>
+<td><code>src/pages/Projection.tsx:185</code></td>
+<td><code>const saved = localStorage.getItem('currentProjection');</code> — inside the mount effect; a storage-disabled environment throws here → blank projection window</td>
+</tr>
+<tr>
+<td><code>src/components/onboarding/ContextualHint.tsx:20</code></td>
+<td><code>return localStorage.getItem(HINT_PREFIX + id) === 'true';</code> (write side at <code>:23</code> correctly uses <code>safeLocalSet</code>)</td>
+</tr>
+<tr>
+<td><code>src/components/onboarding/OnboardingManager.tsx:24</code></td>
+<td><code>localStorage.getItem(STORAGE_KEY)</code> raw</td>
+</tr>
+</tbody></table>
+<p>Contrast with the correct pattern in <code>broadcastSync.ts</code> → <code>loadPersistedProjectionState()</code>, which is guarded. <strong>Fix direction:</strong> add a <code>safeLocalGet(key): string | null</code> to <code>safeStorage.ts</code> and route these three through it. Sizing: ~10 lines total. Note <code>public/theme-boot.js</code> already <em>does</em> guard its <code>localStorage.getItem('theme')</code> in a <code>try/catch</code> — so the pattern is understood in this repo; these three are oversights, not a policy.</p>
+<h3>3.6 Service worker contradicts its own documented guarantee — <strong>Verified</strong> (read)</h3>
+<p><code>pwa/sw.js</code> header comment claims a mid-service deploy never yanks assets: <em>"the old worker keeps serving until every client reloads."</em> The code does the opposite:</p>
+<ul>
+<li><code>pwa/sw.js:81-82</code> — <code>await cache.addAll(PRECACHE_URLS); await self.skipWaiting();</code> inside <code>install</code>.</li>
+<li><code>pwa/sw.js:87-96</code> — <code>activate</code> does <code>caches.keys()</code>, deletes <strong>every</strong> cache whose key ≠ <code>CACHE_VERSION</code>, then <code>await self.clients.claim()</code>.</li>
+</ul>
+<p>So a newly-installed worker takes over open clients immediately and deletes all non-current caches. Practical blast radius is small (the live page holds its assets in memory), but the documented guarantee is false. <strong>Fix direction:</strong> either drop <code>skipWaiting</code>/<code>claim</code> and gate the swap behind a user-visible reload prompt, or correct the comment. Pick one deliberately — do not leave the doc lying. (<code>AGENTS.md</code> RI-053 requires the Teardown to track reality; the SW comment is written as a guarantee, so treat it as a contract.)</p>
+<h3>3.7 Redundant second broadcast listener — <strong>Verified</strong> (read)</h3>
+<p><code>src/pages/Projection.tsx:220-232</code>: <code>channel.onmessage = broadcastLogger</code> installs an unconditional listener <strong>in addition to</strong> <code>onBroadcastMessage</code>'s <code>addEventListener</code>. Every message is handled once and logged once. Functionally harmless, but it is a second seam on the protocol and it <code>console.log</code>s full payloads (see §5.7). Low risk, easy cleanup.</p>
+<hr />
+<h2>4. Performance</h2>
+<blockquote><strong>Framing:</strong> the product targets <em>"often donated, low-spec laptops"</em> (<code>PRODUCT.md</code>, Operating Context). §4.1, §4.3 and §4.4 compose into the dominant typing-time cost and should be treated as one workstream. All costs below are reasoned from code paths (<strong>Inferred</strong>); none were profiled in a browser, so treat magnitudes as structural, not measured. See §10.</blockquote>
+<h3>4.1 Autocomplete re-resolves the query 66× per keystroke — <strong>Verified</strong> (read)</h3>
+<p><code>src/core/autocomplete.ts:44-70</code>, inside <code>matchBooks</code>:</p>
+<pre><code>
+const allBooks = BibleRepository.getAllBooks();
+for (const book of allBooks) {                                    // 66 books
+  const lower = book.toLowerCase();
+  const resolved = BibleRepository.resolveBookName(query);        // line 51 — LOOP-INVARIANT
+  if (resolved.some(r =&gt; r.toLowerCase() === lower)) { ... }
+</code></pre>
+<p><code>resolveBookName</code> (<code>bibleRepository.ts:497-556</code>) is not cheap: it scans all books and, when it falls through to name matching, sorts with a comparator whose tie-break runs <code>canonicalOrder.findIndex(...)</code> <strong>per comparison</strong> (<code>:545-550</code>). So one keystroke performs ~66 full resolutions on an identical input, plus up to 66 Levenshtein DP passes (<code>:70</code>), plus <code>parseInput</code>'s further <code>resolveBookName</code> calls (lines ~103, ~115).</p>
+<p><strong>Fix direction:</strong> hoist line 51 above the loop into a <code>const resolved = ...</code> (a ~2-line change with a large constant-factor win). Bigger win: memoise <code>resolveBookName</code> by normalised input — it is a pure function of <code>(input, currentTranslation)</code>.</p>
+<h3>4.2 Keyword search still scans the whole token vocabulary — <strong>Verified</strong> (read)</h3>
+<p><code>src/core/bibleRepository.ts</code> → <code>searchByKeyword</code>. The inverted index removes the ~31k-verse linear scan, but the union step is a nested loop:</p>
+<pre><code>
+for (const term of searchTerms)
+  for (const [token, id] of index.tokenIds) if (token.includes(term)) ...
+</code></pre>
+<p>Substring matching cannot hash, so every keystroke iterates <strong>all unique tokens</strong> per term. It is a genuine improvement over the previous per-keystroke verse scan, but the docstring's claim that the linear scan is "replaced" overstates it — it is now a per-keystroke scan over the <em>token</em> vocabulary. <strong>Fix direction (P2):</strong> prefix-keyed buckets, or an n-gram/Suffix-array index. Only worth doing after §4.3 debouncing, which likely hides the cost entirely.</p>
+<h3>4.3 No debounce on the typing path — <strong>Verified</strong> (read)</h3>
+<p><code>src/components/operator/SearchInput.tsx:53-66</code> → <code>src/core/inputController.ts:41-66</code>: every <code>onChange</code> synchronously runs <code>getSuggestions</code> (§4.1) <strong>and</strong> <code>SearchEngine.search</code> (§4.2), then re-renders. There is no <code>debounce</code>/<code>useDeferredValue</code>/<code>startTransition</code> on this path anywhere in <code>src/</code>.</p>
+<p><strong>Fix direction:</strong> a ~75 ms debounce (or <code>useDeferredValue</code> on the query for the <em>suggestion</em> path only) removes almost all typing-time cost with no perceptible latency change. <strong>Highest value-per-line change in §4.</strong> Caveat: the search field has load-bearing keyboard semantics (<code>SearchInput</code> handles arrows/Enter/Tab/Escape and forwards to <code>useInputController</code>; teardown §5.11 documents two shipped defects that must not regress). Debounce the <em>query→results</em> computation, <strong>not</strong> the key handling. Run <code>src/test/searchInputKeys.test.tsx</code> (5 tests) and <code>keyboardShortcut.test.tsx</code> (17 tests) after any change here.</p>
+<h3>4.4 11 full-store Zustand subscriptions → whole-UI re-render per keystroke — <strong>Verified</strong> (grep)</h3>
+<p><code>useStateManager()</code> with <strong>no selector</strong> appears <strong>11 times across 10 files</strong>:</p>
+<pre><code>
+src/components/onboarding/TutorialOverlay.tsx
+src/components/operator/BibleNavigator.tsx
+src/components/operator/OperatorScreen.tsx
+src/components/operator/PassageNavigation.tsx
+src/components/operator/PresenterPanel.tsx
+src/components/operator/ProjectionControl.tsx
+src/components/operator/ProjectionStatus.tsx
+src/components/operator/RecentPassages.tsx
+src/components/operator/ServicePlan.tsx
+src/core/inputController.ts
+</code></pre>
+<p>Zustand re-renders <strong>every</strong> subscriber on <strong>any</strong> store write. <code>setSearchQuery</code> fires per keystroke, so each character re-renders the header, presenter panel, projection control, status badge, active tab and settings shell — even the ones that read none of the changed fields.</p>
+<p><strong>Fix direction:</strong> give read-only consumers a selector (<code>useStateManager(s =&amp;gt; s.committedPassage)</code>) or <code>useShallow</code> for multi-field reads. Start with the panels that clearly do not read <code>searchQuery</code> (<code>PresenterPanel</code>, <code>ProjectionStatus</code>, <code>ProjectionControl</code>, <code>BibleNavigator</code>). Sizing: mechanical but touches 10 files — do it as its own PR, verify with the existing suite.</p>
+<h3>4.5 Fonts: ~1.01 MB uncompressed, one missing preload — <strong>Verified</strong> (ls + read)</h3>
+<p><code>public/fonts/</code> — 7 faces, <strong>1,012,960 bytes</strong> total, all <code>.ttf</code>/<code>.otf</code>:</p>
+<table><thead><tr>
+<th>File</th>
+<th>Bytes</th>
+</tr></thead><tbody>
+<tr>
+<td><code>Autography.otf</code></td>
+<td>52,396</td>
+</tr>
+<tr>
+<td><code>PlayfairDisplay-Regular.ttf</code></td>
+<td>176,736</td>
+</tr>
+<tr>
+<td><code>Poppins-Bold.ttf</code></td>
+<td>153,944</td>
+</tr>
+<tr>
+<td><code>Poppins-Light.ttf</code></td>
+<td>159,892</td>
+</tr>
+<tr>
+<td><code>Poppins-Medium.ttf</code></td>
+<td>156,520</td>
+</tr>
+<tr>
+<td><code>Poppins-Regular.ttf</code></td>
+<td>158,240</td>
+</tr>
+<tr>
+<td><code>Poppins-SemiBold.ttf</code></td>
+<td>155,232</td>
+</tr>
+</tbody></table>
+<p>All seven are precached by the SW, so this is on the offline first-load path. <code>index.html</code> preloads <strong>three</strong> (<code>Poppins-Regular</code>, <code>Poppins-SemiBold</code>, <code>PlayfairDisplay-Regular</code>) but <strong>not <code>Autography</code></strong> — and Autography is the wordmark face on the first-paint <code>&amp;lt;h1&amp;gt;</code>, so the header FOUTs on every cold start.</p>
+<p><strong>Fix direction:</strong> convert all to WOFF2 (typically 3–4× smaller → ~250–350 kB, <strong>Inferred</strong> from the format's usual compression, not measured here), and add the missing Autography preload. Also worth considering: subset the Poppins family (5 weights) to the Latin subset actually used.</p>
+<h3>4.6 First SW install fetches ~8.5 MB all-or-nothing — <strong>Verified</strong> (read)</h3>
+<p><code>pwa/sw.js:81</code> — <code>install</code> runs <code>cache.addAll(PRECACHE_URLS)</code> over both route shells, 7 fonts, all 5 Bible ZIPs (~7.5 MB per <code>PRODUCT.md</code>), the semantic index and build assets. Any single 404 fails the <strong>entire</strong> install. Deliberate offline-first trade, but on a slow sanctuary connection install blocks for a long time and one bad asset is fatal.</p>
+<p><strong>Fix direction:</strong> split <strong>shell</strong> precache (fast, must succeed) from <strong>data</strong> precache (can stream/degrade). Keep the app-shell guarantee absolute; let Bible data populate lazily on first use, which the runtime already does on demand.</p>
+<h3>4.7 Smaller per-frame / per-interval costs — <strong>Verified</strong> (read)</h3>
+<ul>
+<li><strong><code>AutoFitVerse</code></strong> — <code>src/pages/Projection.tsx:63-88</code>. The fit loop writes <code>text.style.fontSize</code> then reads <code>text.scrollHeight</code>/<code>scrollWidth</code> each iteration, from 72 px down to 16 px in 2 px steps: <strong>up to ~28 forced synchronous reflows per verse change</strong>, on the projection window, during a live service. Replace with a binary search over the size range (~5 reflows) or measure once via <code>ResizeObserver</code>.</li>
+<li><strong><code>TutorialOverlay</code></strong> — <code>:152-158</code> polls <code>getBoundingClientRect</code> every 500 ms and calls <code>setRect</code> with a <strong>fresh</strong> <code>DOMRect</code> every tick, guaranteeing <strong>2 re-renders/second</strong> for as long as the tutorial is open even when nothing moved. Compare dimensions and skip <code>setRect</code> when unchanged (<code>ResizeObserver</code> is the better fix).</li>
+<li><strong><code>ProjectionControl</code></strong> — three unconditional intervals run for the whole session even if no projector window was ever opened: 2 s heartbeat-timeout check (<code>:64-71</code>), 1.5 s <code>window.closed</code> poll (<code>:74-81</code>), 3 s <code>broadcastSync</code> (<code>:84-94</code>). The 3 s sync is <em>load-bearing</em> (teardown §5 "idempotent re-assertion" is the self-healing mechanism — <strong>do not remove it</strong>); the other two could be gated on "a projector has ever connected".</li>
+<li><strong><code>BibleRepository.getPassage</code></strong> (<code>:573</code>) → <code>getBook</code> (<code>:558</code>) → <code>resolveBookName</code> (<code>:559</code>) recomputes a 66-book scan + sort on <strong>every</strong> call, and it is on the per-result and per-navigation path. Memoisation (§4.1's fix) helps here too.</li>
+</ul>
+<hr />
+<h2>5. Redundancy, dead code &amp; drift</h2>
+<h3>5.1 ~12 unused dependencies propping up 40 of 49 <code>ui/*</code> files — <strong>Verified</strong> (grep + ls)</h3>
+<p><code>src/components/ui/</code> contains <strong>49</strong> files. Only ~9 are reachable from application code: <code>button, input, scroll-area, select, dialog, popover, alert-dialog, tooltip, sonner, toaster</code> (+ <code>toast</code> via <code>toaster</code>). Everything else is unreachable.</p>
+<p>Importers, verified by grep across <code>src/**/*.{ts,tsx}</code>:</p>
+<table><thead><tr>
+<th>Package</th>
+<th>Imported by</th>
+<th>Verdict</th>
+</tr></thead><tbody>
+<tr>
+<td><code>@tanstack/react-query</code></td>
+<td><strong><code>src/App.tsx</code></strong></td>
+<td>Actively wired (<code>QueryClient</code> + provider) around a <strong>zero-query app</strong> — ships in the bundle for nothing</td>
+</tr>
+<tr>
+<td><code>recharts</code></td>
+<td><code>ui/chart.tsx</code> only</td>
+<td>Unreachable</td>
+</tr>
+<tr>
+<td><code>embla-carousel-react</code></td>
+<td><code>ui/carousel.tsx</code> only</td>
+<td>Unreachable</td>
+</tr>
+<tr>
+<td><code>react-day-picker</code></td>
+<td><code>ui/calendar.tsx</code> only</td>
+<td>Unreachable</td>
+</tr>
+<tr>
+<td><code>input-otp</code></td>
+<td><code>ui/input-otp.tsx</code> only</td>
+<td>Unreachable</td>
+</tr>
+<tr>
+<td><code>cmdk</code></td>
+<td><code>ui/command.tsx</code> only</td>
+<td>Unreachable</td>
+</tr>
+<tr>
+<td><code>vaul</code></td>
+<td><code>ui/drawer.tsx</code> only</td>
+<td>Unreachable</td>
+</tr>
+<tr>
+<td><code>react-resizable-panels</code></td>
+<td><code>ui/resizable.tsx</code> only</td>
+<td>Unreachable</td>
+</tr>
+<tr>
+<td><code>react-hook-form</code></td>
+<td><code>ui/form.tsx</code> only</td>
+<td>Unreachable</td>
+</tr>
+<tr>
+<td><code>@hookform/resolvers</code></td>
+<td><strong>nothing</strong></td>
+<td>Truly unused</td>
+</tr>
+<tr>
+<td><code>zod</code></td>
+<td><strong>nothing</strong></td>
+<td>Truly unused</td>
+</tr>
+<tr>
+<td><code>date-fns</code></td>
+<td><strong>nothing</strong></td>
+<td>Truly unused</td>
+</tr>
+</tbody></table>
+<p><strong>Fix direction:</strong> delete the unreachable <code>ui/*</code> files, drop the packages, and remove the <code>QueryClientProvider</code> from <code>App.tsx:4,18</code>. Verify with <code>npm ls</code> + a build. <strong>Caveat:</strong> <code>docs/ARCHITECTURE.md</code> / <code>DEVELOPMENT.md</code> may reference the shadcn baseline — check before deleting, and note that <code>components.json</code> declares the shadcn config, so a future component addition expects the deps.</p>
+<h3>5.2 Dead exports &amp; files — <strong>Verified</strong> (grep, reference counts)</h3>
+<table><thead><tr>
+<th>Symbol / file</th>
+<th>Location</th>
+<th>Refs outside its own definition</th>
+</tr></thead><tbody>
+<tr>
+<td><code>broadcastClear</code></td>
+<td><code>src/core/broadcastSync.ts:127</code></td>
+<td><strong>0</strong> (the <code>CLEAR_PASSAGE</code> message also has no producer)</td>
+</tr>
+<tr>
+<td><code>getTranslationMetadata</code></td>
+<td><code>src/core/bibleRepository.ts:130</code></td>
+<td><strong>0</strong></td>
+</tr>
+<tr>
+<td><code>getVerseCount</code></td>
+<td><code>src/core/bibleRepository.ts:621</code></td>
+<td><strong>0</strong></td>
+</tr>
+<tr>
+<td><code>getChapterCount</code></td>
+<td><code>src/core/bibleRepository.ts:625</code></td>
+<td><strong>0</strong></td>
+</tr>
+<tr>
+<td><code>getCurrentTranslation</code></td>
+<td><code>src/core/bibleRepository.ts:125</code></td>
+<td>1 — <strong>test-only</strong> (<code>translationIsolation.test.ts:100</code>)</td>
+</tr>
+<tr>
+<td><code>ShortcutRow</code></td>
+<td><code>src/components/operator/SettingsAndMore.tsx:264</code></td>
+<td><strong>0</strong> — the shortcuts view inlines its own markup</td>
+</tr>
+<tr>
+<td><code>restartTutorial()</code></td>
+<td><code>src/components/onboarding/OnboardingManager.tsx:80</code></td>
+<td><strong>0</strong> — and the <code>restartTutorial</code> CustomEvent listener at <code>:30</code> waits for an event <strong>nothing dispatches</strong></td>
+</tr>
+<tr>
+<td><code>src/core/index.ts</code></td>
+<td>barrel re-export of 5 modules</td>
+<td><strong>0</strong> importers</td>
+</tr>
+<tr>
+<td><code>src/App.css</code></td>
+<td>Vite-template CSS</td>
+<td><strong>0</strong> importers (never imported by <code>main.tsx</code>)</td>
+</tr>
+<tr>
+<td><code>src/test/example.test.ts</code></td>
+<td><code>expect(true).toBe(true)</code> placeholder</td>
+<td>counts as 1 of the 214 "passing" tests</td>
+</tr>
+</tbody></table>
+<p><strong>Fix direction:</strong> delete <code>App.css</code>, <code>core/index.ts</code>, <code>example.test.ts</code>, and the dead exports. <code>restartTutorial()</code> is a <strong>latent trap</strong>: it dispatches a CustomEvent that no one listens for in the intended way — if a future change wires a button to it, it will silently do nothing. Either wire it up or delete both halves.</p>
+<h3>5.3 Duplicated logic / competing sources of truth — <strong>Verified</strong> (read)</h3>
+<ul>
+<li><strong>The 66-book canon exists twice.</strong> <code>CANONICAL_BOOK_ORDER</code> (<code>src/core/bibleRepository.ts:37</code>) and <code>OT_BOOKS</code>/<code>NT_BOOKS</code> (<code>src/components/operator/BibleNavigator.tsx:10,21</code>). Adding or renaming a book means editing both — and a mismatch is silent.</li>
+<li><strong>"Extend the queue with the next verse" is written three times</strong> verbatim:</li>
+<li><code>src/core/stateManager.ts:179</code> (inside <code>projectSlide</code>, unconditional pre-load)</li>
+<li><code>:576</code> (inside <code>commitCurrentSlide</code>, locked branch)</li>
+<li><code>:610</code> (inside <code>_commitWithOldSlide</code>, locked branch — the comment even says <em>"Same pre-load logic as commitCurrentSlide"</em>)</li>
+</ul>
+<p>  A fourth near-copy (inline, different shape) lives in <code>slideNext</code> at <code>:428</code>. Extract one <code>extendQueueWithNextVerse(...)</code> helper.</p>
+<ul>
+<li><strong>Event-name literal vs constant.</strong> <code>src/core/inputController.ts:292</code> uses the imported <code>NEXT_SERVICE_PLAN_EVENT</code>, but <code>:298</code> dispatches <code>new CustomEvent('nextServicePlanPassage')</code> as a <strong>string literal</strong>. <code>src/core/shortcutRegistry.ts:21</code> is the declared single source of truth. Drift waiting to happen.</li>
+<li><strong>Redundant slice.</strong> <code>src/components/operator/RecentPassages.tsx:152</code> does <code>recentPassages.slice(0, MAX_RECENT_PASSAGES)</code> while the store already caps at that constant (<code>stateManager.ts:205</code>, <code>MAX_RECENT_PASSAGES = 20</code>) — the source comment even says so.</li>
+<li><strong>No-op ranking expression.</strong> <code>src/core/searchEngine.ts:42</code> — <code>score: 100 - index * 0</code>, with the comment <em>"All exact matches score 100"</em>. Write <code>score: 100</code> or delete the field.</li>
+<li><strong>Repeated setup work.</strong> <code>setupBookAliases</code> rebuilds its ~66-entry <code>abbreviations</code> object on every call; <code>sortBooksInOrder</code> runs <code>findIndex</code> over the canon per comparator invocation (same pattern as <code>resolveBookName</code>).</li>
+</ul>
+<h3>5.4 Three lockfiles — <strong>Verified</strong> (git ls-files)</h3>
+<p>Tracked: <code>bun.lock</code> (144,920 B), <code>bun.lockb</code> (245,395 B), <code>package-lock.json</code> (299,710 B), plus <code>skills-lock.json</code> (278 B, agent tooling). <code>AGENTS.md</code> mandates <strong>npm</strong> (<code>npm install --no-audit --no-fund</code>). The two Bun locks are stale (Sep 10; <code>package-lock.json</code> is Sep 29) and will silently drift from <code>package.json</code>. <strong>Fix direction:</strong> delete <code>bun.lock</code> and <code>bun.lockb</code>; keep <code>package-lock.json</code>.</p>
+<h3>5.5 Documentation drift (contract violation) — <strong>Verified</strong> (read)</h3>
+<p><code>docs/System Teardown.md:381</code> (§5.12) states the Settings &amp; More menu has <em>"role=\"menu\", exactly three items — Display Settings, Replay Tutorial, Keyboard Shortcuts."</em></p>
+<p>Reality: <strong>four</strong> items. <code>src/components/operator/SettingsAndMore.tsx</code> has a <code>'menu' | 'display' | 'theme' | 'shortcuts'</code> view union (<code>:47</code>) and four menu buttons at <code>:128</code> (Display Settings), <code>:136</code> (<strong>Theme</strong>), <code>:148</code> (Replay Tutorial), <code>:152</code> (Keyboard Shortcuts). The test agrees: <code>src/test/settingsAndMore.test.tsx:53</code> is named <em>"opens a menu with exactly four entries"</em> and passes.</p>
+<p><code>AGENTS.md</code> §4 says <code>System Teardown.md</code> is <em>"the one doc you are expected to keep current"</em> (RI-053). It has fallen behind here. <strong>Fix direction:</strong> update §5.12 to four items and document the Theme sub-view. Cheapest high-signal fix in this document.</p>
+<h3>5.6 Both toast systems are mounted and never triggered — <strong>Verified</strong> (read)</h3>
+<p><code>src/App.tsx:3,14</code> mounts <code>Toaster</code> (Radix) and <code>:4,15</code> mounts Sonner's <code>Toaster</code>. Neither is ever fired: <code>toast(</code> appears nowhere in application code. On top of that, <code>src/components/ui/use-toast.ts</code> (82 B) is a third file that merely re-exports the hook in <code>src/hooks/use-toast.ts</code>. <strong>Fix direction:</strong> keep whichever one the design intends, delete the other two files plus the unused dependency (<code>@radix-ui/react-toast</code> or <code>sonner</code>).</p>
+<h3>5.7 11 <code>console.log</code> calls in production code — <strong>Verified</strong> (grep)</h3>
+<p>Distribution: <code>src/pages/Projection.tsx</code> <strong>6</strong>, <code>src/core/bibleRepository.ts</code> <strong>3</strong>, <code>src/core/stateManager.ts</code> <strong>2</strong>. The <code>Projection.tsx</code> ones are the noisiest — they dump the full saved passage (<code>:186</code> <em>"Loaded from localStorage:"</em>) and <strong>every received broadcast message</strong> (<code>:226</code> <em>"Received broadcast:"</em>). There is no dev-only gate. <strong>Fix direction:</strong> delete or gate behind <code>import.meta.env.DEV</code>. Run <code>vite build</code> after — Vite does <strong>not</strong> strip bare <code>console.log</code> by default, so these ship.</p>
+<hr />
+<h2>6. Build, config &amp; tooling</h2>
+<h3>6.1 Single 622 kB chunk, no code splitting — <strong>Verified</strong> (build output)</h3>
+<p><code>vite build</code> emits one app chunk: <strong>622,187 B JS</strong> (191 kB gzip per the earlier audit), 83,158 B CSS, 99,473 B worker, and a chunk-size warning. <code>App.tsx</code> imports <code>Index</code> and <code>Projection</code> eagerly. The projection route is a <strong>separate window</strong> that rarely needs the operator bundle (search, autocomplete, navigator, service plan), so it is a natural split point.</p>
+<p><strong>Fix direction:</strong> <code>React.lazy</code> the routes; drop the unused deps (§5.1). Low risk, but note <code>Projection</code> must still be fast on cold start — prefetch it from the operator window rather than lazy-loading it on demand.</p>
+<h3>6.2 Lint is red — <strong>Verified</strong> (executed)</h3>
+<p>6 errors + 15 warnings, exit <code>1</code>. Full list in §2. Two of the six errors are in <code>ui/command.tsx</code> and <code>ui/textarea.tsx</code> — files that §5.1 says should be deleted, so deleting them fixes two errors for free. <code>broadcastSync.ts</code> is a <strong>protected file</strong> (<code>AGENTS.md</code> §4 / VF-100) — the two <code>no-empty</code> errors there need explicit justification in your task prompt.</p>
+<h3>6.3 Type/lint strictness is switched off — <strong>Verified</strong> (read)</h3>
+<p><code>tsconfig.json</code>: <code>noImplicitAny: false</code>, <code>noUnusedLocals: false</code>, <code>noUnusedParameters: false</code>, <code>strictNullChecks: false</code>.</p>
+<p><code>tsconfig.app.json</code>: additionally <code>strict: false</code>, <code>noFallthroughCasesInSwitch: false</code>.</p>
+<p><code>eslint.config.js</code>: <code>@typescript-eslint/no-unused-vars: "off"</code>.</p>
+<p>This is the systemic reason §5.2's dead exports survive and §3.1's stale closure isn't a type error. Turning on <code>noUnusedLocals</code> + <code>noUnusedParameters</code> alone surfaces most of §5.2 automatically. <strong>Do this before</strong> deleting by hand — the compiler will produce the list for you. Note <code>tsconfig.node.json</code> <strong>does</strong> set <code>strict: true</code>, so config files are held to a higher standard than the app.</p>
+<h3>6.4 Test suite architecture — <strong>Verified</strong> (executed)</h3>
+<p>25 files, 214 tests, 45.8 s. Slowest: <code>settingsAndMore.test.tsx</code> (16.6 s) and <code>bibleCache.integration.test.ts</code>. <code>vitest.config.ts</code> sets <strong>no <code>testTimeout</code></strong>, so Vitest's 5 s default applies — that is why a 7 s assertion under parallel load fails. There are also <strong>no coverage thresholds</strong>.</p>
+<p><code>e2e/</code> holds 3 Playwright specs (<code>liquid-glass</code>, <code>offline-and-worker</code>, <code>theme-boot</code>) plus <code>helpers/</code> and <code>global-teardown.ts</code>. <code>playwright.config.ts</code> runs them against the <strong>production build</strong> via <code>vite preview --port 4174</code> with <code>reuseExistingServer: !CI</code>, a 180 s timeout, <code>workers: 1</code>, and a <code>globalTeardown</code> that reaps the respawned preview server. That teardown comment is a real bug fix — don't remove it.</p>
+<p><strong>Fix direction:</strong> raise <code>testTimeout</code> (e.g. 15 s) or reduce parallelism for the heavy files; consider a coverage threshold once the dead code (§5) is gone.</p>
+<h3>6.5 Repository hygiene — <strong>Verified</strong> (ls + git ls-files)</h3>
+<p><strong>Corrected from an earlier pass.</strong> Actual state:</p>
+<ul>
+<li><strong>Tracked residue:</strong> <code>public/placeholder.svg</code> (verified <strong>unreferenced</strong> by any source or HTML). <code>.agents/skills/impeccable/**</code> and <code>.impeccable/*</code> <strong>are tracked and intentional</strong> (agent tooling config), not junk — leave them.</li>
+<li><strong>Correctly gitignored (present but untracked):</strong> <code>dist/</code>, <code>test-results/</code>, <code>playwright-report/</code>, <code>.freebuff/</code>, <code>node_modules/</code>.</li>
+<li><strong>Not present, contrary to an earlier draft of this audit:</strong> there is no <code>Untitled-1.psd</code> and no <code>App Icon Dark.png</code> / <code>App Icon Light.png</code> at the repo root. <code>public/App Icon Orange.png</code> <strong>is used</strong> (<code>index.html</code> favicon + apple-touch-icon) — do not delete it.</li>
+<li><strong>Genuine residue:</strong> <code>src/App.css</code>, <code>src/core/index.ts</code>, <code>src/test/example.test.ts</code>, <code>public/placeholder.svg</code>, the two Bun lockfiles, and the <code>lovable-tagger</code> devDependency wired into the dev build at <code>vite.config.ts:6,149</code> (<code>mode === "development" &amp;amp;&amp;amp; componentTagger()</code>). Remove <code>lovable-tagger</code> and the tagger call — it is Lovable scaffolding with no role in this project.</li>
+</ul>
+<hr />
+<h2>7. Product &amp; UX observations</h2>
+<p>Every item is <strong>Verified</strong> by reading the file cited.</p>
+<ul>
+<li><strong>No error boundary contradicts the stated principles</strong> — <code>PRODUCT.md</code> principles 2 &amp; 4 require surviving crashes; §3.2 shows there is no net. This is the one product-level gap.</li>
+<li><strong><code>MobileBlocker</code> copy contradicts its trigger.</strong> <code>src/components/MobileBlocker.tsx:14</code> says <em>"Please use a tablet, laptop, or desktop device"</em>, but <code>src/hooks/use-mobile.tsx:3</code> sets <code>MOBILE_BREAKPOINT = 768</code> and blocks at <code>innerWidth &amp;lt; 768</code> — which <strong>includes tablets in portrait</strong> (768–834 px). <code>PRODUCT.md</code> states the intended constraint as "below 768 px the app refuses to render". So: fix the copy to say the app needs a wider screen, or lower the breakpoint — but don't leave the instruction disagreeing with the behaviour.</li>
+<li><strong>"Beta" badge on a product declared feature-complete for its one church.</strong> <code>src/components/operator/OperatorScreen.tsx</code> renders a Beta badge while <code>PRODUCT.md</code> says the scope is one church, one operator, and the capabilities list is "confirmed". Decide which is true.</li>
+<li><strong><code>BibleNavigator</code> memos omit <code>currentTranslation</code>.</strong> <code>:40-41</code> memoise <code>otBooks</code>/<code>ntBooks</code> on <code>[allBooks]</code> only, so a mid-session translation switch does <strong>not</strong> refresh the Browse grids. <code>PRODUCT.md</code> lists mid-service translation switching as a live-service rhythm. If two translations expose different verse keys, the grids go stale. Also check the chapter/verse memos in the same file.</li>
+<li><strong><code>Date.now()</code> IDs collide.</strong> <code>src/components/operator/ServicePlan.tsx</code> lines 45, 147, 161, 163, 183 all build ids from <code>Date.now().toString()</code>; <code>:163</code> appends <code>Math.random()</code> but the others do not. Two rapid creations in the same millisecond produce duplicate ids, and the lists key on <code>id</code>. Use <code>crypto.randomUUID()</code>.</li>
+<li><strong><code>robots.txt</code> + social meta advertise an intentionally-undistributed product.</strong> <code>public/robots.txt</code> allows every crawler; <code>index.html</code> carries <code>og:</code> and <code>twitter:</code> tags. <code>PRODUCT.md</code> states the product <em>"is not intended for public distribution"</em>. Harmless, but incoherent — a <code>Disallow: /</code> or removal of the meta tags would match the intent.</li>
+<li><strong>Dropped translation label?</strong> <code>AutoFitVerse</code> (<code>Projection.tsx:76-78</code>) resolves <code>getTranslationDisplayName(translationCode)</code> and renders it below the reference, so the on-screen label is correct — but the teardown's "translation invariant" (§5, item 5) depends on <code>setTranslation</code> re-projecting the live slide. Worth an explicit test: switch translation while a passage is live and assert the projected label <strong>and</strong> text both update.</li>
+</ul>
+<hr />
+<h2>8. Decisions made during this audit</h2>
+<p>Recorded so the next agent does not have to re-derive them.</p>
+<ol>
+<li><strong>No application source was modified.</strong> The task was explicitly <em>"not to write any code"</em>. <code>git status --short</code> shows only new <code>docs/</code> files. Findings are reported, not fixed.</li>
+<li><strong>The <code>tsc</code> result was re-tested after an initial misreading, and the earlier report was corrected.</strong> The first pass recorded <code>npx tsc --noEmit</code> = PASS. Re-running with the project reference (<code>npx tsc -b</code>) exposed 12 real errors (§3.4). The stale row in <code>docs/Wordde_Codebase_Audit_2026-10-13.md</code> has been corrected to match this document. <strong>Lesson for other agents: <code>tsc --noEmit</code> at the repo root of this project proves nothing.</strong></li>
+<li><strong>The earlier "213/214 with a flake" result was superseded, not hidden.</strong> A clean re-run gives <strong>214/214, exit 0</strong>. The flaky-*under-load* characterisation is retained (no <code>testTimeout</code> in <code>vitest.config.ts</code>) but the suite is not currently red.</li>
+<li><strong>An earlier draft's claim about root residue (<code>Untitled-1.psd</code>, <code>App Icon Dark/Light.png</code>) was wrong and was removed.</strong> A full <code>ls -la</code> of the repo root shows no such files, and <code>public/App Icon Orange.png</code> is actively referenced by <code>index.html</code>. §6.5 reflects the actual listing.</li>
+<li><strong>Playwright e2e was deliberately not run.</strong> <code>playwright.config.ts</code> runs <code>npm run build &amp;amp;&amp;amp; npm run preview</code> on port 4174 with a 180 s budget per spec and requires the production build. Running it would spawn a dev/preview server, which was outside a read-only audit's scope. Reported as <strong>not run</strong>, not as passing (§10). <em>(Post-audit the suite has been run in full: 24 tests, exit 0 — see §10.1.)</em></li>
+<li><strong>No browser profiling was performed,</strong> so §4's magnitudes are marked <strong>Inferred</strong>. Verifying them is the highest-value <em>next</em> investigation — see §9 and §10.</li>
+<li><strong>Service/dependency research was judged unnecessary.</strong> The audit identifies <em>unused</em> third-party packages, not a need for new ones, so no provider research was relevant.</li>
+<li><strong><code>System Teardown.md</code> was left untouched.</strong> <code>AGENTS.md</code> designates it as the document a change should keep current (RI-053), but updating it is part of <em>implementing</em> a fix, not auditing one — and §5.5's drift is itself a finding. The correction belongs to whoever makes the corresponding code change.</li>
+</ol>
+<hr />
+<h2>9. Suggested fix order</h2>
+<h3>P0 — correctness, do first (each is small and independently verifiable)</h3>
+<blockquote><strong>Remediation status (2026-10-13).</strong> <strong>P0 #1–#6 are landed</strong> (uncommitted, working tree). After the fixes: <code>npm run typecheck</code> → <strong>exit 0</strong>; <code>npm run lint</code> → <strong>6 errors / 14 warnings</strong> (was 6/15 — the §3.1 warning is gone); <code>npx vitest run</code> → <strong>27 files / 224 tests passing</strong> (was 25/214); <code>npx vite build</code> → <strong>exit 0</strong>, 624.20 kB JS (was 622.19 kB). P1–P3 are untouched. Each row keeps its status below.</blockquote>
+<table><thead><tr>
+<th>#</th>
+<th>Fix</th>
+<th>Files</th>
+<th>Verify with</th>
+<th>Status</th>
+</tr></thead><tbody>
+<tr>
+<td>1</td>
+<td>Add <code>"typecheck": "tsc -b"</code>, a <code>*.tsbuildinfo</code> ignore rule, and make it the mandated check</td>
+<td><code>package.json</code>, <code>.gitignore</code>, <code>AGENTS.md</code> §2, <code>.github/workflows/gate.yml</code></td>
+<td><code>npm run typecheck</code> now fails, then fix the 12 errors</td>
+<td><strong>Landed.</strong> <code>AGENTS.md</code> §2 now mandates <code>npm run typecheck</code>; <strong><code>.github/workflows/gate.yml</code>'s <code>Typecheck</code> step was running the same no-op <code>npx tsc --noEmit</code></strong> and is now <code>npm run typecheck</code> — the audit missed CI, which is where a mandated check actually lives (§3.4).</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Fix the 12 type errors the real check uncovers</td>
+<td><code>src/core/bibleDecodeClient.ts:59</code>, <code>src/test/recentPassages.test.tsx</code></td>
+<td><code>npx tsc -b</code> → exit 0</td>
+<td><strong>Landed.</strong> Verified: <code>tsc -b</code> exit 0.</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Fix the object-URL stale closure + add unmount revoke</td>
+<td><code>src/pages/Projection.tsx:248</code></td>
+<td>lint warning at <code>258:6</code> disappears; manual: reload assets repeatedly, watch blob-URL count in DevTools</td>
+<td><strong>Landed and measured in a real browser.</strong> Warning gone. <code>e2e/projection-hardening.spec.ts</code> instruments <code>URL.createObjectURL</code>/<code>revokeObjectURL</code> inside the projection window across 5 <code>RELOAD_ASSETS</code> cycles: 12 created, 10 revoked, live steady at 2, peak 4. Against the pre-fix file the same spec fails with <code>Expected: 10, Received: 0</code>. See §10.3.</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Add error boundaries (operator + projection, separately)</td>
+<td><code>src/App.tsx</code> + new component</td>
+<td>throw deliberately in a child; the other route must survive</td>
+<td><strong>Landed and proven in a real browser.</strong> <code>src/components/ErrorBoundary.tsx</code>; <code>src/test/errorBoundary.test.tsx</code> (4 unit tests). <code>e2e/projection-hardening.spec.ts</code> poisons <code>currentProjection</code> with a Passage whose <code>verses</code> is null (parses, throws on render), then asserts the boundary's own catch log fires, the <code>Projection stopped</code> fallback renders, <code>#root</code> is still mounted, and a second operator window on the same poisoned storage keeps serving. Against the pre-fix <code>App.tsx</code> the same spec fails.</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Replace <code>getNearbyPassages</code> arithmetic with <code>getNextVerse</code>, thread translation</td>
+<td><code>src/core/searchEngine.ts:144-160</code></td>
+<td><code>bibleNormalizer.test.ts</code>, <code>verseNavigation.test.ts</code>; add a <code>3a</code> case</td>
+<td><strong>Landed.</strong> <code>src/test/searchReference.test.ts</code> gained 2 cases (lettered <code>3</code>→<code>3a</code>→<code>3b</code>; non-contiguous <code>1,2,5</code>).</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Guard the three raw <code>localStorage</code> reads</td>
+<td><code>Projection.tsx:185</code>, <code>ContextualHint.tsx:20</code>, <code>OnboardingManager.tsx:24</code></td>
+<td><code>persistenceGuards.test.ts</code></td>
+<td><strong>Landed.</strong> <code>safeLocalGet</code> added to <code>safeStorage.ts</code>; <code>src/test/persistenceReadGuards.test.tsx</code> (4 tests, including an <code>OnboardingManager</code> boot with storage throwing).</td>
+</tr>
+</tbody></table>
+<h3>P1 — performance (one workstream; do them together)</h3>
+<table><thead><tr>
+<th>#</th>
+<th>Fix</th>
+<th>Files</th>
+</tr></thead><tbody>
+<tr>
+<td>7</td>
+<td>Hoist <code>resolveBookName(query)</code> out of the 66-book loop; memoise <code>resolveBookName</code></td>
+<td><code>src/core/autocomplete.ts:51</code>, <code>src/core/bibleRepository.ts:497</code></td>
+</tr>
+<tr>
+<td>8</td>
+<td>Debounce the query→results path (<strong>not</strong> key handling)</td>
+<td><code>src/components/operator/SearchInput.tsx</code>, <code>src/core/inputController.ts</code></td>
+</tr>
+<tr>
+<td>9</td>
+<td>Selector-based subscriptions for read-only consumers</td>
+<td>10 files, §4.4</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Convert fonts to WOFF2 + preload Autography</td>
+<td><code>public/fonts/</code>, <code>index.html</code>, <code>src/index.css</code></td>
+</tr>
+<tr>
+<td>11</td>
+<td>Binary-search / <code>ResizeObserver</code> the verse auto-fit</td>
+<td><code>src/pages/Projection.tsx:63-88</code></td>
+</tr>
+</tbody></table>
+<h3>P2 — hygiene (cheap, high signal)</h3>
+<table><thead><tr>
+<th>#</th>
+<th>Fix</th>
+<th>Files</th>
+</tr></thead><tbody>
+<tr>
+<td>12</td>
+<td>Turn on <code>noUnusedLocals</code>/<code>noUnusedParameters</code> + <code>no-unused-vars</code> to generate the dead-code list, then delete per §5.2</td>
+<td><code>tsconfig*.json</code>, <code>eslint.config.js</code></td>
+</tr>
+<tr>
+<td>13</td>
+<td>Delete unreachable <code>ui/*</code> files + their deps; remove <code>QueryClientProvider</code></td>
+<td><code>src/components/ui/</code> (40 files), <code>package.json</code>, <code>src/App.tsx:4,18</code></td>
+</tr>
+<tr>
+<td>14</td>
+<td>Delete <code>App.css</code>, <code>core/index.ts</code>, <code>example.test.ts</code>, <code>placeholder.svg</code>, <code>bun.lock</code>, <code>bun.lockb</code>, <code>lovable-tagger</code></td>
+<td>§6.5</td>
+</tr>
+<tr>
+<td>15</td>
+<td>Fix the 6 lint errors (<code>ui/*</code> deletions clear two of them)</td>
+<td>§6.2</td>
+</tr>
+<tr>
+<td>16</td>
+<td>Gate or delete the 11 <code>console.log</code>s</td>
+<td>§5.7</td>
+</tr>
+<tr>
+<td>17</td>
+<td>Update <code>docs/System Teardown.md</code> §5.12 to four menu items</td>
+<td><code>docs/System Teardown.md:381</code></td>
+</tr>
+<tr>
+<td>18</td>
+<td>Reconcile the SW <code>skipWaiting</code>/<code>claim</code> claim</td>
+<td><code>pwa/sw.js:82,93</code></td>
+</tr>
+<tr>
+<td>19</td>
+<td>Deduplicate the canon, the 3× preload block, the event literal</td>
+<td>§5.3</td>
+</tr>
+<tr>
+<td>20</td>
+<td>Raise <code>testTimeout</code>; split shell vs data precache</td>
+<td><code>vitest.config.ts</code>, <code>pwa/sw.js</code></td>
+</tr>
+</tbody></table>
+<h3>P3 — product</h3>
+<ol>
+<li>Fix the <code>MobileBlocker</code> copy vs the 768 px trigger (§7).</li>
+<li>Decide on the "Beta" badge (§7).</li>
+<li>Refresh <code>BibleNavigator</code> memos on translation change (§7).</li>
+<li><code>crypto.randomUUID()</code> for Service Plan ids (§7).</li>
+<li><code>Disallow: /</code> in <code>robots.txt</code> if the product is truly undistributed (§7).</li>
+</ol>
+<hr />
+<h2>10. Not verified / limitations</h2>
+<p>State these honestly if you cite this document.</p>
+<ol>
+<li>~~The e2e suite was not run.~~ <strong>Now run in full and green:</strong> <code>npm run test:e2e</code> → <strong>24 tests passed, exit 0, 2.0 m</strong> (all four specs, production build on :4174). Nothing had to be changed to get there — the suite simply had never been executed. <strong>This does not discharge §3.6.</strong> The audit suggested the offline spec could validate it, but reading that spec shows it tests an <em>offline reload</em> (server killed, assets served from cache), not a <em>mid-service deploy</em> swapping the worker under an open client — which is the behaviour §3.6 actually disputes (<code>skipWaiting</code>/<code>claim</code> vs the comment's promise). §3.6 remains <strong>unverified</strong> and still needs a purpose-built test.</li>
+<li><strong>No browser profiling.</strong> Every performance magnitude in §4 is reasoned from code (marked <strong>Inferred</strong>). To turn §4.1–§4.4 from structural claims into measurements: run the built app, open DevTools Performance, type a 6-character reference with a CPU throttle of 4×–6× (representative of the donated laptops in <code>PRODUCT.md</code>), and record Scripting time and long-task counts before/after each fix.</li>
+<li>~~No memory measurement of the §3.1 leak.~~ <strong>Now measured.</strong> <code>e2e/projection-hardening.spec.ts</code> instruments <code>URL.createObjectURL</code>/<code>revokeObjectURL</code> inside a real Chromium projection window, seeds two blobs into IndexedDB, then fires 5 <code>RELOAD_ASSETS</code> cycles: 12 URLs created, 10 revoked, the live set steady at 2 and peaking at 4. With the pre-fix code the same spec fails at 0 revocations. <strong>Not</strong> measured: process-level heap growth — the URL bookkeeping is the leak, and it is now provably bounded.</li>
+<li><strong>The §3.4 <code>strictNullChecks</code> narrowing mechanism is inferred</strong>, not proven experimentally. The 12 errors are verified; the <em>explanation</em> is the most likely cause.</li>
+<li><strong>The WOFF2 size estimate (~250–350 kB) is inferred</strong> from typical format compression, not measured by converting these specific fonts.</li>
+<li><strong>The e2e specs and <code>public/data/*.zip</code> contents were not opened.</strong> The ZIPs are protected (<code>AGENTS.md</code> §4) and out of audit scope; the earlier "~7.5 MB / 5 translations" figure comes from <code>PRODUCT.md</code>, not from measuring the files.</li>
+<li><strong><code>AutoFitVerse</code> reflow count (~28 per verse change) is computed</strong> from the 72→16 px range at a 2 px step, assuming the loop runs to completion. Real counts depend on content.</li>
+<li><strong>No dead-code analysis tool was run</strong> (no <code>knip</code>/<code>ts-prune</code>). §5's list comes from targeted greps — thorough for the symbols named, not exhaustive. Turning on <code>noUnusedLocals</code> (fix #12) will find more.</li>
+</ol>
+<hr />
+<h2>Appendix A — file inventory established during this audit</h2>
+<ul>
+<li><strong><code>src/components/ui/</code>:</strong> 49 files; ~9 reachable.</li>
+<li><strong><code>public/fonts/</code>:</strong> 7 files, 1,012,960 B, all TTF/OTF.</li>
+<li><strong>Lockfiles:</strong> <code>bun.lock</code>, <code>bun.lockb</code>, <code>package-lock.json</code>, <code>skills-lock.json</code>.</li>
+<li><strong><code>src/test/</code>:</strong> 25 test files + <code>setup.ts</code> + <code>fakeBroadcastChannel.ts</code>.</li>
+<li><strong><code>e2e/</code>:</strong> <code>liquid-glass.spec.ts</code>, <code>offline-and-worker.spec.ts</code>, <code>theme-boot.spec.ts</code>, <code>projection-hardening.spec.ts</code> (added post-audit), <code>helpers/</code>, <code>global-teardown.ts</code>.</li>
+<li><strong><code>dist/assets/</code> (last build):</strong> <code>index-utF3gnt7.js</code> (622,187 B), <code>index-DDFCE-Uc.css</code> (83,158 B), <code>bibleDecodeWorker-DLIZoEGG.js</code> (99,473 B).</li>
+<li><strong><code>src/core/</code>:</strong> <code>assetStorage, autocomplete, bibleCache, bibleDecodeClient, bibleDecodeWorker, bibleNormalizer, bibleRepository, broadcastSync, index, inputController, operatorLease, projectionRecovery, safeStorage, searchEngine, shortcutRegistry, stateManager, translationMetadata, types</code>.</li>
+</ul>
+<h2>Appendix B — <code>AGENTS.md</code> constraints that bind any fix in §9</h2>
+<ul>
+<li><strong>Read first:</strong> <code>docs/MCD.md</code>, <code>docs/RELIABILITY &amp;amp; INVARIANT SPECIFICATION.md</code>, <code>docs/CONSTRAINTS.md</code>, <code>docs/VERIFICATION-RULES.md</code>, <code>docs/System Teardown.md</code>, <code>docs/ARCHITECTURE.md</code>.</li>
+<li><strong>Never violate:</strong> VF-001 verbatim scripture · VF-002 no translation fallback · VF-003 no verse arithmetic (§3.3) · VF-004 projection window is read-only · VF-005 guard localStorage (§3.5) · VP-004 offline-first, only <code>fetch('/data/*.zip')</code> · one commit funnel through <code>projectSlide</code>.</li>
+<li><strong>Protected files (VF-100):</strong> <code>src/core/bibleNormalizer.ts</code>, <code>src/core/broadcastSync.ts</code>, <code>src/core/types.ts</code> — change only with explicit justification in the task prompt. <strong>(Relevant to fixes #15 and #18, both of which touch <code>broadcastSync.ts</code> / <code>pwa/sw.js</code>.)</strong></li>
+<li><strong>Never modify (VF-101):</strong> <code>docs/ARCHITECTURE.md</code>, <code>docs/CONSTRAINTS.md</code>, <code>docs/DEVELOPMENT.md</code>, <code>docs/VERIFICATION-RULES.md</code>; and <code>public/data/*.zip</code>.</li>
+<li><strong>Expected to keep current (RI-053):</strong> <code>docs/System Teardown.md</code> — hence fix #17.</li>
+<li><strong>Every task ends with a completion report</strong> (MCD §26, Phase H): what changed and why, files touched, invariants affected, tests added, verification results, known limitations, teardown sections updated, new debt, decisions to preserve.</li>
+</ul>
+</main></body></html>

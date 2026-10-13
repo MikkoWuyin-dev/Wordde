@@ -26,7 +26,12 @@ Plan → Prompt → Verify → Review → Test → Commit. Make the **smallest c
 - Stack: React 18 + Vite + TypeScript + Zustand + Tailwind/shadcn. No backend, no env files, offline-first.
 - Desktop-only (the operator app refuses to render below 768 px).
 - Run: `npm install --no-audit --no-fund`, then `npm run dev` (serves on **port 8080**).
-- Checks that must all pass before you call a task done: `npx tsc --noEmit`, `npm test`, `npm run build`.
+- Checks that must all pass before you call a task done: `npm run typecheck`, `npm test`, `npm run build`.
+
+> **`npm run typecheck` is `tsc -b` — never `npx tsc --noEmit`.** The root `tsconfig.json` sets
+> `"files": []` and only lists project references, so plain `tsc --noEmit` compiles **zero files**
+> and exits `0` no matter what — it is a gate that cannot fail. `npm run typecheck` is the real
+> check. It writes `*.tsbuildinfo` to the repo root (gitignored) and a **cold** run takes minutes.
 
 ## 3. Hard rules (ordered by how easily they get violated)
 

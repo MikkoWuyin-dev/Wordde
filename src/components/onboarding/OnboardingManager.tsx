@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { safeLocalSet, safeLocalRemove } from '@/core/safeStorage';
+import { safeLocalGet, safeLocalSet, safeLocalRemove } from '@/core/safeStorage';
 import { WelcomeSlides } from './WelcomeSlides';
 import { TutorialOverlay } from './TutorialOverlay';
 import { clearAllHints } from './ContextualHint';
@@ -20,7 +20,8 @@ export function OnboardingManager() {
   const [phase, setPhase] = useState<Phase>('done');
 
   useEffect(() => {
-    const onboarded = localStorage.getItem(STORAGE_KEY);
+    // Guarded read (VF-005): a throw here would blank the operator UI on boot.
+    const onboarded = safeLocalGet(STORAGE_KEY);
     if (!onboarded) {
       setPhase('welcome');
     }

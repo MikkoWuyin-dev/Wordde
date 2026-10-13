@@ -1,16 +1,31 @@
 /**
- * Never-throwing localStorage write helpers (RI-022 / RI-043 / RI-045 / RI-059).
+ * Never-throwing localStorage helpers (RI-022 / RI-043 / RI-045 / RI-059).
  *
- * `localStorage.setItem`/`removeItem` can throw — quota exceeded, Safari
- * private mode, storage disabled. A thrown write inside an operator action
- * would break a live service, so every persistence write goes through these
- * helpers: they warn (with the key, for diagnosability) and report failure
- * instead of throwing.
+ * `localStorage.getItem`/`setItem`/`removeItem` can throw — quota exceeded,
+ * Safari private mode, storage disabled (the browser may also throw on *read*,
+ * e.g. `SecurityError` when storage is blocked). A throw on the boot or
+ * projection path would blank a live service, so every access goes through
+ * these helpers: they warn (with the key, for diagnosability) and report
+ * failure instead of throwing.
  *
  * In-memory state must always be updated independently of these calls; they
  * only make the disk write best-effort, preserving last-known-good state on
  * disk when a write fails.
  */
+
+/**
+ * Read from localStorage without ever throwing. Returns null when the value is
+ * absent **or** when storage is unavailable. A null here must be treated as
+ * "no persisted state" — never as a reason to abort the caller.
+ */
+export function safeLocalGet(key: string): string | null {
+  try {
+    return localStorage.getItem(key);
+  } catch (error) {
+    console.warn(`[safeStorage] Failed to read "${key}":`, error);
+    return null;
+  }
+}
 
 /** Write to localStorage without ever throwing. Returns true on success. */
 export function safeLocalSet(key: string, value: string): boolean {

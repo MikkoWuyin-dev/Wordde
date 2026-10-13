@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# TypeScript incremental build info (tsc -b / project references)
+*.tsbuildinfo
+
 # Playwright artifacts (e2e)
 test-results
 playwright-report

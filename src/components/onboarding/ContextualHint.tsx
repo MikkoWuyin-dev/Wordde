@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { safeLocalSet, safeLocalRemove } from '@/core/safeStorage';
+import { safeLocalGet, safeLocalSet, safeLocalRemove } from '@/core/safeStorage';
 import { cn } from '@/lib/utils';
 
 const HINT_PREFIX = 'hint_seen_';
@@ -15,7 +15,8 @@ interface ContextualHintProps {
 }
 
 function hasSeenHint(id: HintId): boolean {
-  return localStorage.getItem(HINT_PREFIX + id) === 'true';
+  // Guarded read: storage may be unavailable (VF-005 / RI-022). Absent ⇒ not seen.
+  return safeLocalGet(HINT_PREFIX + id) === 'true';
 }
 
 function markHintSeen(id: HintId) {

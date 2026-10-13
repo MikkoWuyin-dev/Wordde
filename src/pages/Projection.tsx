@@ -3,6 +3,7 @@ import { onBroadcastMessage, requestCurrentState, broadcastHeartbeat, broadcastP
 import type { BlankSettings, SessionScreen } from '@/core/broadcastSync';
 import type { Passage } from '@/core/types';
 import { loadAllAssets } from '@/core/assetStorage';
+import { safeLocalGet } from '@/core/safeStorage';
 import { getTranslationDisplayName } from '@/core/translationMetadata';
 
 function BlankOverlay({ settings, assetUrls }: { settings: BlankSettings; assetUrls: Record<string, string> }) {
@@ -151,6 +152,49 @@ const Projection = () => {
   const [assetUrls, setAssetUrls] = useState<Record<string, string>>({});
   const [cursorIdle, setCursorIdle] = useState(false);
 
+  // The live asset map, mirrored in a ref. `loadAllAssets()` allocates a fresh
+  // object URL per asset on every call and the caller owns revocation
+  // (assetStorage.ts contract). The broadcast listener below mounts once, so a
+  // closure over `assetUrls` would only ever see the initial `{}` — the revoke
+  // loop was provably a no-op and every RELOAD_ASSETS orphaned the previous
+  // set. Reading the ref keeps the listener stable while revoking the *current*
+  // URLs. Do not "simplify" this by adding `assetUrls` to the effect deps: that
+  // re-subscribes the broadcast channel on every asset change.
+  const assetUrlsRef = useRef<Record<string, string>>({});
+
+  const revokeAssetUrls = useCallback((urls: Record<string, string>) => {
+    Object.values(urls).forEach((url) => {
+      if (url) URL.revokeObjectURL(url);
+    });
+  }, []);
+
+  /** Install a freshly loaded map, revoking whatever it replaces. */
+  const installAssetUrls = useCallback(
+    (next: Record<string, string>) => {
+      revokeAssetUrls(assetUrlsRef.current);
+      assetUrlsRef.current = next;
+      setAssetUrls(next);
+    },
+    [revokeAssetUrls],
+  );
+
+  /**
+   * (Re)load every asset. `isCancelled` lets the mount effect drop a load that
+   * resolves after unmount — the orphaned URLs are revoked rather than installed.
+   */
+  const refreshAssetUrls = useCallback(
+    (isCancelled?: () => boolean) => {
+      loadAllAssets().then((next) => {
+        if (isCancelled?.()) {
+          revokeAssetUrls(next);
+          return;
+        }
+        installAssetUrls(next);
+      });
+    },
+    [installAssetUrls, revokeAssetUrls],
+  );
+
   // Hide the cursor only after it has been idle for a moment. A static
   // `cursor-none` swallowed the cursor during scrolling and made the screen
   // unusable with a mouse; this keeps it visible while in use.
@@ -180,9 +224,10 @@ const Projection = () => {
   // Load persisted state immediately on mount (refresh-safe)
   useEffect(() => {
     console.log('Projection tab loaded');
-    loadAllAssets().then(setAssetUrls);
+    let cancelled = false;
+    refreshAssetUrls(() => cancelled);
 
-    const saved = localStorage.getItem('currentProjection');
+    const saved = safeLocalGet('currentProjection');
     console.log('Loaded from localStorage:', saved);
 
     if (saved) {
@@ -206,8 +251,14 @@ const Projection = () => {
     }
 
     const timer = setTimeout(() => setShowHint(false), 5000);
-    return () => clearTimeout(timer);
-  }, []);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+      // Closing the window must not strand the blob URLs it allocated.
+      revokeAssetUrls(assetUrlsRef.current);
+      assetUrlsRef.current = {};
+    };
+  }, [refreshAssetUrls, revokeAssetUrls]);
 
   // Heartbeat + announce ready
   useEffect(() => {
@@ -245,8 +296,7 @@ const Projection = () => {
         setIsBlanked(msg.isBlanked);
         if (msg.blankSettings) setBlankSettings(msg.blankSettings);
       } else if (msg.type === 'RELOAD_ASSETS') {
-        Object.values(assetUrls).forEach(u => { if (u) URL.revokeObjectURL(u); });
-        loadAllAssets().then(setAssetUrls);
+        refreshAssetUrls();
       }
     });
 
@@ -255,7 +305,7 @@ const Projection = () => {
       if (channel.onmessage === broadcastLogger) channel.onmessage = null;
       unsub();
     };
-  }, []);
+  }, [refreshAssetUrls]);
 
   return (
     <div

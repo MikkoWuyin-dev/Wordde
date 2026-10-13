@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>START HERE — Wordde audit remediation</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { margin: 0; background: #f7f7f8; color: #16181d;
+         font: 15px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 980px; margin: 0 auto; padding: 40px 24px 96px; }
+  h1 { font-size: 1.9em; line-height: 1.25; margin: 0 0 .6em; letter-spacing: -.01em; }
+  h2 { font-size: 1.35em; margin: 2.2em 0 .5em; padding-bottom: .3em;
+       border-bottom: 1px solid #e3e5ea; letter-spacing: -.005em; }
+  h3 { font-size: 1.1em; margin: 1.8em 0 .4em; }
+  p { margin: .7em 0; }
+  a { color: #1f66d0; }
+  code { background: #eceef2; border-radius: 4px; padding: .12em .38em;
+         font: .88em/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  pre { background: #16181d; color: #e8eaee; border-radius: 8px; padding: 14px 16px;
+        overflow-x: auto; font-size: 12.5px; line-height: 1.55; }
+  pre code { background: none; color: inherit; padding: 0; font-size: inherit; }
+  blockquote { margin: 1.1em 0; padding: .55em 1em; background: #fff6e0;
+               border-left: 4px solid #e0a92b; border-radius: 0 6px 6px 0; }
+  blockquote p { margin: 0; }
+  table { border-collapse: collapse; width: 100%; margin: 1.1em 0; font-size: .94em; }
+  th, td { border: 1px solid #dfe2e8; padding: 7px 10px; text-align: left; vertical-align: top; }
+  th { background: #eef0f4; font-weight: 600; }
+  tbody tr:nth-child(even) { background: #fafbfc; }
+  hr { border: 0; border-top: 1px solid #e3e5ea; margin: 2.4em 0; }
+  ul, ol { padding-left: 1.5em; }
+  li { margin: .3em 0; }
+  @media (prefers-color-scheme: dark) {
+    body { background: #0d0f13; color: #e4e7ec; }
+    h2, hr { border-color: #262a33; }
+    code { background: #22262e; }
+    th, td { border-color: #2a2f39; }
+    th { background: #1b1f27; }
+    tbody tr:nth-child(even) { background: #141821; }
+    a { color: #6aa8ff; }
+    blockquote { background: #241f10; }
+  }
+</style></head>
+<body><main>
+<h1>START HERE — Wordde audit remediation</h1>
+<p>**Read this first. It is the entry point to the audit; the detail lives in</p>
+<p><a href="Wordde_Audit_Handoff_2026-10-13.md">Wordde_Audit_Handoff_2026-10-13.md</a>.**</p>
+<p>You are a coding agent picking up remediation work on the Wordde codebase from a completed</p>
+<p>read-only audit (2026-10-13, branch <code>main</code>). This file tells you what to read, what to check</p>
+<p>before you touch anything, the order to work in, and the three things in this repo that will</p>
+<p>mislead you if nobody warns you.</p>
+<blockquote><strong>Current status (updated 2026-10-13, after remediation).</strong> The <strong>P0 correctness block — audit fixes #1–#6 — is landed but uncommitted.</strong> <code>npm run typecheck</code> exits 0, <code>npm run lint</code> is at <strong>6 errors / 14 warnings</strong>, <code>npx vitest run</code> is <strong>27 files / 224 tests passing</strong>, and <code>npx vite build</code> exits 0. Start from <strong>P1</strong> in the audit's §9 work queue. <strong>Trap 1 below is resolved</strong> and kept only as history; traps 2 and 3 still apply (lint is still red, tests are still green). The audit's §9 table carries a per-fix status column.</blockquote>
+<hr />
+<h2>0. Your first 30 minutes</h2>
+<p>Read in this order. Do not skip step 1 — the repo's own contract requires it.</p>
+<ol>
+<li><strong><code>../AGENTS.md</code></strong> — the durable contract. §0 lists six documents you must read before writing</li>
+</ol>
+<p>   any code (<code>MCD.md</code>, <code>RELIABILITY &amp;amp; INVARIANT SPECIFICATION.md</code>, <code>CONSTRAINTS.md</code>,</p>
+<p>   <code>VERIFICATION-RULES.md</code>, <code>System Teardown.md</code>, <code>ARCHITECTURE.md</code>). §3 lists the hard rules,</p>
+<p>   §4 the protected files, §5 the completion report every task must end with.</p>
+<ol>
+<li><strong><code>Wordde_Audit_Handoff_2026-10-13.md</code> §0 → §2.</strong> Four minutes. §0 tells you about the trap in</li>
+</ol>
+<p>   §3 below; §2 is the raw evidence log.</p>
+<ol>
+<li><strong><code>Wordde_Audit_Handoff_2026-10-13.md</code> §8 (decisions) and §10 (limitations)</strong> — so you know</li>
+</ol>
+<p>   which findings are <em>proven</em> and which are <em>reasoned</em>. Fixes #7–#11 rest on structural</p>
+<p>   reasoning, not measurement.</p>
+<p>Everything after that is reference. §9 is the work queue; §3–§7 are the findings with <code>file:line</code>.</p>
+<hr />
+<h2>1. The three traps — all of them will mislead you</h2>
+<h3>Trap 1 — the typecheck in <code>AGENTS.md</code> cannot fail — <strong>RESOLVED (fix #1/#2)</strong></h3>
+<blockquote>This is history. <code>package.json</code> now defines <code>"typecheck": "tsc -b"</code>, <code>.gitignore</code> covers <code>*.tsbuildinfo</code>, <code>AGENTS.md</code> §2 mandates <code>npm run typecheck</code>, and the 12 errors are fixed. It is kept because it explains why the rest of the audit was written against a gate that looked green.</blockquote>
+<p><code>npx tsc --noEmit</code> exits <strong>0</strong>. It is a <strong>no-op</strong>: the root <code>tsconfig.json</code> sets <code>"files": []</code> and</p>
+<p>only lists project references, so non-build mode compiles <em>zero files</em>.</p>
+<blockquote><strong>The real check is <code>npx tsc -b</code>. On a clean checkout it exits 2 with 12 genuine errors.</strong></blockquote>
+<p>Two operational notes, both observed directly:</p>
+<ul>
+<li>It writes <code>tsconfig.app.tsbuildinfo</code> and <code>tsconfig.node.tsbuildinfo</code> to the repo root, and</li>
+</ul>
+<p>  <code>.gitignore</code> does <strong>not</strong> cover them (<code>git check-ignore</code> confirms). Add a <code>*.tsbuildinfo</code> rule</p>
+<p>  before adopting this gate. <code>--noEmit</code> does <strong>not</strong> avoid this.</p>
+<ul>
+<li>A <strong>cold</strong> run takes minutes (it exceeded a 240 s budget during the audit). That cost is</li>
+</ul>
+<p>  plausibly why the no-op went unnoticed. Think before wiring it into a pre-commit hook.</p>
+<h3>Trap 2 — lint is already red</h3>
+<p><code>npm run lint</code> exits <strong>1</strong> with <strong>6 errors and 14 warnings</strong>. That is the <em>starting</em> state, not</p>
+<p>something you broke. (The <code>react-hooks/exhaustive-deps</code> warning on <code>Projection.tsx:258</code> was the</p>
+<p>codebase's most serious bug — audit fix #3 — and is now <strong>gone</strong>; the remaining 6 errors are</p>
+<p>fix #15.) Do not silence what is left.</p>
+<h3>Trap 3 — the tests are already green</h3>
+<p><code>npx vitest run</code> exits <strong>0</strong> with <strong>27 files, 224/224 passing</strong>, ~27 s. If you see red, you caused</p>
+<p>it. (An earlier audit run showed one flake; it is load-sensitivity — <code>vitest.config.ts</code> sets no</p>
+<p><code>testTimeout</code> against Vitest's 5 s default — not a broken test. If it reappears, raise the timeout;</p>
+<p>do not weaken the assertion.)</p>
+<hr />
+<h2>2. Pin the baseline before you change a line</h2>
+<p>Record all five so you can prove what you moved:</p>
+<table><thead><tr>
+<th>Command</th>
+<th>Expected on a clean checkout</th>
+</tr></thead><tbody>
+<tr>
+<td><code>npm run typecheck</code> (<code>tsc -b</code>)</td>
+<td><strong>exit 0</strong> — the 12 errors are fixed (was exit 2 / 12 errors before #1–#2)</td>
+</tr>
+<tr>
+<td><code>npx eslint .</code></td>
+<td><strong>exit 1</strong> — 6 errors, 14 warnings</td>
+</tr>
+<tr>
+<td><code>npx vitest run</code></td>
+<td><strong>exit 0</strong> — 27 files, 224/224, ~27 s</td>
+</tr>
+<tr>
+<td><code>npx vite build</code></td>
+<td><strong>exit 0</strong> — one <code>index-*.js</code> ≈ 624 kB, plus a chunk-size warning</td>
+</tr>
+<tr>
+<td><code>git status --short</code></td>
+<td>modified app/test/doc files from the P0 fixes, plus the untracked new <code>docs/</code> and <code>scripts/</code></td>
+</tr>
+</tbody></table>
+<p>Report these five results <em>before</em> your first change.</p>
+<hr />
+<h2>3. Work order</h2>
+<p>Work the P0 block first, <strong>one fix per branch</strong>, in the numbered order from</p>
+<p><code>Wordde_Audit_Handoff_2026-10-13.md</code> §9. Each row there carries its own verification command —</p>
+<p>use it, don't invent one.</p>
+<h3>Start here: ~~fix #1 before anything else~~ — <strong>DONE; begin at P1</strong></h3>
+<p>~~Add a real <code>typecheck</code> script (and a <code>*.tsbuildinfo</code> ignore rule) and make it the mandated</p>
+<p>check.~~ Landed. The reasoning is kept because it still governs #12: a real <code>tsc -b</code> gate now</p>
+<p>exists (and the 12 errors behind it are fixed), so #12's "turn the strict flags on and let the</p>
+<p>compiler find the dead code" is now safe to do — it was not before.</p>
+<h3>The P0 block (correctness) — <strong>all six landed</strong></h3>
+<p>The rows below are complete; the audit's §9 table records each fix's status and evidence.</p>
+<table><thead><tr>
+<th>#</th>
+<th>Fix</th>
+<th>Verified by</th>
+</tr></thead><tbody>
+<tr>
+<td>1</td>
+<td>Real <code>typecheck</code> script + ignore rule + update <code>AGENTS.md</code> §2</td>
+<td><code>npm run typecheck</code> now fails, then fix the 12 errors</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Fix the 12 errors the real check uncovers</td>
+<td><code>npx tsc -b</code> → exit 0</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Object-URL stale closure in the projection window + unmount revoke</td>
+<td>the lint warning at <code>Projection.tsx:258</code> disappears</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Error boundaries for the operator and projection routes separately</td>
+<td>throw deliberately in a child; the other route must survive</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Replace <code>getNearbyPassages</code> verse arithmetic with <code>getNextVerse</code>; thread the translation</td>
+<td><code>bibleNormalizer.test.ts</code>, <code>verseNavigation.test.ts</code>; add a <code>3a</code> case</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Guard the three raw <code>localStorage</code> reads</td>
+<td><code>persistenceGuards.test.ts</code></td>
+</tr>
+</tbody></table>
+<p>Then P1 (performance), P2 (hygiene), P3 (product) — §9 of the audit, with file targets and effort.</p>
+<hr />
+<h2>4. Guardrails</h2>
+<h3>Re-verify each finding before you fix it</h3>
+<p>The audit is a <strong>snapshot</strong> on <code>main</code> at a point in time. It is evidence-based, but the audit</p>
+<p>itself already caught one of its own earlier claims being wrong (a phantom set of root residue</p>
+<p>files). Treat §3–§7 as strong leads with precise citations, not gospel. Confirming one takes</p>
+<p>seconds; the citations are exact enough to check.</p>
+<h3>Protected files — get permission, don't ask forgiveness</h3>
+<p><code>AGENTS.md</code> §4 / VF-100: **<code>src/core/bibleNormalizer.ts</code>, <code>src/core/broadcastSync.ts</code>,</p>
+<p><code>src/core/types.ts</code>** are protected. Change only with explicit justification in the task prompt.</p>
+<p><strong>Two planned fixes hit protected ground:</strong> fix #15 (the two <code>no-empty</code> errors are in</p>
+<p><code>broadcastSync.ts</code>) and fix #18 (the <code>pwa/sw.js</code> mid-service guarantee). Flag the conflict</p>
+<p><em>before</em> editing, or surface it instead of proceeding.</p>
+<p>Never edit (VF-101): <code>docs/ARCHITECTURE.md</code>, <code>CONSTRAINTS.md</code>, <code>DEVELOPMENT.md</code>,</p>
+<p><code>VERIFICATION-RULES.md</code>, and <code>public/data/*.zip</code>.</p>
+<p>Expected to keep current (RI-053): <strong><code>System Teardown.md</code></strong> — fix #17 exists because its §5.12</p>
+<p>still says the settings menu has "exactly three items" when the code and its own test say four.</p>
+<h3>Do NOT "fix" these — each looks like a smell and is load-bearing</h3>
+<ul>
+<li><strong>The 3 s <code>broadcastSync</code> interval</strong> in <code>../src/components/operator/ProjectionControl.tsx</code>. That</li>
+</ul>
+<p>  is the self-healing re-assertion (Teardown §5). Removing it removes dropped-message recovery.</p>
+<ul>
+<li><strong>The search field's key handling.</strong> Fix #8's debounce must wrap the <em>query → results</em></li>
+</ul>
+<p>  computation, never the arrow / Enter / Escape path. Two shipped defects are documented in</p>
+<p>  Teardown §5.11 for exactly this: Escape must always forward, and every commit must release</p>
+<p>  focus. Run <code>../src/test/searchInputKeys.test.tsx</code> and <code>keyboardShortcut.test.tsx</code> after any</p>
+<p>  change here.</p>
+<ul>
+<li><strong><code>globalTeardown</code> in <code>playwright.config.ts</code>.</strong> It exists because the e2e suite leaks a process</li>
+</ul>
+<p>  holding port :4174.</p>
+<ul>
+<li><strong>Fix #3's tempting shortcut:</strong> adding <code>assetUrls</code> to the effect's dependency array silences the</li>
+</ul>
+<p>  lint warning and makes the leak worse (it re-subscribes the broadcast channel on every asset</p>
+<p>  change). Use a ref.</p>
+<h3>Also don't do this</h3>
+<ul>
+<li>No opportunistic cleanup in the same commit as a fix — "smallest coherent change" is the repo's</li>
+</ul>
+<p>  own golden rule (<code>DEVELOPMENT.md</code> §2).</p>
+<ul>
+<li>Don't run <code>npm run test:e2e</code> casually: it runs <code>vite build &amp;amp;&amp;amp; vite preview</code> on :4174 with a</li>
+</ul>
+<p>  180 s per-spec budget. It is currently <strong>unrun</strong> and is the only way to verify the service-worker</p>
+<p>  finding (#18) — see §6.</p>
+<hr />
+<h2>5. Definition of done</h2>
+<p><code>AGENTS.md</code> §5 (MCD §26, Phase H). Per fix:</p>
+<ol>
+<li>The fix's own verification command from §9 passes.</li>
+<li>The affected tests are re-run <strong>after</strong> the edit — a green suite from before your change proves</li>
+</ol>
+<p>   nothing about it.</p>
+<ol>
+<li><code>System Teardown.md</code> updated wherever your change altered implementation reality (RI-053).</li>
+<li>The Phase H completion report: what changed and why; files added/modified/deleted; invariants</li>
+</ol>
+<p>   affected; tests added/modified; <code>tsc</code> / <code>test</code> / <code>build</code> results; known limitations; teardown</p>
+<p>   sections updated; new technical debt; decisions future agents must preserve.</p>
+<ol>
+<li>As you land fixes, mark them in <code>Wordde_Audit_Handoff_2026-10-13.md</code> §9 so the audit stays</li>
+</ol>
+<p>   alive as a tracker instead of decaying into a stale document.</p>
+<hr />
+<h2>6. Known blockers and open limitations</h2>
+<ul>
+<li>~~The e2e suite has never been run.~~ <strong>Now run in full and green:</strong> <code>npm run test:e2e</code> →</li>
+</ul>
+<p>  24 tests, exit 0, 2.0 m (four specs, production build). <code>e2e/projection-hardening.spec.ts</code> is new</p>
+<p>  and proves #3's revoke and #4's containment in a real Chromium.</p>
+<ul>
+<li><strong>But green e2e does not close #18.</strong> No spec exercises a <em>mid-service deploy</em> swapping the</li>
+</ul>
+<p>  service worker under an open client — the offline spec tests an offline reload instead. The</p>
+<p>  <code>skipWaiting</code>/<code>claim</code> claim in <code>pwa/sw.js</code> is still unverified, and fix #18 is where "not</p>
+<p>  verified" becomes a real blocker rather than a footnote.</p>
+<ul>
+<li><strong>The performance findings (#7–#11) are structural, not measured.</strong> No browser profiling was</li>
+</ul>
+<p>  done. To turn them into numbers: run the built app, throttle CPU 4×–6× (representative of the</p>
+<p>  donated laptops named in <code>PRODUCT.md</code>), type a six-character reference, and record scripting time</p>
+<p>  and long-task counts before and after each fix.</p>
+<ul>
+<li><strong>The §3.1 memory leak is proven at the code level but its growth rate is unmeasured.</strong> To</li>
+</ul>
+<p>  measure: open the projection window, trigger N asset reloads, and count live blob URLs.</p>
+<ul>
+<li><strong>The <code>strictNullChecks</code> explanation for the <code>bibleDecodeClient.ts:59</code> error is inferred.</strong> The</li>
+</ul>
+<p>  error is verified; the mechanism is the most likely cause.</p>
+<ul>
+<li><code>Wordde_Audit_Handoff_2026-10-13.md</code> §10 holds the full list — read it before citing the audit</li>
+</ul>
+<p>  as authority on anything.</p>
+<hr />
+<h2>7. Where the detail lives</h2>
+<table><thead><tr>
+<th>You need</th>
+<th>Read</th>
+</tr></thead><tbody>
+<tr>
+<td>The work queue with effort and file targets</td>
+<td><a href="Wordde_Audit_Handoff_2026-10-13.md">Wordde_Audit_Handoff_2026-10-13.md</a> §9</td>
+</tr>
+<tr>
+<td>Evidence for a specific finding</td>
+<td>that doc, §3–§7 (each cites <code>file:line</code>)</td>
+</tr>
+<tr>
+<td>What was and wasn't proven</td>
+<td>that doc §8 and §10</td>
+</tr>
+<tr>
+<td>The earlier independent audit + corrections</td>
+<td><a href="Wordde_Codebase_Audit_2026-10-13.md">Wordde_Codebase_Audit_2026-10-13.md</a></td>
+</tr>
+<tr>
+<td>The repo's rules and invariants</td>
+<td><code>../AGENTS.md</code>, then the six documents it lists in §0</td>
+</tr>
+</tbody></table>
+</main></body></html>

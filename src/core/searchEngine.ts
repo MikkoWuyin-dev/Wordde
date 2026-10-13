@@ -142,20 +142,26 @@ class SearchEngineClass {
    */
   private getNearbyPassages(basePassage: Passage, count: number): Passage[] {
     const results: Passage[] = [];
-    const { book, chapter, verseStart } = basePassage.reference;
-    const verses = BibleRepository.getVerses(book, chapter);
-    const startNum = parseInt(verseStart, 10);
+    const { book, chapter, verseStart, translation } = basePassage.reference;
 
-    for (let i = 1; i <= count; i++) {
-      const nextVerseNum = String(startNum + i);
-      const verse = verses.find(v => v.verse === nextVerseNum);
-      if (verse) {
-        const passage = BibleRepository.getPassage({
-          book, chapter, verseStart: nextVerseNum,
-          translation: basePassage.reference.translation,
-        });
-        if (passage) results.push(passage);
-      }
+    // VF-003: never derive a verse key arithmetically. `parseInt('3a') + 1`
+    // silently skips the real '3b' key and mis-orders lettered passages, and
+    // the previous version also read the chapter without the translation the
+    // search ran under. Walk the normalized chapter order with the same
+    // primitive stateManager uses for queue pre-load, threading the reference's
+    // translation through every read so both reads agree mid-flight.
+    let currentVerse = verseStart;
+    for (let i = 0; i < count; i++) {
+      const next = BibleRepository.getNextVerse(book, chapter, currentVerse, translation);
+      if (!next) break;
+      const passage = BibleRepository.getPassage({
+        book: next.book,
+        chapter: next.chapter,
+        verseStart: next.verse,
+        translation,
+      });
+      if (passage) results.push(passage);
+      currentVerse = next.verse;
     }
 
     return results;

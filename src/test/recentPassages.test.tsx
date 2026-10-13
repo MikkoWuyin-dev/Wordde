@@ -67,7 +67,15 @@ const book = (name: string, chapter: string, verses: string[]): BibleBook => ({
   ],
 });
 
-function setStore(partial: Parameters<typeof useStateManager.setState>[0]) {
+/**
+ * Zustand's `setState` is an overloaded union (`SetStateInternal<T>`); the
+ * `replace: true` overload is declared LAST, so `Parameters<typeof setState>[0]`
+ * resolves to the whole-state form and every partial fixture below is rejected.
+ * Derive the partial shape from the store's own state type instead.
+ */
+type StoreState = ReturnType<typeof useStateManager.getState>;
+
+function setStore(partial: Partial<StoreState>) {
   useStateManager.setState(partial);
 }
 

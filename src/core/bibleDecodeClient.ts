@@ -51,12 +51,23 @@ export function decodeViaWorker(
     worker.onmessage = (event: MessageEvent<DecodeResponse>) => {
       finish();
       const data = event.data;
-      if (data && data.ok) {
+      if (!data) {
+        reject(new Error('Decode worker returned an empty response'));
+        return;
+      }
+      // Discriminate on property presence, NOT on the `ok` discriminant. This
+      // project compiles with `strictNullChecks: false`, under which a
+      // truthiness check on `ok` does not narrow the union — both `data.ok`
+      // and `data?.error` fail to typecheck (TS2339). The `in` operator does
+      // narrow, so it is the load-bearing form here; do not "simplify" it back.
+      if ('books' in data) {
         // Same keep-first Map rebuild the main-thread decoder applies, so
         // insertion (traversal) order is identical across tiers.
         resolve({ booksMap: booksArrayToMap(data.books), metadata: data.metadata });
+      } else if ('error' in data) {
+        reject(new Error(data.error || 'Unknown decode worker error'));
       } else {
-        reject(new Error(data?.error || 'Unknown decode worker error'));
+        reject(new Error('Unknown decode worker error'));
       }
     };
 
