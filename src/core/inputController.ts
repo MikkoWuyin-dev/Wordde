@@ -6,7 +6,6 @@ import { useCallback, useEffect, useRef } from 'react';
 import { useStateManager } from './stateManager';
 import { SearchEngine } from './searchEngine';
 import {
-  ADVERTISED_SHORTCUTS,
   HELP_TOGGLE_EVENT,
   INPUT_PASS_THROUGH_KEYS,
   NEXT_SERVICE_PLAN_EVENT,
@@ -151,7 +150,6 @@ export function useGlobalKeyboard() {
   const {
     clearPreview,
     commitCurrentSlide,
-    projectionQueue,
     slideNext,
     slidePrevious,
     loadChapterAsQueue,

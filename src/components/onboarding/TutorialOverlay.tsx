@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { X, CheckCircle2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { useStateManager } from '@/core/stateManager';
 
 interface TutorialStep {

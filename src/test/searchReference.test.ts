@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { BibleRepository } from '@/core/bibleRepository';
 import { SearchEngine } from '@/core/searchEngine';
-import type { BibleBook, Passage, SearchResult } from '@/core/types';
+import type { BibleBook } from '@/core/types';
 
 /** Create a test book with given chapters/verses */
 const book = (name: string, chapters: Record<string, string[]>): BibleBook => ({
@@ -325,9 +325,8 @@ describe('Book abbreviation resolution', () => {
     installFixture('TEST', [
       book('Genesis', { '1': ['1'] }),
     ]);
-    // 'g' is only 1 char, should not match
-    const results = BibleRepository.searchByReference('g 1:1');
-    // May or may not match depending on contains logic, but shouldn't crash
+    // 'g' is only 1 char, so it should not match. It may or may not resolve
+    // depending on the contains logic, but it must never crash.
     expect(() => BibleRepository.searchByReference('g 1:1')).not.toThrow();
   });
 

@@ -42,8 +42,13 @@ function Calendar({ className, classNames, showOutsideDays = true, ...props }: C
         ...classNames,
       }}
       components={{
-        IconLeft: ({ ..._props }) => <ChevronLeft className="h-4 w-4" />,
-        IconRight: ({ ..._props }) => <ChevronRight className="h-4 w-4" />,
+        // react-day-picker passes icon props through; the arrow is fixed, so the
+        // parameter is intentionally ignored. Named `_props` (plain parameter,
+        // not a rest destructure) because TypeScript's noUnusedParameters exempts
+        // underscore-prefixed parameters — a `({ ..._props })` rest binding is not
+        // exempt and would be reported as unused.
+        IconLeft: (_props) => <ChevronLeft className="h-4 w-4" />,
+        IconRight: (_props) => <ChevronRight className="h-4 w-4" />,
       }}
       {...props}
     />

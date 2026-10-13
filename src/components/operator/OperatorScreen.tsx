@@ -16,7 +16,7 @@ import { ServicePlan } from './ServicePlan';
 import { RecentPassages } from './RecentPassages';
 import { SettingsAndMore } from './SettingsAndMore';
 import { ProjectionControl } from './ProjectionControl';
-import { Book, BookX, Monitor, Undo2 } from 'lucide-react';
+import { BookX, Monitor, Undo2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
@@ -160,7 +160,6 @@ export function OperatorScreen() {
   const healthyTranslations = BibleRepository
     .getAvailableTranslations()
     .filter((t) => !failedTranslations.some((f) => f.code === t));
-  const currentTranslationFailed = failedTranslations.some((f) => f.code === currentTranslation);
 
   return (
     <div className="h-screen bg-background flex flex-col overflow-hidden">

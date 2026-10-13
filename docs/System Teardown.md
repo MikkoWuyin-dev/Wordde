@@ -112,7 +112,7 @@ UI components  ──►  inputController  ──►  stateManager (Zustand)
 - `src/core/shortcutRegistry.ts` — single source of truth for operator keyboard shortcuts (keys, labels, groups, modifier gating, empty-input pass-through). Consumed by `useGlobalKeyboard` (dispatch) and the Settings & More shortcuts view (help rendering); `src/test/shortcutRegistry.test.ts` fails on drift in either direction (missing case, zombie case, letters in the input pass-through list, key collisions).
 - `src/core/inputController.ts` (~300 LOC) — two hooks: `useInputController` (search-scoped) and `useGlobalKeyboard` (window-scoped shortcuts; modifier-guarded letters, empty-input pass-through derived from the registry, Escape/`?` handling — see §5.11).
 
-**Rendering flow:** React function components subscribing to Zustand slices. No memoized selectors — the store is small and updates are user-paced (a few per second at most), so full-store subscription is acceptable. Each route in `App.tsx` is wrapped in its own `ErrorBoundary` (`src/components/ErrorBoundary.tsx`), so a render-time throw falls back locally instead of unmounting the whole tree (see §8).
+**Rendering flow:** React function components subscribing to Zustand slices. No memoized selectors — the store is small and updates are user-paced (a few per second at most), so full-store subscription is acceptable. `ProjectionControl` is the one component that takes no reactive store state at all: its subscription was dead (TS6198 — all destructured elements unused) and was removed when the compiler's unused-binding checks went on (audit fix #12), so it reads the store only imperatively via `useStateManager.getState()` (§6, decision 4). Migrating the remaining read-only consumers to selectors is audit fix #9. Each route in `App.tsx` is wrapped in its own `ErrorBoundary` (`src/components/ErrorBoundary.tsx`), so a render-time throw falls back locally instead of unmounting the whole tree (see §8).
 
 ### Offline delivery layer (PWA)
 
@@ -396,7 +396,7 @@ Handle-independent, survives refresh on either side, origin-scoped. Downside: sa
 Options: lazy per translation, preload all. Chose preload: mid-service switch lag was unacceptable. Cost: 3–5 s boot and roughly 60–100 MB of resident JS heap for parsed verse objects. This is the single largest resource decision in the system.
 
 **4. Full-store Zustand subscription, no selectors.**
-Simpler code; update frequency is human-paced. Downside: every store write re-renders every subscribed operator component. Irrelevant at this scale, would matter if the operator UI grew large lists.
+Simpler code; update frequency is human-paced. Downside: every store write re-renders every subscribed operator component. Irrelevant at this scale, would matter if the operator UI grew large lists. **One exception, created by audit fix #12:** `ProjectionControl`'s `useStateManager()` destructure was entirely unused (TS6198) while still re-rendering the component on every store write — including every keystroke — so it was removed and the component now reads the store only imperatively via `useStateManager.getState()`. The remaining read-only consumers still take the full store; migrating them to selectors is audit fix #9.
 
 **5. `blankSettings` in localStorage rather than Zustand.**
 Both windows need it and it mutates rarely. Downside: it is the one piece of state outside the single-source-of-truth rule; changes require an explicit broadcast to propagate.

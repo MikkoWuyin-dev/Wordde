@@ -128,11 +128,16 @@
 <p>Work the P0 block first, <strong>one fix per branch</strong>, in the numbered order from</p>
 <p><code>Wordde_Audit_Handoff_2026-10-13.md</code> §9. Each row there carries its own verification command —</p>
 <p>use it, don't invent one.</p>
-<h3>Start here: ~~fix #1 before anything else~~ — <strong>DONE; begin at P1</strong></h3>
+<h3>Start here: ~~fix #1 before anything else~~ — <strong>DONE; #12 also done; begin at P1</strong></h3>
 <p>~~Add a real <code>typecheck</code> script (and a <code>*.tsbuildinfo</code> ignore rule) and make it the mandated</p>
-<p>check.~~ Landed. The reasoning is kept because it still governs #12: a real <code>tsc -b</code> gate now</p>
-<p>exists (and the 12 errors behind it are fixed), so #12's "turn the strict flags on and let the</p>
-<p>compiler find the dead code" is now safe to do — it was not before.</p>
+<p>check.~~ Landed. The reasoning is kept because it governed #12: a real <code>tsc -b</code> gate made "turn the</p>
+<p>strict flags on and let the compiler find the dead code" safe, and that is now done too.</p>
+<p><strong>#12's compiler half is landed.</strong> <code>noUnusedLocals</code> + <code>noUnusedParameters</code> are <code>true</code> in both</p>
+<p><code>tsconfig.app.json</code> and <code>tsconfig.node.json</code>; the compiler produced <strong>18 findings across 12 files</strong></p>
+<p>and all 18 are resolved (details and verification: audit §9, P2 #12). The flags are gate-blocking</p>
+<p>via <code>gate.yml</code>'s <code>Typecheck</code> step, so new dead code fails CI from here on. #12's <code>eslint</code> half</p>
+<p>(<code>@typescript-eslint/no-unused-vars</code>) is deliberately still <code>"off"</code> — it needs an</p>
+<p><code>argsIgnorePattern</code> for the <code>_</code>-prefix convention and would otherwise entangle §6.2's errors.</p>
 <h3>The P0 block (correctness) — <strong>all six landed</strong></h3>
 <p>The rows below are complete; the audit's §9 table records each fix's status and evidence.</p>
 <table><thead><tr>
@@ -171,7 +176,12 @@
 <td><code>persistenceGuards.test.ts</code></td>
 </tr>
 </tbody></table>
-<p>Then P1 (performance), P2 (hygiene), P3 (product) — §9 of the audit, with file targets and effort.</p>
+<p>Then P1 (performance), the rest of P2 (hygiene — <strong>#12 is done</strong>, #13–#20 remain), and P3</p>
+<p>(product) — §9 of the audit, with file targets and effort. A useful side effect of #12: the tree</p>
+<p>is now free of compiler-visible dead code, which makes #13 (delete the unreachable <code>ui/*</code> files)</p>
+<p>and #14 (root residue) cheaper to verify — anything they leave behind that nothing imports will</p>
+<p>trip #12's checks if it is in <code>src/</code>, and <code>tsc</code> will stay quiet about the rest, which is exactly</p>
+<p>the §10.8 blind spot to keep in mind.</p>
 <hr />
 <h2>4. Guardrails</h2>
 <h3>Re-verify each finding before you fix it</h3>

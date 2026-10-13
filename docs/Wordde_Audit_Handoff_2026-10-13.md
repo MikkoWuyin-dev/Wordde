@@ -485,6 +485,51 @@ Recorded so the next agent does not have to re-derive them.
 
 ### P2 — hygiene (cheap, high signal)
 
+> **Remediation status (2026-10-13).** **#12's compiler half is landed** (uncommitted, working tree).
+> `noUnusedLocals` + `noUnusedParameters` are now `true` in **both** `tsconfig.app.json` and
+> `tsconfig.node.json`. The audit proposed the app config only; §6.3 notes `tsconfig.node.json`
+> "does set `strict: true`, so config files are held to a higher standard" — that was wrong: it
+> carried `noUnusedLocals: false` / `noUnusedParameters: false` explicitly. Both are on now.
+>
+> `npx tsc -b --force` at the moment of the switch produced **18 findings across 12 files** —
+> exactly the compiler-generated list §6.3 and §10.8 predicted — and all 18 are resolved:
+> 6 unused value imports, 3 unused type imports, 3 unused locals, 4 unused parameters,
+> 1 wholly-unused store destructure, 1 dead component. The `settingsAndMore` finding **is**
+> §5.2's `ShortcutRow` dead export, so §5.2 loses that entry.
+>
+> **One finding is a behaviour change, not a deletion.** `ProjectionControl`'s
+> `const { committedPassage, isScreenBlanked } = useStateManager()` subscribed the component to
+> the entire store in order to read nothing (TS6198 — *all* destructured elements unused); the
+> component already reads the store imperatively via `useStateManager.getState()`. Removing the
+> dead destructure drops a re-render on **every** store write, keystrokes included. That
+> discharges §4.4 / P1 #9 for this file only.
+>
+> Two parameters (`calendar.tsx`'s react-day-picker `IconLeft`/`IconRight`, the two fake
+> `BroadcastChannel.removeEventListener`s) must keep their arity, so they became plain
+> `_`-prefixed parameters. Note the shape that would silently defeat the fix: `({ ..._props })`
+> is a **rest destructure**, and `noUnusedParameters` does **not** exempt underscore-prefixed
+> bindings in that form — the exemption is name-based on a real parameter.
+>
+> Post-fix verification: `npm run typecheck` → **exit 0**; `npx vitest run` → **27 files /
+> 224 tests, exit 0**; `npx vite build` → **exit 0** (624.16 kB JS); `npm run test:e2e` →
+> **24 passed, exit 0, 2.0 m** (four specs against the production build in real Chromium —
+> including `projection-hardening.spec.ts`, which exercises the operator and projection windows
+> together and therefore covers the one behaviour change above); `npm run lint` → **6 errors /
+> 14 warnings, exit 1** — identical to the §6.2 baseline, and linting only the 12 touched files
+> reports 0 errors (plus one pre-existing `exhaustive-deps` warning in `TutorialOverlay.tsx`).
+> The flags were also **falsified as inert**: a planted file with an unused local makes
+> `npm run typecheck` exit 2 with `TS6133` (its `_`-prefixed parameter stays exempt, confirming
+> the rename strategy), and the file's removal returns exit 0.
+> CI enforcement: `gate.yml`'s `Typecheck` step runs `npm run typecheck`, so these flags are
+> **gate-blocking**, not advisory — new dead code now fails the pipeline.
+>
+> **Deliberately not done — the `eslint` half of this row.** `@typescript-eslint/no-unused-vars`
+> stays `"off"` in `eslint.config.js`. It needs `argsIgnorePattern`/`varsIgnorePattern` to honour
+> the `_`-prefix convention this fix now depends on (3 sites), and flipping it in the same change
+> would mix §6.2's six `ui/*` errors into a two-line config edit. Do #13 and #15 first, then flip
+> it. Until then **lint is not in the gate at all** (see `gate.yml`), so the compiler is the only
+> unused-binding check CI enforces.
+
 | # | Fix | Files |
 |---|---|---|
 | 12 | Turn on `noUnusedLocals`/`noUnusedParameters` + `no-unused-vars` to generate the dead-code list, then delete per §5.2 | `tsconfig*.json`, `eslint.config.js` |
@@ -518,7 +563,7 @@ State these honestly if you cite this document.
 5. **The WOFF2 size estimate (~250–350 kB) is inferred** from typical format compression, not measured by converting these specific fonts.
 6. **The e2e specs and `public/data/*.zip` contents were not opened.** The ZIPs are protected (`AGENTS.md` §4) and out of audit scope; the earlier "~7.5 MB / 5 translations" figure comes from `PRODUCT.md`, not from measuring the files.
 7. **`AutoFitVerse` reflow count (~28 per verse change) is computed** from the 72→16 px range at a 2 px step, assuming the loop runs to completion. Real counts depend on content.
-8. **No dead-code analysis tool was run** (no `knip`/`ts-prune`). §5's list comes from targeted greps — thorough for the symbols named, not exhaustive. Turning on `noUnusedLocals` (fix #12) will find more.
+8. ~~**No dead-code analysis tool was run** (no `knip`/`ts-prune`). §5's list comes from targeted greps — thorough for the symbols named, not exhaustive. Turning on `noUnusedLocals` (fix #12) will find more.~~ **Now run: it found 18, all resolved** (§9, P2 #12). The compiler *is* the tool once the flags are on. **The blind spots have not moved, though:** `tsc` reports only bindings that are declared and unreferenced. It cannot see whole files nothing imports (§5.1's 40 `ui/*` files, #13), unused **exports** (an `export function` references itself, so `tsc` calls it used), unused `package.json` dependencies, or unreferenced `public/` assets. §5.1–§5.3's hand-curated list remains the authority for those, and no `knip`/`ts-prune` pass has been run.
 
 ---
 

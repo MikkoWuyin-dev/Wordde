@@ -10,7 +10,6 @@ import {
   HELP_TOGGLE_EVENT,
   SHORTCUT_GROUPS,
   shortcutDisplayKeys,
-  type ShortcutDef,
 } from '@/core/shortcutRegistry';
 import { cn } from '@/lib/utils';
 
@@ -256,18 +255,6 @@ function ThemePicker() {
           <span className="ml-auto text-xs text-muted-foreground/70">{hint}</span>
         </button>
       ))}
-    </div>
-  );
-}
-
-/** One help row — keys column from the registry's canonical display form. */
-function ShortcutRow({ shortcut }: { shortcut: ShortcutDef }) {
-  return (
-    <div className="flex items-center justify-between text-[11px]">
-      <span className="text-muted-foreground">{shortcut.label}</span>
-      <kbd className="px-1 py-0.5 rounded bg-muted text-[10px] font-mono">
-        {shortcutDisplayKeys(shortcut)}
-      </kbd>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useState, useRef, useCallback } from 'react';
 import { onBroadcastMessage, requestCurrentState, broadcastHeartbeat, broadcastProjectorReady, loadPersistedProjectionState, getChannel } from '@/core/broadcastSync';
-import type { BlankSettings, SessionScreen } from '@/core/broadcastSync';
+import type { BlankSettings } from '@/core/broadcastSync';
 import type { Passage } from '@/core/types';
 import { loadAllAssets } from '@/core/assetStorage';
 import { safeLocalGet } from '@/core/safeStorage';

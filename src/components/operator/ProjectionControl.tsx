@@ -32,8 +32,10 @@ export function ProjectionControl() {
   const projectorWindowRef = useRef<Window | null>(null);
   const lastHeartbeatRef = useRef<number>(0);
 
-  const { committedPassage, isScreenBlanked } = useStateManager();
-
+  // Deliberately no reactive store subscription here: this component reads the
+  // store imperatively via `useStateManager.getState()`, so an unfiltered
+  // `useStateManager()` call would re-render it on every store write — including
+  // every keystroke — while reading nothing (audit §4.4).
   // Listen for PROJECTOR_READY + HEARTBEAT
   useEffect(() => {
     const unsub = onBroadcastMessage((msg) => {

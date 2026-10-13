@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback } from 'react';
 import { BibleRepository } from '@/core/bibleRepository';
 import { useStateManager } from '@/core/stateManager';
 import { cn } from '@/lib/utils';
-import { ChevronRight, ChevronLeft, BookOpen, Layers } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Layers } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 type NavLevel = 'books' | 'chapters' | 'verses';

@@ -94,12 +94,18 @@ Work the P0 block first, **one fix per branch**, in the numbered order from
 `Wordde_Audit_Handoff_2026-10-13.md` §9. Each row there carries its own verification command —
 use it, don't invent one.
 
-### Start here: ~~fix #1 before anything else~~ — **DONE; begin at P1**
+### Start here: ~~fix #1 before anything else~~ — **DONE; #12 also done; begin at P1**
 
 ~~Add a real `typecheck` script (and a `*.tsbuildinfo` ignore rule) and make it the mandated
-check.~~ Landed. The reasoning is kept because it still governs #12: a real `tsc -b` gate now
-exists (and the 12 errors behind it are fixed), so #12's "turn the strict flags on and let the
-compiler find the dead code" is now safe to do — it was not before.
+check.~~ Landed. The reasoning is kept because it governed #12: a real `tsc -b` gate made "turn the
+strict flags on and let the compiler find the dead code" safe, and that is now done too.
+
+**#12's compiler half is landed.** `noUnusedLocals` + `noUnusedParameters` are `true` in both
+`tsconfig.app.json` and `tsconfig.node.json`; the compiler produced **18 findings across 12 files**
+and all 18 are resolved (details and verification: audit §9, P2 #12). The flags are gate-blocking
+via `gate.yml`'s `Typecheck` step, so new dead code fails CI from here on. #12's `eslint` half
+(`@typescript-eslint/no-unused-vars`) is deliberately still `"off"` — it needs an
+`argsIgnorePattern` for the `_`-prefix convention and would otherwise entangle §6.2's errors.
 
 ### The P0 block (correctness) — **all six landed**
 
@@ -114,7 +120,12 @@ The rows below are complete; the audit's §9 table records each fix's status and
 | 5 | Replace `getNearbyPassages` verse arithmetic with `getNextVerse`; thread the translation | `bibleNormalizer.test.ts`, `verseNavigation.test.ts`; add a `3a` case |
 | 6 | Guard the three raw `localStorage` reads | `persistenceGuards.test.ts` |
 
-Then P1 (performance), P2 (hygiene), P3 (product) — §9 of the audit, with file targets and effort.
+Then P1 (performance), the rest of P2 (hygiene — **#12 is done**, #13–#20 remain), and P3
+(product) — §9 of the audit, with file targets and effort. A useful side effect of #12: the tree
+is now free of compiler-visible dead code, which makes #13 (delete the unreachable `ui/*` files)
+and #14 (root residue) cheaper to verify — anything they leave behind that nothing imports will
+trip #12's checks if it is in `src/`, and `tsc` will stay quiet about the rest, which is exactly
+the §10.8 blind spot to keep in mind.
 
 ---
 

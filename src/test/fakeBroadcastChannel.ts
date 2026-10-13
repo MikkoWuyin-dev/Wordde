@@ -16,7 +16,7 @@ export class FakeBroadcastChannel {
   addEventListener(type: string, cb: (e: { data: unknown }) => void) {
     if (type === 'message') this.listeners.push(cb);
   }
-  removeEventListener(type: string, cb: (e: { data: unknown }) => void) {
+  removeEventListener(_type: string, cb: (e: { data: unknown }) => void) {
     this.listeners = this.listeners.filter((l) => l !== cb);
   }
   close() {}
