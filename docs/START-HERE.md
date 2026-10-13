@@ -9,7 +9,8 @@ before you touch anything, the order to work in, and the three things in this re
 mislead you if nobody warns you.
 
 > **Current status (updated 2026-10-13, after remediation).** The **P0 correctness block — audit
-> fixes #1–#6 — is landed but uncommitted.** `npm run typecheck` exits 0, `npm run lint` is at
+> fixes #1–#6 — is landed and committed** (`66bf527`), as is **#12's compiler half** (`9952d09`).
+> `npm run typecheck` exits 0, `npm run lint` is at
 > **6 errors / 14 warnings**, `npx vitest run` is **27 files / 224 tests passing**, and
 > `npx vite build` exits 0. Start from **P1** in the audit's §9 work queue. **Trap 1 below is
 > resolved** and kept only as history; traps 2 and 3 still apply (lint is still red, tests are

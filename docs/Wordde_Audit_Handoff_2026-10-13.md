@@ -458,7 +458,7 @@ Recorded so the next agent does not have to re-derive them.
 
 ### P0 — correctness, do first (each is small and independently verifiable)
 
-> **Remediation status (2026-10-13).** **P0 #1–#6 are landed** (uncommitted, working tree).
+> **Remediation status (2026-10-13).** **P0 #1–#6 are landed and committed** (`66bf527`).
 > After the fixes: `npm run typecheck` → **exit 0**; `npm run lint` → **6 errors / 14 warnings**
 > (was 6/15 — the §3.1 warning is gone); `npx vitest run` → **27 files / 224 tests passing**
 > (was 25/214); `npx vite build` → **exit 0**, 624.20 kB JS (was 622.19 kB).
@@ -485,7 +485,7 @@ Recorded so the next agent does not have to re-derive them.
 
 ### P2 — hygiene (cheap, high signal)
 
-> **Remediation status (2026-10-13).** **#12's compiler half is landed** (uncommitted, working tree).
+> **Remediation status (2026-10-13).** **#12's compiler half is landed and committed** (`9952d09`).
 > `noUnusedLocals` + `noUnusedParameters` are now `true` in **both** `tsconfig.app.json` and
 > `tsconfig.node.json`. The audit proposed the app config only; §6.3 notes `tsconfig.node.json`
 > "does set `strict: true`, so config files are held to a higher standard" — that was wrong: it
