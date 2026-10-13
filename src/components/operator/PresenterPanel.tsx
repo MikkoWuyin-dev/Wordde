@@ -36,7 +36,9 @@ function SlideCard({
 }: {
   slide: Slide | null;
   label: string;
-  icon: React.ElementType;
+  /** Omitted on the Live card: without an icon the label sits on the card's
+      content edge, the same left edge the scripture reference and body use. */
+  icon?: React.ElementType;
   variant: 'live' | 'next';
 }) {
   const [bodyRef, overflows] = useOverflows(slide?.text);
@@ -74,7 +76,7 @@ function SlideCard({
       )}
     >
       <div className="flex items-center gap-2 shrink-0">
-        <Icon className={cn('h-4 w-4', styles.label)} />
+        {Icon && <Icon className={cn('h-4 w-4', styles.label)} />}
         <span className={cn('text-xs font-semibold uppercase tracking-wider', styles.label)}>
           {label}
         </span>
@@ -195,7 +197,7 @@ export function PresenterPanel() {
           </div>
         </div>
         <div className="flex-1 p-4 flex flex-col gap-3 min-h-0 overflow-y-auto">
-          <SlideCard slide={null} label="Live" icon={Monitor} variant="live" />
+          <SlideCard slide={null} label="Live" variant="live" />
           <SlideCard slide={null} label="Next" icon={SkipForward} variant="next" />
         </div>
       </div>
@@ -248,7 +250,7 @@ export function PresenterPanel() {
       </div>
 
       <div className="flex-1 p-5 flex flex-col gap-4 min-h-0 overflow-y-auto">
-        <SlideCard slide={liveSlide} label="Live" icon={Monitor} variant="live" />
+        <SlideCard slide={liveSlide} label="Live" variant="live" />
         {projectionLocked && previewSlide && previewSlide !== liveSlide && (
           <div className="rounded-xl border border-border/70 bg-card/60 p-5 flex flex-col gap-2">
             <div className="flex items-center gap-2">
